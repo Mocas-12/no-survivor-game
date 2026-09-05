@@ -85,7 +85,7 @@ func _ready():
 		{"title": "寒冰弹头", "desc": "冰元素：命中减速敌机", "apply": _upgrade_ice_element, "can": func(): return player.element != "ice"},
 		{"title": "雷电弹头", "desc": "雷元素：链式电击邻近目标", "apply": _upgrade_lightning_element, "can": func(): return player.element != "lightning"},
 		{"title": "疾风弹头", "desc": "风元素：弹速 +40% 并击退", "apply": _upgrade_wind_element, "can": func(): return player.element != "wind"},
-		{"title": "精准直射", "desc": "切换为贯穿激光射线", "apply": _upgrade_stream, "can": func(): return player.pattern != "stream"},
+		{"title": "追踪导弹", "desc": "发射自动追踪敌机的导弹", "apply": _upgrade_homing, "can": func(): return player.pattern != "homing"},
 		{"title": "扩散弹幕", "desc": "扇形张开，弹道 +1", "apply": _upgrade_wide, "can": func(): return player.spacing_scale < 1.6 and player.pattern != "stream"},
 		{"title": "波浪弹道", "desc": "子弹蛇行，覆盖更广", "apply": _upgrade_wave, "can": func(): return player.pattern != "wave"},
 	]
@@ -404,8 +404,8 @@ func _upgrade_lightning_element():
 func _upgrade_wind_element():
 	player.element = "wind"
 
-func _upgrade_stream():
-	player.pattern = "stream"
+func _upgrade_homing():
+	player.pattern = "homing"
 
 func _upgrade_wide():
 	player.spacing_scale = 1.6

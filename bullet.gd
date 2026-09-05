@@ -7,6 +7,9 @@ var damage = 1
 var element = "normal"   # normal / fire / ice / lightning / wind
 var wave_amp = 0.0       # 波浪弹道摆动幅度（0 = 直线）
 var wave_t = 0.0
+var dir = Vector2.ZERO   # 飞行方向（发射时设置）
+var homing = 0.0         # 转向速率（弧度/秒），0 = 无追踪
+var homing_time = 0.0    # 追踪持续时间
 
 const ELEMENT_COLORS := {
 	"normal": Color(1, 1, 1),
@@ -17,12 +20,34 @@ const ELEMENT_COLORS := {
 }
 
 func _process(delta):
-	var move = transform.x * speed * delta
+	if dir == Vector2.ZERO:
+		dir = transform.x
+	# 追踪：自动转向最近的存活目标（敌机 / Boss）
+	if homing > 0.0 and homing_time > 0.0:
+		homing_time -= delta
+		_steer(delta)
+	var move = dir * speed * delta
 	if wave_amp > 0.0:
 		# 波浪弹道：垂直于航向叠加正弦摆动
 		wave_t += delta * 9.0
-		move += transform.y * sin(wave_t) * wave_amp * delta
+		move += dir.orthogonal() * sin(wave_t) * wave_amp * delta
 	position += move
+	rotation = dir.angle()
+
+# 转向最近的存活目标
+func _steer(delta):
+	var target = null
+	var best = INF
+	for m in get_tree().get_nodes_in_group("mobs"):
+		if m.dead:
+			continue
+		var d2 = global_position.distance_squared_to(m.global_position)
+		if d2 < best:
+			best = d2
+			target = m
+	if target:
+		var want = (target.global_position - global_position).normalized()
+		dir = dir.rotated(clampf(dir.angle_to(want), -homing * delta, homing * delta))
 
 # 设置元素并给子弹染色
 func set_element(e):

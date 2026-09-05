@@ -15,7 +15,7 @@ func _physics_process(delta):
 		var player = get_tree().get_first_node_in_group("player")
 		if player:
 			var want = (player.global_position - global_position).normalized()
-			dir = dir.rotated(clampf(want.angle_to(dir), -homing * delta, homing * delta))
+			dir = dir.rotated(clampf(dir.angle_to(want), -homing * delta, homing * delta))
 	position += dir * speed * delta
 	# 飞出屏幕自动销毁
 	if position.y > 720 or position.y < -120 or position.x < -120 or position.x > 1272:
