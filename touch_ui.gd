@@ -14,9 +14,18 @@ var origin := Vector2.ZERO
 @onready var fire_btn: TouchScreenButton = $FireButton
 
 func _ready():
+	# 常驻处理：即使游戏暂停（升级/结算）也能收到手指抬起事件，避免摇杆方向卡死
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = DisplayServer.is_touchscreen_available()
 	base.hide()
 	thumb.hide()
+
+# 强制复位摇杆（升级/结算暂停前调用，防止方向残留）
+func reset():
+	touch_index = -1
+	base.hide()
+	thumb.hide()
+	moved.emit(Vector2.ZERO)
 
 func _input(event):
 	if not visible:

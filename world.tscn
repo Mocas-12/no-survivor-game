@@ -381,6 +381,66 @@ custom_minimum_size = Vector2(240, 120)
 layout_mode = 2
 theme = SubResource("Theme_ui")
 
+[node name="StartPanel" type="ColorRect" parent="UI"]
+process_mode = 3
+offset_right = 1151.0
+offset_bottom = 642.0
+color = Color(0.03, 0.03, 0.08, 0.92)
+
+[node name="Title" type="Label" parent="UI/StartPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 46
+text = "准备战斗"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="UI/StartPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -60.0
+offset_right = 350.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 20
+text = "电脑：鼠标移动，按住左键射击
+手机：左半屏摇杆移动，右侧按钮开火
+建议横屏游玩"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="UI/StartPanel"]
+custom_minimum_size = Vector2(260, 70)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -130.0
+offset_top = 60.0
+offset_right = 130.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_ui")
+text = "开始战斗"
+
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
 [connection signal="pressed" from="UI/GameOverPanel/RestartButton" to="." method="_on_restart_button_pressed"]
 [connection signal="pressed" from="UI/GameOverPanel/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="UI/StartPanel/StartButton" to="." method="_on_start_pressed"]

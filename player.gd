@@ -38,14 +38,16 @@ var base_scale = 0.60              # 机体基准尺寸：随形态等级成长�
 
 var bullet_scene = preload("res://bullet.tscn")
 var fire_timer = 0.0
+var use_touch = false   # 触屏设备：摇杆专属移动，不回退到鼠标跟随
 
 func _ready():
+	use_touch = DisplayServer.is_touchscreen_available()
 	_update_base_scale()
 	scale = Vector2.ONE * base_scale
 
 func _physics_process(delta):
-	# 移动：手机摇杆优先，否则平滑跟随鼠标
-	if touch_move.length() > 0.1:
+	# 移动：触屏设备由摇杆驱动（无输入时悬停）；桌面端平滑跟随鼠标
+	if use_touch:
 		global_position += touch_move * speed * 1.15 * delta
 	else:
 		global_position = global_position.move_toward(get_global_mouse_position(), follow_speed * delta)

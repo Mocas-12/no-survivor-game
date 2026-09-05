@@ -55,6 +55,8 @@ var last_hurt_ms = -10000  # 受伤无敌帧计时
 @onready var warning_label = $UI/WarningLabel
 @onready var boss_name_label = $UI/BossName
 @onready var boss_bar = $UI/BossBar
+@onready var start_panel = $UI/StartPanel
+@onready var start_button = $UI/StartPanel/StartButton
 @onready var game_over_panel = $UI/GameOverPanel
 @onready var final_score_label = $UI/GameOverPanel/FinalScoreLabel
 @onready var levelup_panel = $UI/LevelUpPanel
@@ -93,7 +95,7 @@ func _ready():
 	# 手机摇杆输入接入玩家
 	$TouchUI.moved.connect(func(d): player.touch_move = d)
 
-	# 背景音乐：无缝循环
+	# 背景音乐：无缝循环（等开始面板点击后再播放，满足浏览器音频手势要求）
 	bgm_player = AudioStreamPlayer.new()
 	var bgm_stream: AudioStreamWAV = BGM
 	bgm_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
@@ -102,11 +104,16 @@ func _ready():
 	bgm_player.stream = bgm_stream
 	bgm_player.volume_db = -13.0
 	add_child(bgm_player)
-	bgm_player.play()
 
 	update_ui()
 	game_over_panel.hide()
 	levelup_panel.hide()
+
+	# 开始面板：等待玩家点击（解锁手机端音频 + 请求全屏）
+	$TouchUI.reset()
+	get_tree().paused = true
+	start_panel.show()
+	start_button.pressed.connect(_on_start_pressed)
 
 # --- 音效 ---
 
@@ -329,6 +336,7 @@ func _apply_form_bonus(n):
 # --- 升级三选一（12 张卡池随机抽 3） ---
 
 func show_level_up():
+	$TouchUI.reset()   # 暂停前复位摇杆，防止恢复后方向残留
 	get_tree().paused = true
 	levelup_panel.show()
 	if levelup_panel.has_method("animate_in"):
@@ -496,6 +504,7 @@ func update_ui():
 	$Timer.wait_time = max(0.3, 0.9 - score * 0.002)
 
 func game_over():
+	$TouchUI.reset()   # 暂停前复位摇杆
 	final_score_label.text = "最终积分: %d    等级: %d" % [score, level]
 	game_over_panel.show()
 	if game_over_panel.has_method("animate_in"):
@@ -504,6 +513,20 @@ func game_over():
 	camera.add_shake(12.0)
 	play_sfx("gameover")
 	get_tree().paused = true
+
+# --- 开始面板 ---
+
+func _on_start_pressed():
+	start_panel.hide()
+	get_tree().paused = false
+	bgm_player.play()          # 在用户手势内启动音频（解锁手机端声音）
+	_request_web_fullscreen()
+
+func _request_web_fullscreen():
+	# 手机浏览器：请求全屏并锁定横屏（部分浏览器可能拒绝，静默失败）
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("if(window.__requestGameFullscreen){window.__requestGameFullscreen();}", true)
 
 # --- 结算栏按钮的功能代码 ---
 
