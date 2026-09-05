@@ -1,11 +1,27 @@
 extends CharacterBody2D
 
-# 4 种形态贴图（击杀 Boss 掉落核心装备后变形）
+# 20 种形态贴图（每次吃核心进化一号：体型/翼型/引擎/武装渐进成长）
 const FORM_TEXTURES := [
 	preload("res://assets/player_form1.png"),
 	preload("res://assets/player_form2.png"),
 	preload("res://assets/player_form3.png"),
 	preload("res://assets/player_form4.png"),
+	preload("res://assets/player_form5.png"),
+	preload("res://assets/player_form6.png"),
+	preload("res://assets/player_form7.png"),
+	preload("res://assets/player_form8.png"),
+	preload("res://assets/player_form9.png"),
+	preload("res://assets/player_form10.png"),
+	preload("res://assets/player_form11.png"),
+	preload("res://assets/player_form12.png"),
+	preload("res://assets/player_form13.png"),
+	preload("res://assets/player_form14.png"),
+	preload("res://assets/player_form15.png"),
+	preload("res://assets/player_form16.png"),
+	preload("res://assets/player_form17.png"),
+	preload("res://assets/player_form18.png"),
+	preload("res://assets/player_form19.png"),
+	preload("res://assets/player_form20.png"),
 ]
 
 @export var follow_speed = 1300    # 鼠标跟随速度（越大跟得越紧）
@@ -18,12 +34,13 @@ var element = "normal"             # 弹头元素：normal / fire / ice / lightn
 var pattern = "spread"             # 弹道模式：spread 扇形 / stream 平行直射 / wave 波浪
 var spacing_scale = 1.0            # 扇形张开系数（扩散弹幕会增大）
 var touch_move = Vector2.ZERO      # 手机虚拟摇杆输入
-var base_scale = 0.85              # 主角整体缩小一号
+var base_scale = 0.60              # 机体基准尺寸：随形态等级成长（0.60 → 1.0）
 
 var bullet_scene = preload("res://bullet.tscn")
 var fire_timer = 0.0
 
 func _ready():
+	_update_base_scale()
 	scale = Vector2.ONE * base_scale
 
 func _physics_process(delta):
@@ -71,6 +88,10 @@ func shoot():
 		world.play_sfx("shoot", -14.0, 0.04)
 
 func set_form(n):
-	# 只换贴图（变形演出由 world 的渐进动画驱动）
+	# 只换贴图并更新基准尺寸（变形演出由 world 驱动）
 	form = n
 	$Sprite2D.texture = FORM_TEXTURES[n]
+	_update_base_scale()
+
+func _update_base_scale():
+	base_scale = 0.60 + 0.021 * form   # 形态越高机体越大：0.60 → 1.0

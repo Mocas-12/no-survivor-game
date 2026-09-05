@@ -106,40 +106,85 @@ def main():
     save("gameover", mix(sweep(420, 95, 0.9, a=0.01, r=1.2), gain(sweep(210, 48, 0.9, a=0.01, r=1.2), 0.6)), 0.7)
 
 
+def saw(ph):
+    return 2.0 * ((ph / (2 * math.pi)) % 1.0) - 1.0
+
+
 def bgm():
-    """A 小调 128BPM 背景音乐：贝斯 + 和弦垫 + 琶音 + 鼓点，8 小节无缝循环"""
-    bpm = 128.0
+    """A 小调 140BPM 战斗 BGM：鼓组驱动 + 锯齿贝斯 + 力量和弦 + 主旋律，16 小节无缝循环"""
+    bpm = 140.0
     beat = 60.0 / bpm
-    bars = 8
+    bars = 16
     total = seconds(beat * 4 * bars)
     out = [0.0] * total
-    chords = [(220.0, 261.63, 329.63), (174.61, 220.0, 261.63), (130.81, 164.81, 196.0), (196.0, 246.94, 293.66)]  # Am F C G
-    roots = [110.0, 87.31, 65.41, 98.0]
+    roots = [110.0, 87.31, 65.41, 98.0, 110.0, 87.31, 65.41, 82.41]   # A F C G A F C E
+    fifths = [164.81, 130.81, 98.0, 146.83, 164.81, 130.81, 98.0, 123.47]
 
-    def add_note(start_s, dur, f, vol, wave_fn=math.sin, r=0.8):
+    def add_note(start_s, dur, f, vol, wave_fn=math.sin, r=0.8, lp=0.0, detune=0.0):
         n = seconds(dur)
         s0 = seconds(start_s)
+        prev = 0.0
         for i in range(min(n, total - s0)):
             ph = 2 * math.pi * f * i / SR
-            out[s0 + i] += wave_fn(ph) * vol * env(i, n, 0.02, r)
+            v = wave_fn(ph)
+            if detune > 0.0:
+                v = (v + wave_fn(2 * math.pi * f * (1 + detune) * i / SR)) * 0.5
+            if lp > 0.0:
+                prev += (v - prev) * lp
+                v = prev
+            out[s0 + i] += v * vol * env(i, n, 0.015, r)
 
     for bar in range(bars):
-        ch = bar % 4
+        ch = bar % 8
         bar_start = bar * beat * 4
-        for b in range(4):  # 贝斯：每拍根音
-            add_note(bar_start + b * beat, beat * 0.9, roots[ch], 0.30, square, 0.5)
-        for f in chords[ch]:  # 和弦垫
-            add_note(bar_start, beat * 4, f, 0.06, math.sin, 1.2)
-        seq = chords[ch] + (chords[ch][1],)
-        for s16 in range(16):  # 十六分琶音
-            add_note(bar_start + s16 * beat / 4, beat / 4 * 0.85, seq[s16 % 4] * 2, 0.05, math.sin, 0.6)
-        n_h = seconds(beat * 0.15)  # 八分 hi-hat
-        for h8 in range(8):
-            s0 = seconds(bar_start + h8 * beat * 0.5)
-            for i in range(n_h):
-                if s0 + i < total:
-                    out[s0 + i] += random.uniform(-1, 1) * 0.05 * env(i, n_h, 0.001, 3.0)
-    save("bgm", out, 0.55)
+        # 底鼓：每拍
+        for b in range(4):
+            n_k = seconds(0.11)
+            s0 = seconds(bar_start + b * beat)
+            for i in range(n_k):
+                t = i / n_k
+                out[s0 + i] += math.sin(2 * math.pi * (150 - 105 * t) * i / SR) * 0.55 * (1 - t) ** 1.5
+        # 军鼓：2、4 拍
+        for b in (1, 3):
+            s0 = seconds(bar_start + b * beat)
+            n_s = seconds(0.09)
+            for i in range(n_s):
+                out[s0 + i] += random.uniform(-1, 1) * 0.28 * env(i, n_s, 0.001, 2.0)
+        # 踩镲：十六分
+        for s16 in range(16):
+            s0 = seconds(bar_start + s16 * beat / 4)
+            n_h = seconds(0.03)
+            for i in range(min(n_h, total - s0)):
+                out[s0 + i] += random.uniform(-1, 1) * 0.045 * env(i, n_h, 0.001, 3.0)
+        # 锯齿贝斯：八分驱动（根音 + 指向五度的律动）
+        for e in range(8):
+            f = roots[ch] if e % 4 != 3 else fifths[ch] / 2
+            add_note(bar_start + e * beat / 2, beat * 0.48, f, 0.26, saw, 0.6, 0.28, 0.006)
+        # 力量和弦垫（根音 + 五度 + 八度）
+        for f in (roots[ch], fifths[ch], roots[ch] * 2):
+            add_note(bar_start, beat * 4, f, 0.05, saw, 1.2, 0.12, 0.004)
+        # 十六分琶音（高八度）
+        seq = [roots[ch] * 2, fifths[ch] * 2, roots[ch] * 4, fifths[ch] * 2]
+        for s16 in range(16):
+            add_note(bar_start + s16 * beat / 4, beat / 4 * 0.8, seq[s16 % 4], 0.045, math.sin, 0.5)
+
+    # 主旋律（后 8 小节进入，A 小调五声）：英雄感动机
+    pent = [440.0, 523.25, 587.33, 659.25, 783.99]
+    motif = [
+        (0, 0), (0.5, 1), (1, 2), (1.5, 3), (2, 4), (3, 2), (3.5, 1),
+        (4, 2), (5, 1), (5.5, 0), (6, 1), (7, -1),
+        (8, 0), (8.5, 1), (9, 2), (9.5, 4), (10, 3), (11, 2), (11.5, 1),
+        (12, 2), (13, 1), (13.5, 0), (14, -2), (15, -1),
+    ]
+    for rep in range(4):
+        base_bar = 8 + rep * 2
+        for (off_e, idx) in motif:
+            idx2 = max(0, min(4, idx))
+            f = pent[idx2] * (2 if rep % 2 == 1 and idx2 >= 3 else 1)
+            add_note((base_bar + rep * 0) * 0 + (base_bar - 8 + rep * 0 + 0) * 0 + (base_bar * beat) + off_e * beat, beat * 0.55, f, 0.09, math.sin, 0.5)
+
+    save("bgm", out, 0.6)
+
 
 
 if __name__ == "__main__":

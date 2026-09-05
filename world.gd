@@ -243,7 +243,7 @@ func _on_boss_died(pos):
 	# 掉落核心装备：接住后战机渐进变形
 	var core = core_scene.instantiate()
 	core.position = pos
-	core.form_target = mini(player.form + 1, 3)
+	core.form_target = mini(player.form + 1, 19)
 	add_child(core)
 
 	update_ui()
@@ -276,32 +276,29 @@ func spawn_lightning(from: Vector2, to: Vector2):
 
 func apply_core(form):
 	play_sfx("transform")
-	get_tree().paused = true
-	flash_ui(CYAN, 0.5)
-	camera.add_shake(10.0)
-	confetti_burst(player.position, 30, CYAN)
-	var upgraded = form > player.form  # 演出会先改 form，提前记录是否为新形态
+	flash_ui(CYAN, 0.35)
+	camera.add_shake(8.0)
+	confetti_burst(player.position, 24, CYAN)
+	_apply_form_bonus(form)
+	update_ui()
 
-	# 渐进变形：旧形态收缩白化 → 光柱冲天 → 新形态弹性放大 → 回落
+	# 连贯变形演出（不暂停）：旧机体收缩白化 → 光柱冲天 → 新机体弹性放大 → 回落
 	var tw = create_tween()
-	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tw.tween_property(player, "scale", Vector2.ONE * 0.1, 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tw.parallel().tween_property(player, "modulate", Color(8, 8, 10), 0.28)
-	tw.tween_callback(func(): player.set_form(form))
-	tw.tween_callback(_spawn_evolution_beam)
-	tw.tween_property(player, "modulate", Color(1, 1, 1), 0.22)
-	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.45, 0.42).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.22).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(player, "scale", Vector2.ONE * 0.25, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(player, "modulate", Color(6, 6, 8), 0.18)
 	tw.tween_callback(func():
-		_apply_form_bonus(form, upgraded)
-		update_ui()
-		get_tree().paused = false
+		player.set_form(form)
+		_spawn_evolution_beam()
+		var tw2 = create_tween()
+		tw2.tween_property(player, "modulate", Color(1, 1, 1), 0.18)
+		tw2.parallel().tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw2.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.2)
 	)
-	# 演出期间连环冲击波
-	for i in 4:
-		get_tree().create_timer(0.25 + i * 0.16, true).timeout.connect(func():
+	# 连环冲击波
+	for i in 3:
+		get_tree().create_timer(0.1 + i * 0.15, true).timeout.connect(func():
 			if is_instance_valid(player):
-				spawn_ring(player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.4 + i * 0.6, 0.5))
+				spawn_ring(player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.0 + i * 0.5, 0.45))
 
 func _spawn_evolution_beam():
 	# 冲天光柱
@@ -318,24 +315,16 @@ func _spawn_evolution_beam():
 	tw.tween_property(beam, "modulate:a", 0.0, 0.5)
 	tw.chain().tween_callback(beam.queue_free)
 
-func _apply_form_bonus(form, upgraded: bool):
-	if upgraded:
-		match form:
-			1:
-				player.bullet_count += 1                      # 先锋：多一发弹道
-			2:
-				player.damage += 2                            # 堡垒：火力 + 生命
-				max_health += 4
-				health = min(health + 4, max_health)
-			3:
-				player.bullet_count += 1                      # 新星：全面强化
-				player.fire_cooldown = maxf(0.05, player.fire_cooldown * 0.75)
-				player.speed = int(player.speed * 1.1)
-	else:
-		# 已是最终形态再吃核心：超载奖励
-		player.damage += 2
-		health = max_health
-		player.fire_cooldown = maxf(0.04, player.fire_cooldown * 0.9)
+func _apply_form_bonus(n):
+	# 每次变形的渐进成长：弹道/伤害/射速/生命交替增强
+	if n % 2 == 1:
+		player.bullet_count = mini(player.bullet_count + 1, 8)
+	if n % 3 == 0:
+		player.damage += 1
+	player.fire_cooldown = maxf(0.055, player.fire_cooldown * 0.94)
+	if n % 4 == 0:
+		max_health += 2
+		health = mini(health + 3, max_health)
 
 # --- 升级三选一（12 张卡池随机抽 3） ---
 

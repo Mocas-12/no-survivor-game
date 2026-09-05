@@ -304,57 +304,107 @@ def glow_discs(base, spots, color, radius, strength):
     base.alpha_composite(layer)
 
 
-def gen_plane_form(idx, body_top, body_bottom, accent, dark, wing_span, wing_drop, hull_w, pods, swept_forward):
-    """主角 4 形态战斗机（朝上）。idx: 0-3"""
+# ---------- 主角 20 形态（参数化渐进成长：体型/翼型/引擎/武装逐级变化） ----------
+
+def wing_polys(variant, cx, hw, span, wing_y, drop):
+    """按翼型代号返回机翼多边形组（朝上飞机），6 种翼型随形态阶跃进化"""
+    x0 = cx - hw + ss(2)
+    x1 = cx - hw - ss(2)
+    wy = ss(wing_y)
+    tip = cx - ss(span)
+    if variant == 0:  # 三角翼
+        return [[(x0, wy), (tip, wy + ss(drop)), (tip, wy + ss(drop) + ss(14)), (x1, wy + ss(44))]]
+    if variant == 1:  # 后掠翼
+        return [[(x0, wy), (tip, wy + ss(drop) + ss(16)), (tip + ss(6), wy + ss(drop) + ss(24)), (x1, wy + ss(46))]]
+    if variant == 2:  # 前掠翼
+        return [[(x0, wy), (tip, wy + ss(drop) - ss(14)), (tip + ss(6), wy + ss(drop)), (x1, wy + ss(42))]]
+    if variant == 3:  # X 翼（两对）
+        return [[(x0, wy), (tip, wy + ss(drop)), (tip, wy + ss(drop) + ss(12)), (x1, wy + ss(40))],
+                [(x0, wy - ss(18)), (tip + ss(14), wy - ss(6)), (tip + ss(14), wy + ss(4)), (x1, wy + ss(16))]]
+    if variant == 4:  # 前伸双叉
+        return [[(cx - hw - ss(4), wy + ss(10)), (tip + ss(10), wy + ss(26)), (tip + ss(16), wy + ss(38)), (x1, wy + ss(48))],
+                [(x0, wy), (tip - ss(6), wy + ss(4)), (tip, wy + ss(14)), (x1, wy + ss(40))]]
+    # 双层翼
+    return [[(x0, wy - ss(10)), (tip, wy + ss(drop) - ss(4)), (tip, wy + ss(drop) + ss(8)), (x1, wy + ss(34))],
+            [(x0, wy + ss(20)), (tip + ss(10), wy + ss(drop) + ss(24)), (tip + ss(10), wy + ss(drop) + ss(34)), (x1, wy + ss(52))]]
+
+
+def gen_form(n):
+    """第 n 形态（0-19）：体型、翼展、翼型、引擎数、武装逐级递进"""
     size = (ss(160), ss(160))
     cx = ss(80)
-    wing_x = ss(wing_span)
-    wing_y = ss(wing_drop)
-    hull_dx = ss(hull_w)
-    fy = ss(118) if not swept_forward else ss(104)
-    fwd = ss(14) if swept_forward else -ss(6)
+    tier = n // 4
+    k = n % 4
+    body_s = 0.56 + n * 0.023            # 机体尺寸 0.56 → 1.0
+    span = 30 + n * 2.4                  # 翼展 30 → 75
+    hw = 7 + n * 0.32                    # 机身宽度
+    wing_drop = 40 + (n % 4) * 6 + tier * 4
+    wing_y = 52 + tier * 2
+    engines = 1 + tier + (1 if k >= 2 else 0)
+    wing = min(tier, 5)
+    pods = n >= 4
+    barrels = n >= 8
+    armor = n >= 12
+    fy = ss(104 + tier * 6)
 
-    hull = [(cx, ss(8)), (cx - hull_dx, ss(56)), (cx - hull_dx - ss(2), fy + ss(14)),
-            (cx - ss(5), ss(132)), (cx + ss(5), ss(132)), (cx + hull_dx + ss(2), fy + ss(14)), (cx + hull_dx, ss(56))]
-    wing_l = [(cx - hull_dx + ss(2), ss(54)), (cx - wing_x, wing_y), (cx - wing_x + (fwd if swept_forward else 0), wing_y + ss(14)), (cx - hull_dx - ss(2), fy)]
-    tail_l = [(cx - hull_dx, fy), (cx - ss(26), ss(138)), (cx - ss(24), ss(144)), (cx - hull_dx + ss(6), ss(132))]
+    TOPS = [(200, 245, 255), (210, 250, 250), (220, 250, 235), (255, 230, 205), (255, 225, 235)]
+    BOTS = [(30, 140, 215), (20, 120, 190), (15, 125, 110), (200, 60, 40), (150, 60, 200)]
+    ACCS = [(90, 225, 255), (140, 255, 210), (110, 255, 180), (255, 190, 80), (255, 120, 120), (130, 140, 255), (255, 220, 110), (245, 245, 255)]
+    top = TOPS[tier]
+    bot = BOTS[tier]
+    accent = ACCS[n % len(ACCS)]
+    dark = tuple(int(v * 0.35) for v in bot)
+
+    hull = [(cx, ss(8)), (cx - ss(hw), ss(54)), (cx - ss(hw) - ss(2), fy + ss(12)),
+            (cx - ss(5), ss(132)), (cx + ss(5), ss(132)), (cx + ss(hw) + ss(2), fy + ss(12)), (cx + ss(hw), ss(54))]
+    wings = wing_polys(wing, cx, ss(hw), span, wing_y, wing_drop)
+    tail_l = [(cx - ss(hw), fy), (cx - ss(26), ss(140)), (cx - ss(24), ss(146)), (cx - ss(hw) + ss(6), ss(132))]
+    polys = [hull] + wings + [tail_l, mirror_pts(tail_l, cx)]
+    if pods:  # 翼尖挂舱
+        wy2 = wing_y + wing_drop
+        pod_l = [(cx - ss(span) - ss(2), wy2), (cx - ss(span) + ss(12), wy2), (cx - ss(span) + ss(14), wy2 + ss(30)), (cx - ss(span) - ss(4), wy2 + ss(30))]
+        polys += [pod_l, mirror_pts(pod_l, cx)]
+    if armor:  # 装甲带
+        polys.append([(cx - ss(hw) - ss(4), ss(70)), (cx + ss(hw) + ss(4), ss(70)), (cx + ss(hw) + ss(2), ss(84)), (cx - ss(hw) - ss(2), ss(84))])
 
     def fn(d):
-        for poly in [hull, wing_l, mirror_pts(wing_l, cx), tail_l, mirror_pts(tail_l, cx)]:
+        for poly in polys:
             d.polygon(poly, fill=255)
             for (x, y) in poly:
                 d.ellipse([x - ss(3), y - ss(3), x + ss(3), y + ss(3)], fill=255)
     m = mask_of(size, fn)
-
     img = Image.new("RGBA", size, (0, 0, 0, 0))
     add_glow(img, m, accent, ss(9), 0.55)
-    render(img, m, vgrad(size, body_top, body_bottom), rim=dark, rim_w=3)
+    render(img, m, vgrad(size, top, bot), rim=dark, rim_w=3)
 
-    if pods:  # 侧挂引擎舱
-        pod_l = mask_of(size, lambda d: d.rounded_rectangle([cx - wing_x - ss(4), wing_y + ss(2), cx - wing_x + ss(8), wing_y + ss(34)], radius=ss(5), fill=255))
-        pod_r = mask_of(size, lambda d: d.rounded_rectangle([cx + wing_x - ss(8), wing_y + ss(2), cx + wing_x + ss(4), wing_y + ss(34)], radius=ss(5), fill=255))
-        img.paste(Image.new("RGBA", size, dark + (255,)), (0, 0), pod_l)
-        img.paste(Image.new("RGBA", size, dark + (255,)), (0, 0), pod_r)
-        glow_discs(img, [(cx - wing_x, wing_y + ss(36), ss(5)), (cx + wing_x, wing_y + ss(36), ss(5))], accent, ss(4), 0.9)
-
-    # 座舱
     d = ImageDraw.Draw(img)
-    d.ellipse([cx - ss(5), ss(30), cx + ss(5), ss(62)], fill=(13, 22, 46, 255))
-    d.arc([cx - ss(5), ss(30), cx + ss(5), ss(62)], start=210, end=300, fill=accent + (255,), width=ss(1))
-    # 引擎喷口 + 尾焰光
-    d.rounded_rectangle([cx - ss(6), ss(124), cx + ss(6), ss(134)], radius=ss(2), fill=(10, 20, 40, 255))
-    glow_discs(img, [(cx, ss(136), ss(7))], accent, ss(5), 0.95)
+    # 座舱
+    d.ellipse([cx - ss(5), ss(30), cx + ss(5), ss(60)], fill=(13, 22, 46, 255))
+    d.arc([cx - ss(5), ss(30), cx + ss(5), ss(60)], start=210, end=300, fill=accent + (255,), width=ss(1))
+    # 引擎喷口（数量 1 → 5）
+    ne = engines
+    nozzles = []
+    for i in range(ne):
+        nx = cx + (i - (ne - 1) / 2.0) * ss(9)
+        nozzles.append(nx)
+        d.rounded_rectangle([nx - ss(3), ss(118), nx + ss(3), ss(130)], radius=ss(1), fill=(10, 20, 40, 255))
+    glow_discs(img, [(nx, ss(134), ss(6)) for nx in nozzles], accent, ss(5), 0.9)
     # 机翼装饰线
-    d.line([(cx - wing_x + ss(4), wing_y + ss(8)), (cx - hull_dx, ss(88))], fill=accent + (200,), width=ss(1))
-    d.line([(cx + wing_x - ss(4), wing_y + ss(8)), (cx + hull_dx, ss(88))], fill=accent + (200,), width=ss(1))
-    finish(img, f"player_form{idx + 1}.png", (160, 160))
+    d.line([(cx - ss(span), ss(wing_y + wing_drop)), (cx - ss(hw), ss(84))], fill=accent + (180,), width=ss(1))
+    d.line([(cx + ss(span), ss(wing_y + wing_drop)), (cx + ss(hw), ss(84))], fill=accent + (180,), width=ss(1))
+    if barrels:  # 翼尖炮管
+        d.rounded_rectangle([cx - ss(span) - ss(2), ss(wing_y + wing_drop), cx - ss(span) + ss(4), ss(wing_y + wing_drop + 22)], radius=ss(1), fill=(20, 30, 50, 255))
+        d.rounded_rectangle([cx + ss(span) - ss(4), ss(wing_y + wing_drop), cx + ss(span) + ss(2), ss(wing_y + wing_drop + 22)], radius=ss(1), fill=(20, 30, 50, 255))
+    if armor:  # 装甲棱线
+        d.line([(cx - ss(12), ss(66)), (cx - ss(12), ss(120))], fill=dark + (200,), width=ss(2))
+        d.line([(cx + ss(12), ss(66)), (cx + ss(12), ss(120))], fill=dark + (200,), width=ss(2))
+    finish(img, f"player_form{n + 1}.png", (160, 160))
 
 
 def gen_all_player_forms():
-    gen_plane_form(0, (200, 245, 255), (30, 140, 215), (90, 225, 255), (14, 44, 84), 46, 96, 9, False, False)   # 隼击 Falcon
-    gen_plane_form(1, (235, 248, 255), (40, 110, 200), (255, 170, 60), (18, 40, 70), 52, 100, 10, True, False)   # 先锋 Vanguard
-    gen_plane_form(2, (222, 250, 244), (16, 130, 120), (80, 255, 200), (8, 60, 56), 56, 92, 12, True, False)     # 堡垒 Bastion
-    gen_plane_form(3, (255, 240, 250), (150, 40, 190), (255, 215, 90), (50, 12, 60), 50, 94, 8, False, True)     # 新星 Nova
+    for n in range(20):
+        gen_form(n)
+
 
 
 # ---------- 敌机（朝 +X，配合 look_at 追踪） ----------
