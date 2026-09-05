@@ -370,13 +370,29 @@ def gen_enemy_plane(kind):
         body_top, body_bot, accent, dark = (255, 215, 140), (235, 115, 35), (255, 170, 70), (140, 58, 8)
         hull = [(c + ss(54), c), (c - ss(10), c - ss(11)), (c - ss(22), c), (c - ss(10), c + ss(11))]
         wing_l = [(c, c - ss(9)), (c - ss(38), c - ss(36)), (c - ss(44), c - ss(30)), (c - ss(12), c - ss(2))]
+    elif kind == "swift":
+        body_top, body_bot, accent, dark = (222, 255, 170), (110, 195, 40), (185, 255, 90), (40, 80, 10)
+        hull = [(c + ss(44), c), (c - ss(14), c - ss(9)), (c - ss(22), c), (c - ss(14), c + ss(9))]
+        wing_l = [(c - ss(2), c - ss(8)), (c - ss(30), c - ss(24)), (c - ss(34), c - ss(18)), (c - ss(8), c - ss(2))]
+    elif kind == "shooter":
+        body_top, body_bot, accent, dark = (195, 215, 240), (65, 90, 140), (140, 190, 255), (22, 38, 68)
+        hull = [(c + ss(40), c), (c + ss(20), c - ss(14)), (c - ss(16), c - ss(14)), (c - ss(24), c), (c - ss(16), c + ss(14)), (c + ss(20), c + ss(14))]
+        wing_l = [(c - ss(4), c - ss(12)), (c - ss(24), c - ss(30)), (c - ss(30), c - ss(24)), (c - ss(14), c - ss(4))]
+    elif kind == "shield":
+        body_top, body_bot, accent, dark = (232, 238, 248), (115, 125, 150), (205, 215, 235), (48, 54, 70)
+        hull = [(c + ss(44), c), (c + ss(16), c - ss(18)), (c - ss(20), c - ss(16)), (c - ss(26), c), (c - ss(20), c + ss(16)), (c + ss(16), c + ss(18))]
+        wing_l = [(c, c - ss(16)), (c - ss(26), c - ss(34)), (c - ss(32), c - ss(28)), (c - ss(10), c - ss(6))]
     else:
         body_top, body_bot, accent, dark = (205, 155, 255), (115, 48, 198), (165, 90, 255), (56, 16, 104)
         hull = [(c + ss(58), c), (c - ss(14), c - ss(18)), (c - ss(28), c), (c - ss(14), c + ss(18))]
         wing_l = [(c, c - ss(14)), (c - ss(52), c - ss(40)), (c - ss(58), c - ss(32)), (c - ss(16), c - ss(4))]
 
+    polys = [hull, wing_l, mirror_pts(wing_l, c)]
+    if kind == "shooter":  # 前伸炮管
+        polys.append([(c + ss(34), c - ss(3)), (c + ss(52), c - ss(3)), (c + ss(52), c + ss(3)), (c + ss(34), c + ss(3))])
+
     def fn(d):
-        for poly in [hull, wing_l, mirror_pts(wing_l, c)]:
+        for poly in polys:
             d.polygon(poly, fill=255)
             for (x, y) in poly:
                 d.ellipse([x - ss(3), y - ss(3), x + ss(3), y + ss(3)], fill=255)
@@ -391,7 +407,7 @@ def gen_enemy_plane(kind):
 
 
 def gen_all_enemy_planes():
-    for k in ("normal", "fast", "tank"):
+    for k in ("normal", "fast", "swift", "shooter", "shield", "tank"):
         gen_enemy_plane(k)
 
 
@@ -430,7 +446,7 @@ def gen_boss(kind):
         name = "boss2"
         canopy = (cx, ss(120), 12, 20)
         engines = [(cx - ss(30), ss(58), ss(6)), (cx + ss(30), ss(58), ss(6)), (cx - ss(110), ss(74), ss(4)), (cx + ss(110), ss(74), ss(4))]
-    else:  # 要塞：青绿巨型堡垒，螺旋弹幕
+    elif kind == 3:  # 要塞：青绿巨型堡垒，螺旋弹幕
         top, bot, accent, dark = (170, 255, 235), (16, 130, 115), (70, 255, 220), (6, 74, 66)
         base = [(cx - ss(132), ss(84)), (cx + ss(132), ss(84)), (cx + ss(112), ss(192)), (cx - ss(112), ss(192))]
         tower = [(cx - ss(42), ss(28)), (cx + ss(42), ss(28)), (cx + ss(54), ss(96)), (cx - ss(54), ss(96))]
@@ -445,6 +461,33 @@ def gen_boss(kind):
         name = "boss3"
         canopy = (cx, ss(60), 14, 20)
         engines = [(cx - ss(90), ss(82), ss(6)), (cx + ss(90), ss(82), ss(6)), (cx - ss(30), ss(26), ss(5)), (cx + ss(30), ss(26), ss(5))]
+    elif kind == 4:  # 猎手：金色双爪追猎舰，追踪弹
+        top, bot, accent, dark = (255, 232, 165), (200, 118, 20), (255, 195, 70), (95, 52, 5)
+        claw_l = [(cx - ss(92), ss(244)), (cx - ss(60), ss(118)), (cx - ss(34), ss(140)), (cx - ss(56), ss(248))]
+        center = [(cx, ss(56)), (cx + ss(56), ss(150)), (cx, ss(232)), (cx - ss(56), ss(150))]
+        wing_l = [(cx - ss(18), ss(102)), (cx - ss(126), ss(78)), (cx - ss(132), ss(96)), (cx - ss(30), ss(132))]
+
+        def fn(d):
+            for poly in [claw_l, mirror_pts(claw_l, cx), center, wing_l, mirror_pts(wing_l, cx)]:
+                d.polygon(poly, fill=255)
+                for (x, y) in poly:
+                    d.ellipse([x - ss(4), y - ss(4), x + ss(4), y + ss(4)], fill=255)
+        name = "boss4"
+        canopy = (cx, ss(116), 13, 20)
+        engines = [(cx - ss(28), ss(60), ss(6)), (cx + ss(28), ss(60), ss(6)), (cx - ss(108), ss(84), ss(4)), (cx + ss(108), ss(84), ss(4))]
+    else:  # 幻影：蓝白幽灵水晶舰，瞬移刺弹
+        top, bot, accent, dark = (225, 246, 255), (85, 135, 230), (150, 210, 255), (18, 44, 90)
+        body = [(cx, ss(48)), (cx + ss(72), ss(140)), (cx, ss(228)), (cx - ss(72), ss(140))]
+        wing_l = [(cx - ss(28), ss(118)), (cx - ss(112), ss(88)), (cx - ss(132), ss(126)), (cx - ss(48), ss(168))]
+
+        def fn(d):
+            for poly in [body, wing_l, mirror_pts(wing_l, cx)]:
+                d.polygon(poly, fill=255)
+                for (x, y) in poly:
+                    d.ellipse([x - ss(4), y - ss(4), x + ss(4), y + ss(4)], fill=255)
+        name = "boss5"
+        canopy = (cx, ss(120), 12, 18)
+        engines = [(cx - ss(26), ss(52), ss(6)), (cx + ss(26), ss(52), ss(6))]
 
     m = mask_of(size, fn)
     img = Image.new("RGBA", size, (0, 0, 0, 0))
@@ -456,6 +499,10 @@ def gen_boss(kind):
         for (tx, ty, r) in [(cx - ss(72), ss(140), ss(11)), (cx + ss(72), ss(140), ss(11)), (cx, ss(152), ss(13))]:
             d.ellipse([tx - r, ty - r, tx + r, ty + r], fill=dark + (255,))
             d.ellipse([tx - ss(4), ty - ss(4), tx + ss(4), ty + ss(4)], fill=accent + (255,))
+    # 幻影内部水晶棱面
+    if kind == 5:
+        inner = [(cx, ss(80)), (cx + ss(44), ss(140)), (cx, ss(200)), (cx - ss(44), ss(140))]
+        d.line(inner + [inner[0]], fill=(255, 255, 255, 110), width=ss(2))
     d.ellipse([canopy[0] - canopy[2], canopy[1] - canopy[3], canopy[0] + canopy[2], canopy[1] + canopy[3]], fill=(12, 18, 36, 255))
     d.arc([canopy[0] - canopy[2], canopy[1] - canopy[3], canopy[0] + canopy[2], canopy[1] + canopy[3]], start=30, end=150, fill=accent + (255,), width=ss(2))
     glow_discs(img, engines, accent, ss(6), 0.9)
@@ -463,8 +510,40 @@ def gen_boss(kind):
 
 
 def gen_all_bosses():
-    for k in (1, 2, 3):
+    for k in (1, 2, 3, 4, 5):
         gen_boss(k)
+
+
+# ---------- 触屏 UI 贴图 ----------
+
+def gen_touch_ui():
+    # 虚拟摇杆底座：半透明双环
+    size = (ss(128), ss(128))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse([ss(8), ss(8), ss(120), ss(120)], fill=(180, 220, 255, 70))
+    d.ellipse([ss(20), ss(20), ss(108), ss(108)], fill=(0, 0, 0, 0))
+    d.ellipse([ss(26), ss(26), ss(102), ss(102)], outline=(190, 230, 255, 170), width=ss(3))
+    finish(img, "joystick_base.png", (128, 128))
+
+    # 摇杆帽：实心圆 + 高光
+    size = (ss(96), ss(96))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    m = circle_mask(size, ss(48), ss(48), ss(40))
+    render(img, m, radial_fill(size, ss(40), ss(40), ss(46), (210, 240, 255), (60, 140, 220)), rim=(20, 60, 110, 255), rim_w=3)
+    d = ImageDraw.Draw(img)
+    d.ellipse([ss(28), ss(22), ss(56), ss(44)], fill=(255, 255, 255, 130))
+    finish(img, "joystick_thumb.png", (96, 96))
+
+    # 开火按钮：青色圆环 + 中心能量点
+    size = (ss(128), ss(128))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse([ss(10), ss(10), ss(118), ss(118)], fill=(90, 220, 255, 55))
+    d.ellipse([ss(20), ss(20), ss(108), ss(108)], fill=(0, 0, 0, 0))
+    d.ellipse([ss(24), ss(24), ss(104), ss(104)], outline=(120, 230, 255, 210), width=ss(4))
+    d.ellipse([ss(48), ss(48), ss(80), ss(80)], fill=(120, 230, 255, 200))
+    finish(img, "fire_button.png", (128, 128))
 
 
 # ---------- 核心装备 / 敌方子弹 / 滚动星空层 ----------
@@ -545,4 +624,5 @@ if __name__ == "__main__":
     gen_gem()
     gen_particles()
     gen_space_layers()
+    gen_touch_ui()
     print("全部素材已生成 ->", OUT)

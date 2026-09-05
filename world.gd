@@ -9,7 +9,9 @@ extends Node2D
 @export var boss_scene: PackedScene = preload("res://boss.tscn")
 
 const RING_TEX := preload("res://assets/ring.png")
+const SOFT_TEX := preload("res://assets/particle_soft.png")
 const SPARK_TEX := preload("res://assets/particle_spark.png")
+const BGM := preload("res://assets/sounds/bgm.wav")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
 
@@ -38,7 +40,7 @@ var pending_level_ups = 0  # 待选择的升级次数
 # 3. 波次与 Boss
 var kill_count = 0         # 累计击杀数
 var next_boss_at = 25      # 击杀数达到该值触发 Boss 战
-var boss_tier = 0          # 已出现的 Boss 次数（血量递增）
+var boss_tier = 0          # 已出现的 Boss 次数（血量伤害递增）
 var boss_active = false    # Boss 战进行中（停止刷小怪）
 var last_hurt_ms = -10000  # 受伤无敌帧计时
 
@@ -62,23 +64,45 @@ var last_hurt_ms = -10000  # 受伤无敌帧计时
 	$UI/LevelUpPanel/Box/Buttons/Btn2,
 ]
 
-# 升级强化池（在 _ready 里填充）
+# 升级强化池（12 张：基础 5 + 元素 4 + 弹道 3），每次升级随机抽 3 张
 var upgrade_pool = []
 var add_mat: CanvasItemMaterial
+var bgm_player: AudioStreamPlayer
 
 func _ready():
 	add_mat = CanvasItemMaterial.new()
 	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 
 	upgrade_pool = [
-		{"title": "射速强化", "desc": "射击间隔 -20%", "apply": _upgrade_fire_rate, "can": func(): return player.fire_cooldown > 0.07},
+		{"title": "射速强化", "desc": "射击间隔 -20%", "apply": _upgrade_fire_rate, "can": func(): return player.fire_cooldown > 0.06},
 		{"title": "威力强化", "desc": "子弹伤害 +1", "apply": _upgrade_damage, "can": func(): return true},
 		{"title": "多重弹道", "desc": "同时多射一发", "apply": _upgrade_multishot, "can": func(): return player.bullet_count < 7},
 		{"title": "疾跑强化", "desc": "移动速度 +12%", "apply": _upgrade_speed, "can": func(): return true},
 		{"title": "装甲强化", "desc": "生命上限 +2，回复 4 点", "apply": _upgrade_health, "can": func(): return true},
+		{"title": "火焰弹头", "desc": "火元素：命中溅射邻近敌机", "apply": _upgrade_fire_element, "can": func(): return player.element != "fire"},
+		{"title": "寒冰弹头", "desc": "冰元素：命中减速敌机", "apply": _upgrade_ice_element, "can": func(): return player.element != "ice"},
+		{"title": "雷电弹头", "desc": "雷元素：链式电击邻近目标", "apply": _upgrade_lightning_element, "can": func(): return player.element != "lightning"},
+		{"title": "疾风弹头", "desc": "风元素：弹速 +40% 并击退", "apply": _upgrade_wind_element, "can": func(): return player.element != "wind"},
+		{"title": "精准直射", "desc": "弹道平行集中，射速 +25%", "apply": _upgrade_stream, "can": func(): return player.pattern != "stream"},
+		{"title": "扩散弹幕", "desc": "扇形张开，弹道 +1", "apply": _upgrade_wide, "can": func(): return player.spacing_scale < 1.6 and player.pattern != "stream"},
+		{"title": "波浪弹道", "desc": "子弹蛇行，覆盖更广", "apply": _upgrade_wave, "can": func(): return player.pattern != "wave"},
 	]
 	for i in upgrade_buttons.size():
 		upgrade_buttons[i].pressed.connect(_on_upgrade_button_pressed.bind(i))
+
+	# 手机摇杆输入接入玩家
+	$TouchUI.moved.connect(func(d): player.touch_move = d)
+
+	# 背景音乐：无缝循环
+	bgm_player = AudioStreamPlayer.new()
+	var bgm_stream: AudioStreamWAV = BGM
+	bgm_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	bgm_stream.loop_begin = 0
+	bgm_stream.loop_end = bgm_stream.data.size() / 2
+	bgm_player.stream = bgm_stream
+	bgm_player.volume_db = -13.0
+	add_child(bgm_player)
+	bgm_player.play()
 
 	update_ui()
 	game_over_panel.hide()
@@ -99,19 +123,25 @@ func play_sfx(name: String, volume_db := 0.0, pitch_jitter := 0.05):
 
 func _on_timer_timeout():
 	var enemy = enemy_scene.instantiate()
-	# 抢滩登陆：敌人从屏幕上方随机位置出现
+	# 抢滩登陆：敌机从屏幕上方随机位置出现
 	enemy.position = Vector2(randf_range(0, 1152), -80)
 	enemy.setup(pick_enemy_type())
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
 
 func pick_enemy_type() -> String:
-	# 分数越高，强力敌人出现得越频繁
+	# 分数越高，新兵种与强力兵种陆续登场
 	var roll = randf()
-	if score >= 150 and roll < 0.15:
+	if score >= 150 and roll < 0.12:
 		return "tank"
-	if score >= 50 and roll < 0.45:
+	if score >= 100 and roll < 0.24:
+		return "shield"
+	if score >= 60 and roll < 0.40:
+		return "shooter"
+	if score >= 40 and roll < 0.58:
 		return "fast"
+	if score >= 20 and roll < 0.76:
+		return "swift"
 	return "normal"
 
 # --- 击杀与经验 ---
@@ -125,10 +155,10 @@ func _on_enemy_died(pos, value, fx_color):
 	play_sfx("explode", -8.0, 0.12)
 	camera.add_shake(6.0 if value >= 30 else 2.5)
 
-	# 敌机死亡处掉落经验水晶（坦克怪更值钱）
+	# 敌机死亡处掉落经验水晶（重型机更值钱）
 	var gem = gem_scene.instantiate()
 	gem.position = pos
-	gem.xp_value = 3 if value >= 30 else 1
+	gem.xp_value = 3 if value >= 30 else (2 if value >= 20 else 1)
 	add_child(gem)
 
 	update_ui()
@@ -177,7 +207,7 @@ func _start_boss():
 func _spawn_boss():
 	boss_tier += 1
 	var boss = boss_scene.instantiate()
-	var id = ((boss_tier - 1) % 3) + 1
+	var id = ((boss_tier - 1) % 5) + 1
 	boss.setup(id, boss_tier)
 	boss.died.connect(_on_boss_died)
 	boss.hp_changed.connect(_on_boss_hp)
@@ -198,7 +228,8 @@ func _on_boss_hp(hp, max_hp):
 
 func _on_boss_died(pos):
 	boss_active = false
-	next_boss_at = kill_count + 30 + boss_tier * 5
+	# 波次间隔：越来越久才遇到下一个 Boss
+	next_boss_at = kill_count + 50 + boss_tier * 10
 	boss_name_label.hide()
 	boss_bar.hide()
 
@@ -209,7 +240,7 @@ func _on_boss_died(pos):
 	for i in 3:
 		spawn_ring(pos + Vector2(randf_range(-60, 60), randf_range(-40, 40)), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
 
-	# 掉落核心装备：接住后飞机变形
+	# 掉落核心装备：接住后战机渐进变形
 	var core = core_scene.instantiate()
 	core.position = pos
 	core.form_target = mini(player.form + 1, 3)
@@ -218,24 +249,77 @@ func _on_boss_died(pos):
 	update_ui()
 	$Timer.start()  # 恢复刷小怪
 
-func spawn_enemy_bullet(pos, dir, speed):
+func spawn_enemy_bullet(pos, dir, speed, damage := 1, homing := 0.0, homing_time := 0.0):
 	var b = enemy_bullet_scene.instantiate()
 	b.position = pos
 	b.dir = dir
 	b.speed = speed
+	b.damage = damage
+	b.homing = homing
+	b.homing_time = homing_time
 	add_child(b)
 
-# --- 核心装备：拾取变形 ---
+func spawn_lightning(from: Vector2, to: Vector2):
+	# 雷电链电弧：中间抖动的电光线
+	var line = Line2D.new()
+	line.default_color = Color(0.8, 0.7, 1)
+	line.width = 3.0
+	line.material = add_mat
+	var mid = (from + to) / 2.0 + Vector2(randf_range(-14, 14), randf_range(-14, 14))
+	line.points = PackedVector2Array([from, mid, to])
+	add_child(line)
+	var tw = line.create_tween()
+	tw.tween_property(line, "modulate:a", 0.0, 0.12)
+	tw.tween_callback(line.queue_free)
+
+# --- 核心装备：渐进变形演出 ---
 
 func apply_core(form):
 	play_sfx("transform")
-	flash_ui(CYAN, 0.4)
-	spawn_ring(player.position, CYAN, 0.3, 2.8, 0.55)
-	confetti_burst(player.position, 26, CYAN)
-	camera.add_shake(8.0)
+	get_tree().paused = true
+	flash_ui(CYAN, 0.5)
+	camera.add_shake(10.0)
+	confetti_burst(player.position, 30, CYAN)
+	var upgraded = form > player.form  # 演出会先改 form，提前记录是否为新形态
 
-	if form > player.form:
-		player.set_form(form)
+	# 渐进变形：旧形态收缩白化 → 光柱冲天 → 新形态弹性放大 → 回落
+	var tw = create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(player, "scale", Vector2.ONE * 0.1, 0.28).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_property(player, "modulate", Color(8, 8, 10), 0.28)
+	tw.tween_callback(func(): player.set_form(form))
+	tw.tween_callback(_spawn_evolution_beam)
+	tw.tween_property(player, "modulate", Color(1, 1, 1), 0.22)
+	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.45, 0.42).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.22).set_trans(Tween.TRANS_SINE)
+	tw.tween_callback(func():
+		_apply_form_bonus(form, upgraded)
+		update_ui()
+		get_tree().paused = false
+	)
+	# 演出期间连环冲击波
+	for i in 4:
+		get_tree().create_timer(0.25 + i * 0.16, true).timeout.connect(func():
+			if is_instance_valid(player):
+				spawn_ring(player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.4 + i * 0.6, 0.5))
+
+func _spawn_evolution_beam():
+	# 冲天光柱
+	var beam = Sprite2D.new()
+	beam.texture = SOFT_TEX
+	beam.material = add_mat
+	beam.position = player.position
+	beam.scale = Vector2(0.45, 3.2)
+	beam.modulate = Color(0.7, 0.95, 1, 0.9)
+	add_child(beam)
+	var tw = beam.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(beam, "scale", Vector2(1.1, 4.5), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(beam, "modulate:a", 0.0, 0.5)
+	tw.chain().tween_callback(beam.queue_free)
+
+func _apply_form_bonus(form, upgraded: bool):
+	if upgraded:
 		match form:
 			1:
 				player.bullet_count += 1                      # 先锋：多一发弹道
@@ -252,9 +336,8 @@ func apply_core(form):
 		player.damage += 2
 		health = max_health
 		player.fire_cooldown = maxf(0.04, player.fire_cooldown * 0.9)
-	update_ui()
 
-# --- 升级三选一 ---
+# --- 升级三选一（12 张卡池随机抽 3） ---
 
 func show_level_up():
 	get_tree().paused = true
@@ -311,9 +394,34 @@ func _upgrade_health():
 	health = min(health + 4, max_health)
 	update_ui()
 
+func _upgrade_fire_element():
+	player.element = "fire"
+	player.damage += 1
+
+func _upgrade_ice_element():
+	player.element = "ice"
+
+func _upgrade_lightning_element():
+	player.element = "lightning"
+
+func _upgrade_wind_element():
+	player.element = "wind"
+
+func _upgrade_stream():
+	player.pattern = "stream"
+	player.fire_cooldown *= 0.75
+
+func _upgrade_wide():
+	player.spacing_scale = 1.6
+	player.bullet_count = mini(player.bullet_count + 1, 7)
+
+func _upgrade_wave():
+	player.pattern = "wave"
+
 # --- 特效工具函数 ---
 
 func spawn_ring(pos: Vector2, color: Color, from_scale: float, to_scale: float, dur: float):
+	# 扩散冲击波圆环：放大 + 淡出后自毁
 	var ring := Sprite2D.new()
 	ring.texture = RING_TEX
 	ring.material = add_mat
@@ -363,8 +471,8 @@ func flash_ui(color: Color, peak: float):
 func pulse_player():
 	var tw := create_tween()
 	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tw.tween_property(player, "scale", Vector2(1.3, 1.3), 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(player, "scale", Vector2.ONE, 0.3)
+	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.3, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.3)
 
 # --- 受伤与结算 ---
 
@@ -408,7 +516,7 @@ func game_over():
 	play_sfx("gameover")
 	get_tree().paused = true
 
-# --- 结算栏按钮 ---
+# --- 结算栏按钮的功能代码 ---
 
 func _on_restart_button_pressed():
 	get_tree().paused = false

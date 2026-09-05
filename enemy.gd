@@ -3,57 +3,88 @@ extends CharacterBody2D
 # 被击杀时发出信号：位置 + 积分 + 特效颜色（world 用它来加分、震屏和掉落经验）
 signal died(pos: Vector2, value: int, fx_color: Color)
 
-# 三种敌人的贴图（gen_assets.py 生成的统一风格素材）
-const TEX_NORMAL := preload("res://assets/enemy_normal.png")
-const TEX_FAST := preload("res://assets/enemy_fast.png")
-const TEX_TANK := preload("res://assets/enemy_tank.png")
+# 六种敌机贴图与数值表（模型整体缩小了一号）
+const TEX := {
+	"normal": preload("res://assets/enemy_normal.png"),
+	"fast": preload("res://assets/enemy_fast.png"),
+	"swift": preload("res://assets/enemy_swift.png"),
+	"shooter": preload("res://assets/enemy_shooter.png"),
+	"shield": preload("res://assets/enemy_shield.png"),
+	"tank": preload("res://assets/enemy_tank.png"),
+}
+const COLORS := {
+	"normal": Color(1, 0.3, 0.4),
+	"fast": Color(1, 0.62, 0.25),
+	"swift": Color(0.72, 1, 0.35),
+	"shooter": Color(0.55, 0.75, 1),
+	"shield": Color(0.85, 0.88, 0.95),
+	"tank": Color(0.72, 0.4, 1),
+}
+const STATS := {
+	"normal": {"speed": 150, "hp": 3, "score": 10, "damage": 1, "scale": 0.8},
+	"fast": {"speed": 260, "hp": 1, "score": 5, "damage": 1, "scale": 0.75},
+	"swift": {"speed": 300, "hp": 1, "score": 8, "damage": 1, "scale": 0.7},
+	"shooter": {"speed": 110, "hp": 4, "score": 15, "damage": 1, "scale": 0.75},
+	"shield": {"speed": 80, "hp": 8, "score": 25, "damage": 2, "scale": 0.9},
+	"tank": {"speed": 80, "hp": 12, "score": 40, "damage": 3, "scale": 1.0},
+}
 
+var kind = "normal"
 var speed = 150
 var health = 3
-var score_value = 10   # 击杀奖励积分
-var damage = 1         # 撞到玩家造成的伤害
-var dead = false       # 防止死亡逻辑重复触发
-var fx_color = Color(1, 0.3, 0.4)  # 爆炸/冲击波颜色（随敌人种类变化）
+var score_value = 10
+var damage = 1
+var dead = false
+var fx_color = Color(1, 0.3, 0.4)
+var slow_timer = 0.0   # 冰元素减速剩余时间
+var sway_t = 0.0       # 蛇形走位计时
+var fire_cd = 0.0      # 炮手机开火冷却
 
 # 自动寻找玩家（玩家在 player 分组里）
 @onready var player = get_tree().get_first_node_in_group("player")
 
-# 由 world.gd 生成敌人时调用，type 为 "normal" / "fast" / "tank"
+# 由 world.gd 生成敌机时调用
 func setup(type: String):
-	match type:
-		"fast":
-			speed = 260
-			health = 1
-			score_value = 5
-			damage = 1
-			scale = Vector2(0.95, 0.95)
-			$Sprite2D.texture = TEX_FAST
-			fx_color = Color(1, 0.62, 0.25)   # 橙色：小而快
-		"tank":
-			speed = 80
-			health = 12
-			score_value = 40
-			damage = 3
-			scale = Vector2(1.25, 1.25)
-			$Sprite2D.texture = TEX_TANK
-			fx_color = Color(0.72, 0.4, 1)    # 紫色：大而硬
-		_:
-			$Sprite2D.texture = TEX_NORMAL
-			fx_color = Color(1, 0.3, 0.4)     # 红色：普通怪
+	kind = type
+	var st: Dictionary = STATS[type]
+	speed = st["speed"]
+	health = st["hp"]
+	score_value = st["score"]
+	damage = st["damage"]
+	scale = Vector2.ONE * st["scale"]
+	$Sprite2D.texture = TEX[type]
+	fx_color = COLORS[type]
 	$ExplosionParticles.color = fx_color
 	$Sparks.color = Color(1, 0.92, 0.75)
+	if type == "shooter":
+		fire_cd = randf_range(1.0, 2.2)
 
-func _physics_process(_delta):
+func _physics_process(delta):
 	if dead:
 		return
+	slow_timer = maxf(0.0, slow_timer - delta)
 	if player:
 		# 1. 追踪逻辑
 		look_at(player.global_position)
 		var direction = global_position.direction_to(player.global_position)
-		velocity = direction * speed
+		var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
+		velocity = direction * cur_speed
+		if kind == "swift":
+			# 蛇形走位：垂直于航向叠加正弦摆动
+			sway_t += delta * 6.0
+			velocity += transform.y * sin(sway_t) * 90.0
 		move_and_slide()
 
-		# 2. 碰撞玩家逻辑
+		# 2. 炮手机：周期性朝玩家开火
+		if kind == "shooter":
+			fire_cd -= delta
+			if fire_cd <= 0.0:
+				fire_cd = randf_range(2.0, 2.8)
+				var world = get_tree().current_scene
+				if world.has_method("spawn_enemy_bullet"):
+					world.spawn_enemy_bullet(global_position + direction * 30.0, direction, 210.0)
+
+		# 3. 碰撞玩家逻辑
 		for i in get_slide_collision_count():
 			var target = get_slide_collision(i).get_collider()
 			if target and target.is_in_group("player"):
@@ -62,6 +93,14 @@ func _physics_process(_delta):
 					get_tree().current_scene.take_damage(damage)
 				queue_free()
 				return
+
+# --- 冰元素：减速 ---
+func slow_down(t: float):
+	slow_timer = maxf(slow_timer, t)
+
+# --- 风元素：击退 ---
+func knockback(v: Vector2):
+	global_position += v
 
 # --- 被子弹打中时调用的函数 ---
 func take_damage(amount):

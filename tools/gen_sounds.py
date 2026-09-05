@@ -106,5 +106,42 @@ def main():
     save("gameover", mix(sweep(420, 95, 0.9, a=0.01, r=1.2), gain(sweep(210, 48, 0.9, a=0.01, r=1.2), 0.6)), 0.7)
 
 
+def bgm():
+    """A 小调 128BPM 背景音乐：贝斯 + 和弦垫 + 琶音 + 鼓点，8 小节无缝循环"""
+    bpm = 128.0
+    beat = 60.0 / bpm
+    bars = 8
+    total = seconds(beat * 4 * bars)
+    out = [0.0] * total
+    chords = [(220.0, 261.63, 329.63), (174.61, 220.0, 261.63), (130.81, 164.81, 196.0), (196.0, 246.94, 293.66)]  # Am F C G
+    roots = [110.0, 87.31, 65.41, 98.0]
+
+    def add_note(start_s, dur, f, vol, wave_fn=math.sin, r=0.8):
+        n = seconds(dur)
+        s0 = seconds(start_s)
+        for i in range(min(n, total - s0)):
+            ph = 2 * math.pi * f * i / SR
+            out[s0 + i] += wave_fn(ph) * vol * env(i, n, 0.02, r)
+
+    for bar in range(bars):
+        ch = bar % 4
+        bar_start = bar * beat * 4
+        for b in range(4):  # 贝斯：每拍根音
+            add_note(bar_start + b * beat, beat * 0.9, roots[ch], 0.30, square, 0.5)
+        for f in chords[ch]:  # 和弦垫
+            add_note(bar_start, beat * 4, f, 0.06, math.sin, 1.2)
+        seq = chords[ch] + (chords[ch][1],)
+        for s16 in range(16):  # 十六分琶音
+            add_note(bar_start + s16 * beat / 4, beat / 4 * 0.85, seq[s16 % 4] * 2, 0.05, math.sin, 0.6)
+        n_h = seconds(beat * 0.15)  # 八分 hi-hat
+        for h8 in range(8):
+            s0 = seconds(bar_start + h8 * beat * 0.5)
+            for i in range(n_h):
+                if s0 + i < total:
+                    out[s0 + i] += random.uniform(-1, 1) * 0.05 * env(i, n_h, 0.001, 3.0)
+    save("bgm", out, 0.55)
+
+
 if __name__ == "__main__":
     main()
+    bgm()

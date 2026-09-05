@@ -9,6 +9,13 @@
 [ext_resource type="Texture2D" path="res://assets/stars_near.png" id="7_near"]
 [ext_resource type="Script" path="res://camera.gd" id="8_cam"]
 [ext_resource type="Script" path="res://panel_fx.gd" id="9_pfx"]
+[ext_resource type="Script" path="res://touch_ui.gd" id="10_tui"]
+[ext_resource type="Texture2D" path="res://assets/joystick_base.png" id="11_jb"]
+[ext_resource type="Texture2D" path="res://assets/joystick_thumb.png" id="12_jt"]
+[ext_resource type="Texture2D" path="res://assets/fire_button.png" id="13_fb"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_fire"]
+radius = 92.0
 
 [sub_resource type="StyleBoxFlat" id="sb_bar_bg"]
 bg_color = Color(0.07, 0.09, 0.18, 0.85)
@@ -143,6 +150,24 @@ position = Vector2(557, 600)
 [node name="Timer" type="Timer" parent="." unique_id=1903243666]
 wait_time = 0.9
 autostart = true
+
+[node name="TouchUI" type="CanvasLayer" parent="."]
+visible = false
+script = ExtResource("10_tui")
+
+[node name="JoystickBase" type="Sprite2D" parent="TouchUI"]
+visible = false
+texture = ExtResource("11_jb")
+
+[node name="JoystickThumb" type="Sprite2D" parent="TouchUI"]
+visible = false
+texture = ExtResource("12_jt")
+
+[node name="FireButton" type="TouchScreenButton" parent="TouchUI"]
+position = Vector2(980, 470)
+texture_normal = ExtResource("13_fb")
+shape = SubResource("CircleShape2D_fire")
+action = "shoot"
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=305512950]
 

@@ -31,6 +31,10 @@ shoot={
 
 3d/physics_engine="Jolt Physics"
 
+[input_devices]
+
+pointing/emulate_mouse_from_touch=false
+
 [display]
 
 window/stretch/mode="canvas_items"
