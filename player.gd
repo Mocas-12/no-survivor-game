@@ -80,12 +80,12 @@ func _build_beam():
 	beam.visible = false
 	beam_glow = Line2D.new()
 	beam_glow.points = PackedVector2Array([Vector2.ZERO, Vector2(0, -1200)])
-	beam_glow.width = 26.0
+	beam_glow.width = 44.0
 	beam_glow.default_color = Color(0.6, 0.9, 1, 0.3)
 	beam_glow.material = add
 	beam_core = Line2D.new()
 	beam_core.points = PackedVector2Array([Vector2.ZERO, Vector2(0, -1200)])
-	beam_core.width = 5.0
+	beam_core.width = 10.0
 	beam_core.default_color = Color(1, 1, 1, 0.95)
 	beam_core.material = add
 	beam.add_child(beam_glow)
@@ -120,10 +120,12 @@ func _physics_process(delta):
 # --- 激光射线（贯穿：对走廊内所有目标持续造成伤害） ---
 func _fire_beam(delta):
 	beam.visible = true
-	# 激光颜色随元素变化 + 呼吸脉动
+	# 激光颜色随元素变化 + 呼吸脉动；宽度补偿主角缩放，保持屏幕宽度恒定
 	var ec: Color = ELEMENT_COLORS[element]
 	beam_glow.default_color = Color(ec.r, ec.g, ec.b, 0.4)
 	beam_core.default_color = Color(1.0, 1.0, 1.0, 0.95)
+	beam_glow.width = 44.0 / player.scale.x
+	beam_core.width = 10.0 / player.scale.x
 	beam.modulate.a = 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.02)
 	beam_cd -= delta
 	beam_spark_t -= delta
@@ -136,7 +138,7 @@ func _fire_beam(delta):
 		for m in get_tree().get_nodes_in_group("mobs"):
 			if m.dead:
 				continue
-			if origin_y - m.global_position.y > 0.0 and absf(m.global_position.x - origin_x) <= 18.0:
+			if origin_y - m.global_position.y > 0.0 and absf(m.global_position.x - origin_x) <= 24.0:
 				var amt = damage * 0.4
 				if m.has_method("take_damage_silent"):
 					m.take_damage_silent(amt)
