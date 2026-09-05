@@ -103,7 +103,7 @@ Each level-up pauses the game and deals **3 random cards out of a 12-card pool**
 | 🔵 Ice warhead | hits slow enemies by 45% for 1.6s |
 | 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
 | 🟢 Wind warhead | bullet speed +40%, hits knock back |
-| 🎯 Precision stream | parallel concentrated guns, fire rate +25% |
+| 🎯 Precision laser | continuous piercing beam that burns everything in its line |
 | 🌠 Wide barrage | wider fan, +1 bullet |
 | 〰️ Wave path | bullets snake sideways for wider coverage |
 

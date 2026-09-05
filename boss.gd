@@ -205,6 +205,24 @@ func take_damage(amount):
 	if hp <= 0:
 		_die()
 
+# --- 激光持续伤害：更新血条但不触发闪白 ---
+func take_damage_silent(amount):
+	if dead:
+		return
+	hp = maxf(hp - amount, 0.0)
+	hp_changed.emit(hp, max_hp)
+	if not enraged and hp <= max_hp * 0.5:
+		enraged = true
+		var world = get_tree().current_scene
+		if world.has_method("spawn_ring"):
+			world.spawn_ring(global_position, Color(1, 0.3, 0.2), 0.4, 3.0, 0.6)
+		if world.has_method("flash_ui"):
+			world.flash_ui(Color(1, 0.3, 0.2), 0.25)
+		if world.has_method("play_sfx"):
+			world.play_sfx("warning", -4.0, 0.2)
+	if hp <= 0:
+		_die()
+
 func _die():
 	if dead:
 		return

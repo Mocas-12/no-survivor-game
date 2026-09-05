@@ -102,6 +102,14 @@ func slow_down(t: float):
 func knockback(v: Vector2):
 	global_position += v
 
+# --- 激光持续伤害：不触发闪白（避免每帧刷屏） ---
+func take_damage_silent(amount):
+	if dead:
+		return
+	health -= amount
+	if health <= 0:
+		die()
+
 # --- 被子弹打中时调用的函数 ---
 func take_damage(amount):
 	if dead:

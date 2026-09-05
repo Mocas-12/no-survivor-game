@@ -37,13 +37,60 @@ var touch_move = Vector2.ZERO      # 手机虚拟摇杆输入
 var base_scale = 0.60              # 机体基准尺寸：随形态等级成长（0.60 → 1.0）
 
 var bullet_scene = preload("res://bullet.tscn")
+const BulletScript := preload("res://bullet.gd")
+const LASER_LOOP := preload("res://assets/sounds/laser.wav")
 var fire_timer = 0.0
 var use_touch = false   # 触屏设备：摇杆专属移动，不回退到鼠标跟随
+var beam: Node2D = null           # 激光束节点（精准直射模式）
+var beam_glow: Line2D = null
+var beam_core: Line2D = null
+var beam_audio: AudioStreamPlayer = null
+var beam_cd = 0.0                 # 激光伤害节拍（10Hz）
+var beam_spark_t = 0.0            # 激光命中火花节拍
+
+const ELEMENT_COLORS := {
+	"normal": Color(1, 1, 1),
+	"fire": Color(1, 0.62, 0.35),
+	"ice": Color(0.6, 0.9, 1),
+	"lightning": Color(0.78, 0.62, 1),
+	"wind": Color(0.62, 1, 0.62),
+}
 
 func _ready():
 	use_touch = DisplayServer.is_touchscreen_available()
 	_update_base_scale()
 	scale = Vector2.ONE * base_scale
+	_build_beam()
+	# 激光循环音
+	beam_audio = AudioStreamPlayer.new()
+	var laser_stream: AudioStreamWAV = LASER_LOOP
+	laser_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	laser_stream.loop_begin = 0
+	laser_stream.loop_end = laser_stream.data.size() / 2
+	beam_audio.stream = laser_stream
+	beam_audio.volume_db = -16.0
+	add_child(beam_audio)
+
+func _build_beam():
+	# 激光束：双层加法发光线（外层辉光 + 内层白芯）
+	var add = CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	beam = Node2D.new()
+	beam.position = Vector2(0, -44)
+	beam.visible = false
+	beam_glow = Line2D.new()
+	beam_glow.points = PackedVector2Array([Vector2.ZERO, Vector2(0, -1200)])
+	beam_glow.width = 26.0
+	beam_glow.default_color = Color(0.6, 0.9, 1, 0.3)
+	beam_glow.material = add
+	beam_core = Line2D.new()
+	beam_core.points = PackedVector2Array([Vector2.ZERO, Vector2(0, -1200)])
+	beam_core.width = 5.0
+	beam_core.default_color = Color(1, 1, 1, 0.95)
+	beam_core.material = add
+	beam.add_child(beam_glow)
+	beam.add_child(beam_core)
+	add_child(beam)
 
 func _physics_process(delta):
 	# 移动：触屏设备由摇杆驱动（无输入时悬停）；桌面端平滑跟随鼠标
@@ -54,11 +101,54 @@ func _physics_process(delta):
 	var screen = get_viewport_rect().size
 	global_position = global_position.clamp(Vector2(26, 26), screen - Vector2(26, 26))
 
-	# 按住射击（鼠标左键或右侧开火按钮）
-	fire_timer -= delta
-	if Input.is_action_pressed("shoot") and fire_timer <= 0:
-		shoot()
-		fire_timer = fire_cooldown
+	# 攻击：精准直射为持续激光，其他模式为间隔连射
+	var firing = Input.is_action_pressed("shoot")
+	if firing and pattern == "stream":
+		_fire_beam(delta)
+		if not beam_audio.playing:
+			beam_audio.play()
+	else:
+		if beam.visible:
+			beam.visible = false
+		if beam_audio.playing:
+			beam_audio.stop()
+		fire_timer -= delta
+		if firing and fire_timer <= 0:
+			shoot()
+			fire_timer = fire_cooldown
+
+# --- 激光射线（贯穿：对走廊内所有目标持续造成伤害） ---
+func _fire_beam(delta):
+	beam.visible = true
+	# 激光颜色随元素变化 + 呼吸脉动
+	var ec: Color = ELEMENT_COLORS[element]
+	beam_glow.default_color = Color(ec.r, ec.g, ec.b, 0.4)
+	beam_core.default_color = Color(1.0, 1.0, 1.0, 0.95)
+	beam.modulate.a = 0.85 + 0.15 * sin(Time.get_ticks_msec() * 0.02)
+	beam_cd -= delta
+	beam_spark_t -= delta
+	var world = get_tree().current_scene
+	if beam_cd <= 0.0:
+		beam_cd = 0.1
+		var origin_x = global_position.x
+		var origin_y = global_position.y - 44.0
+		var hit_any = false
+		for m in get_tree().get_nodes_in_group("mobs"):
+			if m.dead:
+				continue
+			if origin_y - m.global_position.y > 0.0 and absf(m.global_position.x - origin_x) <= 18.0:
+				var amt = damage * 0.4
+				if m.has_method("take_damage_silent"):
+					m.take_damage_silent(amt)
+				elif m.has_method("take_damage"):
+					m.take_damage(amt)
+				if element == "ice" and m.has_method("slow_down"):
+					m.slow_down(0.2)
+				hit_any = true
+				if beam_spark_t <= 0.0 and world.has_method("spawn_hit_spark"):
+					world.spawn_hit_spark(m.global_position)
+		if hit_any:
+			beam_spark_t = 0.18
 
 func shoot():
 	var speed_mul = 1.4 if element == "wind" else 1.0
