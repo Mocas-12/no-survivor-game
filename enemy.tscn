@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://bh71vxorol5ad"]
+
+[ext_resource type="Script" uid="uid://bc30y6qoomymu" path="res://enemy.gd" id="1_7k104"]
+[ext_resource type="Texture2D" path="res://assets/particle_soft.png" id="2_soft"]
+[ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="3_spark"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_e"]
+radius = 22.0
+
+[node name="Enemy" type="CharacterBody2D" unique_id=405132097 groups=["mobs"]]
+script = ExtResource("1_7k104")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="ExplosionParticles" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 22
+lifetime = 0.5
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 130.0
+initial_velocity_max = 320.0
+scale_amount_min = 0.25
+scale_amount_max = 0.6
+texture = ExtResource("2_soft")
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 12
+lifetime = 0.3
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 240.0
+initial_velocity_max = 420.0
+scale_amount_min = 0.3
+scale_amount_max = 0.6
+texture = ExtResource("3_spark")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_e")

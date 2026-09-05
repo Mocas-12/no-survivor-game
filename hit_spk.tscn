@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hit_spk.gd" id="1_hs"]
+[ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="2_tex"]
+
+[node name="HitSpark" type="CPUParticles2D"]
+emitting = false
+amount = 8
+lifetime = 0.22
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 120.0
+initial_velocity_max = 260.0
+scale_amount_min = 0.3
+scale_amount_max = 0.55
+texture = ExtResource("2_tex")
+script = ExtResource("1_hs")

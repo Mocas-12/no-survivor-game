@@ -1,0 +1,283 @@
+[gd_scene format=3 uid="uid://ccx7tcudnlaiy"]
+
+[ext_resource type="PackedScene" uid="uid://bjorh24wlg2gc" path="res://player.tscn" id="1_fj7yv"]
+[ext_resource type="Script" uid="uid://bfg1yeodd41of" path="res://world.gd" id="1_tlwt5"]
+[ext_resource type="Texture2D" path="res://assets/starfield.png" id="3_bg"]
+[ext_resource type="Script" path="res://camera.gd" id="4_cam"]
+[ext_resource type="Script" path="res://panel_fx.gd" id="5_pfx"]
+
+[sub_resource type="StyleBoxFlat" id="sb_bar_bg"]
+bg_color = Color(0.07, 0.09, 0.18, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_hp_fill"]
+bg_color = Color(0.92, 0.28, 0.33, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_xp_fill"]
+bg_color = Color(0.3, 0.8, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_n"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.95, 0.97, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.16, 0.22, 0.42, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_h"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(1, 0.88, 0.52, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.45, 0.3, 0.05, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="sb_btn_p"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.78, 0.84, 0.95, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.16, 0.22, 0.42, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="Theme" id="Theme_ui"]
+Button/colors/font_color = Color(0.1, 0.12, 0.24, 1)
+Button/colors/font_focus_color = Color(0.1, 0.12, 0.24, 1)
+Button/colors/font_hover_color = Color(0.24, 0.15, 0.02, 1)
+Button/colors/font_pressed_color = Color(0.1, 0.12, 0.24, 1)
+Button/font_sizes/font_size = 20
+Button/styles/hover = SubResource("sb_btn_h")
+Button/styles/normal = SubResource("sb_btn_n")
+Button/styles/pressed = SubResource("sb_btn_p")
+
+[node name="World" type="Node2D" unique_id=1247086468]
+script = ExtResource("1_tlwt5")
+
+[node name="Background" type="Sprite2D" parent="."]
+texture = ExtResource("3_bg")
+centered = false
+
+[node name="Camera" type="Camera2D" parent="."]
+process_mode = 3
+position = Vector2(576, 324)
+script = ExtResource("4_cam")
+
+[node name="Player" parent="." unique_id=351119110 instance=ExtResource("1_fj7yv")]
+position = Vector2(557, 600)
+
+[node name="Timer" type="Timer" parent="." unique_id=1903243666]
+wait_time = 0.9
+autostart = true
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=305512950]
+
+[node name="ScoreLabel" type="Label" parent="UI" unique_id=962958952]
+offset_left = 18.0
+offset_top = 12.0
+offset_right = 300.0
+offset_bottom = 48.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 26
+text = "积分: 0"
+
+[node name="LevelLabel" type="Label" parent="UI"]
+offset_left = 18.0
+offset_top = 46.0
+offset_right = 300.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 18
+text = "等级 1"
+
+[node name="XpBar" type="ProgressBar" parent="UI"]
+offset_left = 350.0
+offset_top = 16.0
+offset_right = 800.0
+offset_bottom = 34.0
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_xp_fill")
+max_value = 5.0
+show_percentage = false
+
+[node name="HealthBar" type="ProgressBar" parent="UI" unique_id=2693795]
+offset_left = 1000.0
+offset_top = 16.0
+offset_right = 1134.0
+offset_bottom = 40.0
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_hp_fill")
+max_value = 10.0
+value = 10.0
+show_percentage = false
+
+[node name="LevelUpFlash" type="ColorRect" parent="UI"]
+offset_right = 1151.0
+offset_bottom = 642.0
+color = Color(1, 0.85, 0.4, 0)
+mouse_filter = 2
+
+[node name="GameOverPanel" type="ColorRect" parent="UI" unique_id=1858673827]
+process_mode = 3
+offset_right = 1151.0
+offset_bottom = 642.0
+color = Color(0.05, 0.05, 0.09, 0.85)
+script = ExtResource("5_pfx")
+
+[node name="Label" type="Label" parent="UI/GameOverPanel" unique_id=797297302]
+modulate = Color(1, 0.25, 0.25, 1)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -140.0
+offset_right = 150.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 48
+text = "游戏结束"
+horizontal_alignment = 1
+
+[node name="FinalScoreLabel" type="Label" parent="UI/GameOverPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -50.0
+offset_right = 200.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 26
+text = "最终积分: 0"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="UI/GameOverPanel" unique_id=1827834846]
+custom_minimum_size = Vector2(130, 48)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = 40.0
+offset_right = -10.0
+offset_bottom = 88.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_ui")
+text = "重新开始"
+
+[node name="QuitButton" type="Button" parent="UI/GameOverPanel" unique_id=105855657]
+custom_minimum_size = Vector2(130, 48)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 10.0
+offset_top = 40.0
+offset_right = 140.0
+offset_bottom = 88.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_ui")
+text = "退出游戏"
+
+[node name="LevelUpPanel" type="ColorRect" parent="UI"]
+process_mode = 3
+visible = false
+offset_right = 1151.0
+offset_bottom = 642.0
+color = Color(0.03, 0.03, 0.08, 0.82)
+script = ExtResource("5_pfx")
+
+[node name="Box" type="VBoxContainer" parent="UI/LevelUpPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -110.0
+offset_right = 400.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 26
+alignment = 1
+
+[node name="Title" type="Label" parent="UI/LevelUpPanel/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 36
+text = "～ 进化！选择一项强化 ～"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="UI/LevelUpPanel/Box"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Btn0" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
+custom_minimum_size = Vector2(240, 120)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+
+[node name="Btn1" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
+custom_minimum_size = Vector2(240, 120)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+
+[node name="Btn2" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
+custom_minimum_size = Vector2(240, 120)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+[connection signal="pressed" from="UI/GameOverPanel/RestartButton" to="." method="_on_restart_button_pressed"]
+[connection signal="pressed" from="UI/GameOverPanel/QuitButton" to="." method="_on_quit_button_pressed"]

@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://gem.gd" id="1_gem"]
+[ext_resource type="Texture2D" path="res://assets/gem.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/particle_soft.png" id="3_soft"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_add"]
+blend_mode = 1
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_g"]
+radius = 14.0
+
+[node name="Gem" type="Area2D"]
+script = ExtResource("1_gem")
+
+[node name="Glow" type="Sprite2D" parent="."]
+material = SubResource("CanvasItemMaterial_add")
+modulate = Color(0.5, 0.9, 1, 0.55)
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("3_soft")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_g")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
