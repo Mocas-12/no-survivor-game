@@ -95,7 +95,7 @@ func _build_beam():
 func _physics_process(delta):
 	# 移动：触屏设备由摇杆驱动（无输入时悬停）；桌面端平滑跟随鼠标
 	if use_touch:
-		global_position += touch_move * speed * 1.15 * delta
+		global_position += touch_move * speed * 1.25 * delta
 	else:
 		global_position = global_position.move_toward(get_global_mouse_position(), follow_speed * delta)
 	var screen = get_viewport_rect().size

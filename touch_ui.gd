@@ -5,7 +5,8 @@ extends CanvasLayer
 
 signal moved(dir: Vector2)
 
-const RADIUS := 110.0
+const RADIUS := 56.0    # 拖动 56px 即达满速（在底座圆环内，跟手不拖沓）
+const DEADZONE := 6.0   # 6px 死区防手指抖动
 var touch_index := -1
 var origin := Vector2.ZERO
 
@@ -46,7 +47,10 @@ func _input(event):
 			thumb.hide()
 			moved.emit(Vector2.ZERO)
 	elif event is InputEventScreenDrag and event.index == touch_index:
-		# 拖动：摇杆帽跟随，输出归一化方向
+		# 拖动：摇杆帽跟随（限制在底座内），56px 即满速输出
 		var v = (event.position - origin).limit_length(RADIUS)
 		thumb.position = origin + v
-		moved.emit(v / RADIUS)
+		var move = v / RADIUS
+		if move.length() < DEADZONE / RADIUS:
+			move = Vector2.ZERO
+		moved.emit(move)
