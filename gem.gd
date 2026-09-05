@@ -3,6 +3,7 @@ extends Area2D
 var xp_value = 1          # 拾取后获得的经验
 var magnet_range = 180.0  # 玩家靠近多少像素时开始吸附
 var magnet_speed = 700.0  # 吸附时飞向玩家的速度
+var fall_speed = 90.0     # 随星空背景向下流动的速度
 
 @onready var player = get_tree().get_first_node_in_group("player")
 
@@ -14,9 +15,16 @@ func _process(delta):
 	rotation += 2.0 * delta
 	scale = Vector2.ONE * (1.0 + 0.12 * sin(t))
 
+	# 随星空背景向下漂移（进入磁吸范围后磁吸速度占主导）
+	position.y += fall_speed * delta
+
 	# 磁吸：玩家靠近时水晶自动飞过去
 	if player and global_position.distance_to(player.global_position) < magnet_range:
 		global_position = global_position.move_toward(player.global_position, magnet_speed * delta)
+
+	# 漂出屏幕底部自动回收
+	if position.y > 720:
+		queue_free()
 
 func _on_body_entered(body):
 	# 撞到玩家就上交经验并消失
