@@ -362,8 +362,9 @@ def gen_form(n):
     hull = [(cx, ss(8)), (cx - ss(hw), ss(52)), (cx - ss(hw) - ss(2), ss(fy)),
             (cx - ss(5), ss(130)), (cx + ss(5), ss(130)), (cx + ss(hw) + ss(2), ss(fy)), (cx + ss(hw), ss(52))]
     wings = wing_polys(wing, cx, hw, span, wy, drop, chord)
+    wings_mirror = [mirror_pts(poly, cx) for poly in wings]  # 右翼镜像（修复右半机身缺失）
     tail_l = [(cx - ss(hw), ss(fy)), (cx - ss(26), ss(138)), (cx - ss(24), ss(144)), (cx - ss(hw) + ss(6), ss(128))]
-    polys = [hull] + wings + [tail_l, mirror_pts(tail_l, cx)]
+    polys = [hull] + wings + wings_mirror + [tail_l, mirror_pts(tail_l, cx)]
 
     def fn(d):
         for poly in polys:
