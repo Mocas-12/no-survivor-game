@@ -306,27 +306,30 @@ def glow_discs(base, spots, color, radius, strength):
 
 # ---------- 主角 20 形态（参数化渐进成长：体型/翼型/引擎/武装逐级变化） ----------
 
-def wing_polys(variant, cx, hw, span, wing_y, drop):
-    """按翼型代号返回机翼多边形组（朝上飞机），6 种翼型随形态阶跃进化"""
+def wing_polys(variant, cx, hw, span, wy, drop, chord):
+    """按翼型代号返回机翼多边形组：全部带真实翼弦厚度，与机身贴合"""
     x0 = cx - hw + ss(2)
     x1 = cx - hw - ss(2)
-    wy = ss(wing_y)
     tip = cx - ss(span)
-    if variant == 0:  # 三角翼
-        return [[(x0, wy), (tip, wy + ss(drop)), (tip, wy + ss(drop) + ss(14)), (x1, wy + ss(44))]]
-    if variant == 1:  # 后掠翼
-        return [[(x0, wy), (tip, wy + ss(drop) + ss(16)), (tip + ss(6), wy + ss(drop) + ss(24)), (x1, wy + ss(46))]]
+    tf = ss(wy + drop)      # 翼尖前缘
+    tb = tf + ss(12)        # 翼尖后缘
+    r_front = ss(wy)
+    r_back = ss(wy + chord)
+    if variant == 0:  # 三角翼：前缘大后掠
+        return [[(x0, r_front), (tip, tf), (tip, tb), (x1, r_back + ss(6))]]
+    if variant == 1:  # 后掠梯形翼
+        return [[(x0, r_front), (tip, tf), (tip, tb), (x1, r_back + ss(10))]]
     if variant == 2:  # 前掠翼
-        return [[(x0, wy), (tip, wy + ss(drop) - ss(14)), (tip + ss(6), wy + ss(drop)), (x1, wy + ss(42))]]
-    if variant == 3:  # X 翼（两对）
-        return [[(x0, wy), (tip, wy + ss(drop)), (tip, wy + ss(drop) + ss(12)), (x1, wy + ss(40))],
-                [(x0, wy - ss(18)), (tip + ss(14), wy - ss(6)), (tip + ss(14), wy + ss(4)), (x1, wy + ss(16))]]
+        return [[(x0, r_front + ss(8)), (tip, tf - ss(10)), (tip, tf + ss(2)), (x1, r_back + ss(14))]]
+    if variant == 3:  # X 翼（前后两对）
+        return [[(x0, r_front - ss(4)), (tip, tf - ss(14)), (tip, tf - ss(4)), (x1, r_front + ss(22))],
+                [(x0, r_front + ss(16)), (tip + ss(12), tf + ss(8)), (tip + ss(12), tf + ss(16)), (x1, r_back + ss(20))]]
     if variant == 4:  # 前伸双叉
-        return [[(cx - hw - ss(4), wy + ss(10)), (tip + ss(10), wy + ss(26)), (tip + ss(16), wy + ss(38)), (x1, wy + ss(48))],
-                [(x0, wy), (tip - ss(6), wy + ss(4)), (tip, wy + ss(14)), (x1, wy + ss(40))]]
+        return [[(x0, r_front - ss(2)), (tip + ss(6), tf - ss(16)), (tip + ss(12), tf - ss(6)), (x1, r_front + ss(18))],
+                [(x0, r_front + ss(14)), (tip - ss(2), tf + ss(12)), (tip + ss(4), tf + ss(20)), (x1, r_back + ss(14))]]
     # 双层翼
-    return [[(x0, wy - ss(10)), (tip, wy + ss(drop) - ss(4)), (tip, wy + ss(drop) + ss(8)), (x1, wy + ss(34))],
-            [(x0, wy + ss(20)), (tip + ss(10), wy + ss(drop) + ss(24)), (tip + ss(10), wy + ss(drop) + ss(34)), (x1, wy + ss(52))]]
+    return [[(x0, r_front - ss(8)), (tip, tf - ss(8)), (tip, tf + ss(2)), (x1, r_front + ss(26))],
+            [(x0, r_front + ss(22)), (tip + ss(10), tf + ss(12)), (tip + ss(10), tf + ss(20)), (x1, r_back + ss(26))]]
 
 
 def gen_form(n):
@@ -335,17 +338,18 @@ def gen_form(n):
     cx = ss(80)
     tier = n // 4
     k = n % 4
-    body_s = 0.56 + n * 0.023            # 机体尺寸 0.56 → 1.0
-    span = 30 + n * 2.4                  # 翼展 30 → 75
-    hw = 7 + n * 0.32                    # 机身宽度
-    wing_drop = 40 + (n % 4) * 6 + tier * 4
-    wing_y = 52 + tier * 2
+    span = 30 + n * 2.2          # 翼展 30 → 71
+    hw = 7 + n * 0.30            # 机身宽
+    wy = 54 + tier * 3           # 翼根前缘
+    drop = 16 + tier * 7 + k * 3 # 翼尖后掠量
+    chord = 26 + tier * 3        # 翼弦（机翼前后厚度）
     engines = 1 + tier + (1 if k >= 2 else 0)
     wing = min(tier, 5)
     pods = n >= 4
     barrels = n >= 8
     armor = n >= 12
-    fy = ss(104 + tier * 6)
+    fy = 112 + tier * 5
+    tip = cx - ss(span)
 
     TOPS = [(200, 245, 255), (210, 250, 250), (220, 250, 235), (255, 230, 205), (255, 225, 235)]
     BOTS = [(30, 140, 215), (20, 120, 190), (15, 125, 110), (200, 60, 40), (150, 60, 200)]
@@ -355,23 +359,35 @@ def gen_form(n):
     accent = ACCS[n % len(ACCS)]
     dark = tuple(int(v * 0.35) for v in bot)
 
-    hull = [(cx, ss(8)), (cx - ss(hw), ss(54)), (cx - ss(hw) - ss(2), fy + ss(12)),
-            (cx - ss(5), ss(132)), (cx + ss(5), ss(132)), (cx + ss(hw) + ss(2), fy + ss(12)), (cx + ss(hw), ss(54))]
-    wings = wing_polys(wing, cx, ss(hw), span, wing_y, wing_drop)
-    tail_l = [(cx - ss(hw), fy), (cx - ss(26), ss(140)), (cx - ss(24), ss(146)), (cx - ss(hw) + ss(6), ss(132))]
+    hull = [(cx, ss(8)), (cx - ss(hw), ss(52)), (cx - ss(hw) - ss(2), ss(fy)),
+            (cx - ss(5), ss(130)), (cx + ss(5), ss(130)), (cx + ss(hw) + ss(2), ss(fy)), (cx + ss(hw), ss(52))]
+    wings = wing_polys(wing, cx, hw, span, wy, drop, chord)
+    tail_l = [(cx - ss(hw), ss(fy)), (cx - ss(26), ss(138)), (cx - ss(24), ss(144)), (cx - ss(hw) + ss(6), ss(128))]
     polys = [hull] + wings + [tail_l, mirror_pts(tail_l, cx)]
-    if pods:  # 翼尖挂舱
-        wy2 = wing_y + wing_drop
-        pod_l = [(cx - ss(span) - ss(2), wy2), (cx - ss(span) + ss(12), wy2), (cx - ss(span) + ss(14), wy2 + ss(30)), (cx - ss(span) - ss(4), wy2 + ss(30))]
-        polys += [pod_l, mirror_pts(pod_l, cx)]
-    if armor:  # 装甲带
-        polys.append([(cx - ss(hw) - ss(4), ss(70)), (cx + ss(hw) + ss(4), ss(70)), (cx + ss(hw) + ss(2), ss(84)), (cx - ss(hw) - ss(2), ss(84))])
 
     def fn(d):
         for poly in polys:
             d.polygon(poly, fill=255)
             for (x, y) in poly:
                 d.ellipse([x - ss(3), y - ss(3), x + ss(3), y + ss(3)], fill=255)
+        if pods:  # 翼上引擎舱：沿机翼前缘 68% 处安装，与翼面重叠
+            p0, p1 = wings[0][0], wings[0][1]
+            px = p0[0] + (p1[0] - p0[0]) * 0.68
+            py = p0[1] + (p1[1] - p0[1]) * 0.68
+            for sx in (px, cx + (cx - px)):
+                sxp, syp = ss(sx), ss(py)
+                d.rounded_rectangle([sxp - ss(5), syp - ss(5), sxp + ss(7), syp + ss(13)], radius=ss(3), fill=255)
+                for (x, y) in [(sxp - ss(5), syp - ss(5)), (sxp + ss(7), syp - ss(5)), (sxp - ss(5), syp + ss(13)), (sxp + ss(7), syp + ss(13))]:
+                    d.ellipse([x - ss(2), y - ss(2), x + ss(2), y + ss(2)], fill=255)
+        if barrels:  # 翼上炮管：沿机翼前缘 82% 处向前安装
+            p0, p1 = wings[0][0], wings[0][1]
+            bx = p0[0] + (p1[0] - p0[0]) * 0.82
+            by = p0[1] + (p1[1] - p0[1]) * 0.82
+            for sx in (bx, cx + (cx - bx)):
+                sxp, syp = ss(bx), ss(by)
+                d.rounded_rectangle([sxp - ss(2), syp - ss(16), sxp + ss(3), syp + ss(4)], radius=ss(1), fill=255)
+        if armor:  # 机身装甲带
+            d.rounded_rectangle([cx - ss(hw) - ss(3), ss(66), cx + ss(hw) + ss(3), ss(82)], radius=ss(2), fill=255)
     m = mask_of(size, fn)
     img = Image.new("RGBA", size, (0, 0, 0, 0))
     add_glow(img, m, accent, ss(9), 0.55)
@@ -379,26 +395,22 @@ def gen_form(n):
 
     d = ImageDraw.Draw(img)
     # 座舱
-    d.ellipse([cx - ss(5), ss(30), cx + ss(5), ss(60)], fill=(13, 22, 46, 255))
-    d.arc([cx - ss(5), ss(30), cx + ss(5), ss(60)], start=210, end=300, fill=accent + (255,), width=ss(1))
-    # 引擎喷口（数量 1 → 5）
+    d.ellipse([cx - ss(5), ss(28), cx + ss(5), ss(58)], fill=(13, 22, 46, 255))
+    d.arc([cx - ss(5), ss(28), cx + ss(5), ss(58)], start=210, end=300, fill=accent + (255,), width=ss(1))
+    # 引擎喷口（数量 1 → 5），随机身尾部位置
     ne = engines
     nozzles = []
     for i in range(ne):
         nx = cx + (i - (ne - 1) / 2.0) * ss(9)
         nozzles.append(nx)
-        d.rounded_rectangle([nx - ss(3), ss(118), nx + ss(3), ss(130)], radius=ss(1), fill=(10, 20, 40, 255))
-    glow_discs(img, [(nx, ss(134), ss(6)) for nx in nozzles], accent, ss(5), 0.9)
-    # 机翼装饰线
-    d.line([(cx - ss(span), ss(wing_y + wing_drop)), (cx - ss(hw), ss(84))], fill=accent + (180,), width=ss(1))
-    d.line([(cx + ss(span), ss(wing_y + wing_drop)), (cx + ss(hw), ss(84))], fill=accent + (180,), width=ss(1))
-    if barrels:  # 翼尖炮管
-        d.rounded_rectangle([cx - ss(span) - ss(2), ss(wing_y + wing_drop), cx - ss(span) + ss(4), ss(wing_y + wing_drop + 22)], radius=ss(1), fill=(20, 30, 50, 255))
-        d.rounded_rectangle([cx + ss(span) - ss(4), ss(wing_y + wing_drop), cx + ss(span) + ss(2), ss(wing_y + wing_drop + 22)], radius=ss(1), fill=(20, 30, 50, 255))
-    if armor:  # 装甲棱线
-        d.line([(cx - ss(12), ss(66)), (cx - ss(12), ss(120))], fill=dark + (200,), width=ss(2))
-        d.line([(cx + ss(12), ss(66)), (cx + ss(12), ss(120))], fill=dark + (200,), width=ss(2))
+        d.rounded_rectangle([nx - ss(3), ss(fy - 6), nx + ss(3), ss(fy + 4)], radius=ss(1), fill=(10, 20, 40, 255))
+    glow_discs(img, [(nx, ss(fy + 8), ss(6)) for nx in nozzles], accent, ss(5), 0.9)
+    # 装甲棱线
+    if armor:
+        d.line([(cx - ss(12), ss(64)), (cx - ss(12), ss(118))], fill=dark + (200,), width=ss(2))
+        d.line([(cx + ss(12), ss(64)), (cx + ss(12), ss(118))], fill=dark + (200,), width=ss(2))
     finish(img, f"player_form{n + 1}.png", (160, 160))
+
 
 
 def gen_all_player_forms():
