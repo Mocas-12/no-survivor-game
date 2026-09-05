@@ -450,7 +450,9 @@ def gen_enemy_plane(kind):
         hull = [(c + ss(58), c), (c - ss(14), c - ss(18)), (c - ss(28), c), (c - ss(14), c + ss(18))]
         wing_l = [(c, c - ss(14)), (c - ss(52), c - ss(40)), (c - ss(58), c - ss(32)), (c - ss(16), c - ss(4))]
 
-    polys = [hull, wing_l, mirror_pts(wing_l, c)]
+    # 敌机朝 +X：上下机翼沿水平轴（y=c）镜像，而不是左右镜像
+    wing_low = [(x, int(2 * c - y)) for (x, y) in wing_l]
+    polys = [hull, wing_l, wing_low]
     if kind == "shooter":  # 前伸炮管
         polys.append([(c + ss(34), c - ss(3)), (c + ss(52), c - ss(3)), (c + ss(52), c + ss(3)), (c + ss(34), c + ss(3))])
 
