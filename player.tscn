@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bjorh24wlg2gc"]
 
 [ext_resource type="Script" uid="uid://bnst2fb87h5jv" path="res://player.gd" id="1_4flbx"]
-[ext_resource type="Texture2D" path="res://assets/player.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/player_form1.png" id="2_tex"]
 [ext_resource type="Texture2D" path="res://assets/particle_soft.png" id="3_soft"]
 [ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="4_spark"]
 
@@ -12,11 +12,11 @@ radius = 20.0
 script = ExtResource("1_4flbx")
 
 [node name="EngineTrail" type="CPUParticles2D" parent="."]
-position = Vector2(-38, 0)
-amount = 26
+position = Vector2(0, 48)
+amount = 30
 lifetime = 0.35
-spread = 10.0
-direction = Vector2(-1, 0)
+spread = 8.0
+direction = Vector2(0, 1)
 initial_velocity_min = 60.0
 initial_velocity_max = 110.0
 scale_amount_min = 0.15
@@ -25,14 +25,14 @@ color = Color(0.4, 0.85, 1, 0.45)
 texture = ExtResource("3_soft")
 
 [node name="MuzzleFlash" type="CPUParticles2D" parent="."]
-position = Vector2(46, 0)
+position = Vector2(0, -48)
 emitting = false
 amount = 6
 lifetime = 0.1
 one_shot = true
 explosiveness = 1.0
-direction = Vector2(1, 0)
-spread = 18.0
+direction = Vector2(0, -1)
+spread = 16.0
 gravity = Vector2(0, 0)
 initial_velocity_min = 160.0
 initial_velocity_max = 300.0

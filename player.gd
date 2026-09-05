@@ -1,48 +1,58 @@
 extends CharacterBody2D
 
-@export var speed = 400
-@export var fire_cooldown = 0.25   # 射击间隔（秒），升级强化可以缩短
+# 4 种形态贴图（击杀 Boss 掉落核心装备后变形）
+const FORM_TEXTURES := [
+	preload("res://assets/player_form1.png"),
+	preload("res://assets/player_form2.png"),
+	preload("res://assets/player_form3.png"),
+	preload("res://assets/player_form4.png"),
+]
+
+@export var follow_speed = 1300    # 鼠标跟随速度（越大跟得越紧）
+@export var fire_cooldown = 0.25   # 射击间隔（秒），强化可缩短
 var damage = 1                     # 每发子弹的伤害
 var bullet_count = 3               # 同时发射的弹道数量
+var form = 0                       # 当前形态 0-3
 
-# 预加载子弹场景
 var bullet_scene = preload("res://bullet.tscn")
 var fire_timer = 0.0
 
 func _physics_process(delta):
-	# 获取 WASD 移动方向
-	var direction = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
-	velocity = direction * speed
-	move_and_slide()
-
-	# 把玩家限制在屏幕范围内，防止跑出画面
+	# 纯鼠标操控：飞机平滑跟随鼠标，机头固定朝上
+	var target = get_global_mouse_position()
+	global_position = global_position.move_toward(target, follow_speed * delta)
 	var screen = get_viewport_rect().size
-	global_position = global_position.clamp(Vector2(24, 24), screen - Vector2(24, 24))
+	global_position = global_position.clamp(Vector2(26, 26), screen - Vector2(26, 26))
 
-	# 玩家面朝鼠标
-	look_at(get_global_mouse_position())
-
-	# 按住鼠标左键连续射击（间隔由 fire_cooldown 控制）
+	# 按住鼠标左键连续射击
 	fire_timer -= delta
 	if Input.is_action_pressed("shoot") and fire_timer <= 0:
 		shoot()
 		fire_timer = fire_cooldown
 
 func shoot():
-	# 根据弹道数量均匀计算每发子弹的角度偏移
-	# 例如 3 发 → -0.22, 0, +0.22
-	var spacing = 0.22
+	# 扇形弹道（机头朝上 = -90°）
+	var spacing = 0.18
 	var start = -(bullet_count - 1) / 2.0 * spacing
-
 	for i in bullet_count:
 		var b = bullet_scene.instantiate()
 		b.damage = damage
-		# 挂到当前场景下，这样“重新开始”时子弹会跟着一起被清掉
 		get_tree().current_scene.add_child(b)
-
-		# 设置子弹的初始位置和角度（玩家朝向 + 偏移）
-		b.global_position = global_position
-		b.global_rotation = global_rotation + start + i * spacing
-
-	# 枪口火光
+		b.global_position = global_position + Vector2(0, -44)
+		b.global_rotation = -PI / 2 + start + i * spacing
 	$MuzzleFlash.restart()
+
+	# 射击音效
+	var world = get_tree().current_scene
+	if world.has_method("play_sfx"):
+		world.play_sfx("shoot", -14.0, 0.04)
+
+func set_form(n):
+	# 变形演出：换贴图 + 白闪 + 膨胀脉冲
+	form = n
+	$Sprite2D.texture = FORM_TEXTURES[n]
+	modulate = Color(6, 6, 8)
+	var tw = create_tween()
+	tw.tween_property(self, "modulate", Color(1, 1, 1), 0.35)
+	tw.parallel().tween_property(self, "scale", Vector2(1.35, 1.35), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.3)

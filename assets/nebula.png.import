@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cgmctk5n0xkeg"
-path="res://.godot/imported/starfield.png-db0f5afa7ba530996b319b28a90205df.ctex"
+uid="uid://gqjah3lpd3yy"
+path="res://.godot/imported/nebula.png-5710968e3007cd2ee15e8e3208da668e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/starfield.png"
-dest_files=["res://.godot/imported/starfield.png-db0f5afa7ba530996b319b28a90205df.ctex"]
+source_file="res://assets/nebula.png"
+dest_files=["res://.godot/imported/nebula.png-5710968e3007cd2ee15e8e3208da668e.ctex"]
 
 [params]
 

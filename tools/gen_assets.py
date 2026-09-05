@@ -286,13 +286,263 @@ def gen_starfield():
     print("saved starfield.png")
 
 
+# ---------- 飞机通用工具 ----------
+
+def mirror_pts(pts, cx):
+    return [(int(2 * cx - x), y) for (x, y) in pts]
+
+
+def glow_discs(base, spots, color, radius, strength):
+    """在指定坐标画一团柔光（引擎喷口等）"""
+    m = Image.new("L", base.size, 0)
+    d = ImageDraw.Draw(m)
+    for (x, y, r) in spots:
+        d.ellipse([x - r, y - r, x + r, y + r], fill=255)
+    g = m.filter(ImageFilter.GaussianBlur(radius)).point(lambda v: int(v * strength))
+    layer = Image.new("RGBA", base.size, color + (0,))
+    layer.putalpha(g)
+    base.alpha_composite(layer)
+
+
+def gen_plane_form(idx, body_top, body_bottom, accent, dark, wing_span, wing_drop, hull_w, pods, swept_forward):
+    """主角 4 形态战斗机（朝上）。idx: 0-3"""
+    size = (ss(160), ss(160))
+    cx = ss(80)
+    wing_x = ss(wing_span)
+    wing_y = ss(wing_drop)
+    hull_dx = ss(hull_w)
+    fy = ss(118) if not swept_forward else ss(104)
+    fwd = ss(14) if swept_forward else -ss(6)
+
+    hull = [(cx, ss(8)), (cx - hull_dx, ss(56)), (cx - hull_dx - ss(2), fy + ss(14)),
+            (cx - ss(5), ss(132)), (cx + ss(5), ss(132)), (cx + hull_dx + ss(2), fy + ss(14)), (cx + hull_dx, ss(56))]
+    wing_l = [(cx - hull_dx + ss(2), ss(54)), (cx - wing_x, wing_y), (cx - wing_x + (fwd if swept_forward else 0), wing_y + ss(14)), (cx - hull_dx - ss(2), fy)]
+    tail_l = [(cx - hull_dx, fy), (cx - ss(26), ss(138)), (cx - ss(24), ss(144)), (cx - hull_dx + ss(6), ss(132))]
+
+    def fn(d):
+        for poly in [hull, wing_l, mirror_pts(wing_l, cx), tail_l, mirror_pts(tail_l, cx)]:
+            d.polygon(poly, fill=255)
+            for (x, y) in poly:
+                d.ellipse([x - ss(3), y - ss(3), x + ss(3), y + ss(3)], fill=255)
+    m = mask_of(size, fn)
+
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    add_glow(img, m, accent, ss(9), 0.55)
+    render(img, m, vgrad(size, body_top, body_bottom), rim=dark, rim_w=3)
+
+    if pods:  # 侧挂引擎舱
+        pod_l = mask_of(size, lambda d: d.rounded_rectangle([cx - wing_x - ss(4), wing_y + ss(2), cx - wing_x + ss(8), wing_y + ss(34)], radius=ss(5), fill=255))
+        pod_r = mask_of(size, lambda d: d.rounded_rectangle([cx + wing_x - ss(8), wing_y + ss(2), cx + wing_x + ss(4), wing_y + ss(34)], radius=ss(5), fill=255))
+        img.paste(Image.new("RGBA", size, dark + (255,)), (0, 0), pod_l)
+        img.paste(Image.new("RGBA", size, dark + (255,)), (0, 0), pod_r)
+        glow_discs(img, [(cx - wing_x, wing_y + ss(36), ss(5)), (cx + wing_x, wing_y + ss(36), ss(5))], accent, ss(4), 0.9)
+
+    # 座舱
+    d = ImageDraw.Draw(img)
+    d.ellipse([cx - ss(5), ss(30), cx + ss(5), ss(62)], fill=(13, 22, 46, 255))
+    d.arc([cx - ss(5), ss(30), cx + ss(5), ss(62)], start=210, end=300, fill=accent + (255,), width=ss(1))
+    # 引擎喷口 + 尾焰光
+    d.rounded_rectangle([cx - ss(6), ss(124), cx + ss(6), ss(134)], radius=ss(2), fill=(10, 20, 40, 255))
+    glow_discs(img, [(cx, ss(136), ss(7))], accent, ss(5), 0.95)
+    # 机翼装饰线
+    d.line([(cx - wing_x + ss(4), wing_y + ss(8)), (cx - hull_dx, ss(88))], fill=accent + (200,), width=ss(1))
+    d.line([(cx + wing_x - ss(4), wing_y + ss(8)), (cx + hull_dx, ss(88))], fill=accent + (200,), width=ss(1))
+    finish(img, f"player_form{idx + 1}.png", (160, 160))
+
+
+def gen_all_player_forms():
+    gen_plane_form(0, (200, 245, 255), (30, 140, 215), (90, 225, 255), (14, 44, 84), 46, 96, 9, False, False)   # 隼击 Falcon
+    gen_plane_form(1, (235, 248, 255), (40, 110, 200), (255, 170, 60), (18, 40, 70), 52, 100, 10, True, False)   # 先锋 Vanguard
+    gen_plane_form(2, (222, 250, 244), (16, 130, 120), (80, 255, 200), (8, 60, 56), 56, 92, 12, True, False)     # 堡垒 Bastion
+    gen_plane_form(3, (255, 240, 250), (150, 40, 190), (255, 215, 90), (50, 12, 60), 50, 94, 8, False, True)     # 新星 Nova
+
+
+# ---------- 敌机（朝 +X，配合 look_at 追踪） ----------
+
+def gen_enemy_plane(kind):
+    size = (ss(128), ss(128)) if kind != "tank" else (ss(160), ss(160))
+    c = ss(64) if kind != "tank" else ss(80)
+    if kind == "normal":
+        body_top, body_bot, accent, dark = (255, 150, 160), (200, 35, 60), (255, 90, 110), (110, 14, 38)
+        hull = [(c + ss(48), c), (c - ss(6), c - ss(13)), (c - ss(18), c), (c - ss(6), c + ss(13))]
+        wing_l = [(c, c - ss(10)), (c - ss(30), c - ss(32)), (c - ss(36), c - ss(26)), (c - ss(12), c - ss(2))]
+    elif kind == "fast":
+        body_top, body_bot, accent, dark = (255, 215, 140), (235, 115, 35), (255, 170, 70), (140, 58, 8)
+        hull = [(c + ss(54), c), (c - ss(10), c - ss(11)), (c - ss(22), c), (c - ss(10), c + ss(11))]
+        wing_l = [(c, c - ss(9)), (c - ss(38), c - ss(36)), (c - ss(44), c - ss(30)), (c - ss(12), c - ss(2))]
+    else:
+        body_top, body_bot, accent, dark = (205, 155, 255), (115, 48, 198), (165, 90, 255), (56, 16, 104)
+        hull = [(c + ss(58), c), (c - ss(14), c - ss(18)), (c - ss(28), c), (c - ss(14), c + ss(18))]
+        wing_l = [(c, c - ss(14)), (c - ss(52), c - ss(40)), (c - ss(58), c - ss(32)), (c - ss(16), c - ss(4))]
+
+    def fn(d):
+        for poly in [hull, wing_l, mirror_pts(wing_l, c)]:
+            d.polygon(poly, fill=255)
+            for (x, y) in poly:
+                d.ellipse([x - ss(3), y - ss(3), x + ss(3), y + ss(3)], fill=255)
+    m = mask_of(size, fn)
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    add_glow(img, m, accent, ss(8), 0.5)
+    render(img, m, vgrad(size, body_top, body_bot), rim=dark, rim_w=3)
+    d = ImageDraw.Draw(img)
+    d.ellipse([c + ss(16), c - ss(5), c + ss(34), c + ss(5)], fill=(15, 12, 30, 255))  # 座舱
+    glow_discs(img, [(c - ss(14), c, ss(5))], accent, ss(4), 0.9)  # 尾焰
+    finish(img, f"enemy_{kind}.png", (128, 128) if kind != "tank" else (160, 160))
+
+
+def gen_all_enemy_planes():
+    for k in ("normal", "fast", "tank"):
+        gen_enemy_plane(k)
+
+
+# ---------- BOSS 巨舰（朝下 / +Y） ----------
+
+def gen_boss(kind):
+    size = (ss(320), ss(256))
+    cx = ss(160)
+    if kind == 1:  # 毁灭者：红色战列舰，环形弹幕
+        top, bot, accent, dark = (255, 120, 130), (175, 25, 50), (255, 80, 100), (105, 12, 36)
+        hull = [(cx - ss(34), ss(26)), (cx + ss(34), ss(26)), (cx + ss(50), ss(120)), (cx + ss(28), ss(206)), (cx - ss(28), ss(206)), (cx - ss(50), ss(120))]
+        side_l = [(cx - ss(128), ss(48)), (cx - ss(78), ss(48)), (cx - ss(66), ss(150)), (cx - ss(94), ss(174)), (cx - ss(126), ss(150))]
+        pods = [(cx - ss(70), ss(158), ss(13)), (cx + ss(70), ss(158), ss(13))]
+
+        def fn(d):
+            for poly in [hull, side_l, mirror_pts(side_l, cx)]:
+                d.polygon(poly, fill=255)
+                for (x, y) in poly:
+                    d.ellipse([x - ss(4), y - ss(4), x + ss(4), y + ss(4)], fill=255)
+                for (x, y, r) in pods:
+                    d.ellipse([x - r, y - r, x + r, y + r], fill=255)
+        name = "boss1"
+        canopy = (cx, ss(96), 15, 26)
+        engines = [(cx - ss(22), ss(22), ss(6)), (cx + ss(22), ss(22), ss(6)), (cx - ss(100), ss(44), ss(5)), (cx + ss(100), ss(44), ss(5))]
+    elif kind == 2:  # 拦截者：紫色隐形双叉，瞄准弹幕
+        top, bot, accent, dark = (215, 160, 255), (110, 45, 200), (180, 100, 255), (52, 14, 100)
+        prong_l = [(cx - ss(74), ss(232)), (cx - ss(44), ss(110)), (cx - ss(18), ss(124)), (cx - ss(36), ss(238))]
+        center = [(cx, ss(52)), (cx + ss(52), ss(138)), (cx, ss(206)), (cx - ss(52), ss(138))]
+        wing_l = [(cx - ss(20), ss(96)), (cx - ss(128), ss(70)), (cx - ss(134), ss(88)), (cx - ss(30), ss(126))]
+
+        def fn(d):
+            for poly in [prong_l, mirror_pts(prong_l, cx), center, wing_l, mirror_pts(wing_l, cx)]:
+                d.polygon(poly, fill=255)
+                for (x, y) in poly:
+                    d.ellipse([x - ss(4), y - ss(4), x + ss(4), y + ss(4)], fill=255)
+        name = "boss2"
+        canopy = (cx, ss(120), 12, 20)
+        engines = [(cx - ss(30), ss(58), ss(6)), (cx + ss(30), ss(58), ss(6)), (cx - ss(110), ss(74), ss(4)), (cx + ss(110), ss(74), ss(4))]
+    else:  # 要塞：青绿巨型堡垒，螺旋弹幕
+        top, bot, accent, dark = (170, 255, 235), (16, 130, 115), (70, 255, 220), (6, 74, 66)
+        base = [(cx - ss(132), ss(84)), (cx + ss(132), ss(84)), (cx + ss(112), ss(192)), (cx - ss(112), ss(192))]
+        tower = [(cx - ss(42), ss(28)), (cx + ss(42), ss(28)), (cx + ss(54), ss(96)), (cx - ss(54), ss(96))]
+
+        def fn(d):
+            for poly in [base, tower]:
+                d.polygon(poly, fill=255)
+                for (x, y) in poly:
+                    d.ellipse([x - ss(4), y - ss(4), x + ss(4), y + ss(4)], fill=255)
+            for (tx, ty, r) in [(cx - ss(72), ss(140), ss(17)), (cx + ss(72), ss(140), ss(17)), (cx, ss(152), ss(20))]:
+                d.ellipse([tx - r, ty - r, tx + r, ty + r], fill=255)
+        name = "boss3"
+        canopy = (cx, ss(60), 14, 20)
+        engines = [(cx - ss(90), ss(82), ss(6)), (cx + ss(90), ss(82), ss(6)), (cx - ss(30), ss(26), ss(5)), (cx + ss(30), ss(26), ss(5))]
+
+    m = mask_of(size, fn)
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    add_glow(img, m, accent, ss(10), 0.5)
+    render(img, m, vgrad(size, top, bot), rim=dark, rim_w=4)
+    d = ImageDraw.Draw(img)
+    # 炮塔圈
+    if kind == 3:
+        for (tx, ty, r) in [(cx - ss(72), ss(140), ss(11)), (cx + ss(72), ss(140), ss(11)), (cx, ss(152), ss(13))]:
+            d.ellipse([tx - r, ty - r, tx + r, ty + r], fill=dark + (255,))
+            d.ellipse([tx - ss(4), ty - ss(4), tx + ss(4), ty + ss(4)], fill=accent + (255,))
+    d.ellipse([canopy[0] - canopy[2], canopy[1] - canopy[3], canopy[0] + canopy[2], canopy[1] + canopy[3]], fill=(12, 18, 36, 255))
+    d.arc([canopy[0] - canopy[2], canopy[1] - canopy[3], canopy[0] + canopy[2], canopy[1] + canopy[3]], start=30, end=150, fill=accent + (255,), width=ss(2))
+    glow_discs(img, engines, accent, ss(6), 0.9)
+    finish(img, f"boss{kind}.png", (320, 256))
+
+
+def gen_all_bosses():
+    for k in (1, 2, 3):
+        gen_boss(k)
+
+
+# ---------- 核心装备 / 敌方子弹 / 滚动星空层 ----------
+
+def gen_core():
+    size = (ss(96), ss(96))
+    pts = [(ss(48), ss(10)), (ss(86), ss(48)), (ss(48), ss(86)), (ss(10), ss(48))]
+    m = rounded_poly_mask(size, pts, ss(6))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    add_glow(img, m, (255, 215, 90), ss(9), 0.85)
+    render(img, m, vgrad(size, (255, 245, 200), (250, 180, 40)), rim=(120, 70, 5, 255), rim_w=3)
+    d = ImageDraw.Draw(img)
+    d.ellipse([ss(36), ss(36), ss(60), ss(60)], fill=(60, 220, 255, 255))  # 中心能量核
+    d.ellipse([ss(42), ss(40), ss(50), ss(50)], fill=(230, 255, 255, 255))
+    finish(img, "core.png", (96, 96))
+
+
+def gen_enemy_bullet():
+    size = (ss(48), ss(48))
+    m = circle_mask(size, ss(24), ss(24), ss(9))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    add_glow(img, m, (255, 90, 200), ss(5), 0.95)
+    render(img, m, radial_fill(size, ss(22), ss(22), ss(13), (255, 230, 250), (240, 60, 150)), rim=(120, 10, 70, 255), rim_w=2)
+    finish(img, "enemy_bullet.png", (48, 48))
+
+
+def tileable_stars(name, count, rmin, rmax, amin, amax, color_choices, W=512, H=512, halos=0):
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    random.seed(hash(name) % 10000)
+    halo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dh = ImageDraw.Draw(halo)
+    for _ in range(count):
+        x, y = random.randint(0, W - 1), random.randint(0, H - 1)
+        r = random.randint(rmin, rmax)
+        c = random.choice(color_choices) + (random.randint(amin, amax),)
+        for ox in (-W, 0, W):        # 9 宫格平铺保证无缝
+            for oy in (-H, 0, H):
+                d.ellipse([x + ox - r, y + oy - r, x + ox + r, y + oy + r], fill=c)
+        if halos and r == rmax and random.random() < 0.5:
+            for ox in (-W, 0, W):
+                for oy in (-H, 0, H):
+                    dh.ellipse([x + ox - r * 4, y + oy - r * 4, x + ox + r * 4, y + oy + r * 4], fill=(150, 210, 255, 55))
+    if halos:
+        img.alpha_composite(halo.filter(ImageFilter.GaussianBlur(5)))
+    finish(img, f"{name}.png", (512, 512))
+
+
+def gen_nebula():
+    W = H = 1024
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    random.seed(42)
+    blobs = [(300, 300, 240, (120, 60, 220)), (720, 620, 300, (30, 120, 200)), (600, 200, 190, (200, 60, 160)), (200, 750, 220, (40, 160, 170))]
+    for (x, y, r, c) in blobs:
+        layer = paint_discs((W, H), x, y, r, c, exponent=2.2, steps=90)
+        rr, gg, bb, aa = layer.split()
+        aa = aa.point(lambda v: v // 5)  # 压到 ~20% 透明度
+        img.alpha_composite(Image.merge("RGBA", (rr, gg, bb, aa)))
+    img = img.filter(ImageFilter.GaussianBlur(30))
+    finish(img, "nebula.png", (1024, 1024))
+
+
+def gen_space_layers():
+    stars = [(255, 255, 255), (150, 220, 255), (200, 175, 255)]
+    tileable_stars("stars_far", 110, 1, 1, 35, 110, stars)
+    tileable_stars("stars_mid", 70, 1, 2, 80, 190, stars)
+    tileable_stars("stars_near", 26, 2, 3, 170, 255, stars, halos=6)
+    gen_nebula()
+
+
 if __name__ == "__main__":
-    gen_player()
-    gen_enemy_normal()
-    gen_enemy_fast()
-    gen_enemy_tank()
+    gen_all_player_forms()
+    gen_all_enemy_planes()
+    gen_all_bosses()
+    gen_core()
+    gen_enemy_bullet()
     gen_bullet()
     gen_gem()
     gen_particles()
-    gen_starfield()
+    gen_space_layers()
     print("全部素材已生成 ->", OUT)

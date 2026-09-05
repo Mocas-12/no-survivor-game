@@ -2,7 +2,7 @@
 
 # No Survivor Game
 
-**A Godot 4 arena-survivor mini game — hold the beach, sweep the landing waves, evolve your build**
+**A Godot 4 vertical-scrolling arena survivor — mouse-piloted fighter, boss fleet, evolution forms**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -13,9 +13,9 @@
 
 **English** | [简体中文](./README.zh-CN.md)
 
-*WASD to move · aim with the mouse · hold left click to sweep the waves*
+*Move your mouse — the fighter follows · hold left click to sweep the waves*
 
-<img src="./screenshots/gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/evolution.png" width="49%" alt="Level-up evolution" />
+<img src="./screenshots/gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/boss.png" width="49%" alt="Boss battle" />
 
 </div>
 
@@ -25,6 +25,8 @@
 
 - [Gameplay](#-gameplay)
 - [Enemies](#-enemies)
+- [Boss Fleet](#-boss-fleet)
+- [Ship Forms](#-ship-forms)
 - [Level-Up: The Evolution Moment](#-level-up-the-evolution-moment)
 - [Game Feel](#-game-feel)
 - [Tech Highlights](#-tech-highlights)
@@ -35,32 +37,51 @@
 
 ## 🎮 Gameplay
 
-Enemies storm in from the top of the screen like a beach landing and chase you down. Destroy them, grab the XP crystals they drop, level up and pick your evolutions — see how long you can hold the line before the swarm takes you down. The spawn rate keeps accelerating with your score, and heavier enemy types join the landing as it goes.
+Pilot your fighter with the mouse alone — it glides wherever you point, guns blazing upward. Enemy squadrons storm in from the top like a beach landing, and every few waves a boss warship arrives with bullet patterns of its own. Destroy everything, grab XP crystals, evolve your ship, and see how long you can hold the line.
 
+- 🖱️ **Mouse-only piloting**: the fighter smoothly follows your cursor — no keyboard needed
 - 🌊 **Beach-defense waves**: enemies land from the top edge and hunt you down
 - 💎 **XP crystals**: kills drop glowing gems that magnet toward you
-- 🧬 **Level-up with 3-choose-1 upgrades**: every level pauses the game for an evolution pick
+- 👑 **Boss battles**: every 25+ kills triggers a sirened boss duel — normal spawns stop until it falls
+- 🛩️ **Ship evolution**: defeated bosses drop a power core that transforms your fighter
 - 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs
-- 💀 **Run summary**: game over shows your final score and level, with one-click restart
 
 ## 👾 Enemies
 
 | Enemy | Look | HP | Speed | Score | Touch Damage | XP Drop |
 | --- | --- | --- | --- | --- | --- | --- |
-| Grunt | 😡 red blob | 3 | 150 | 10 | 1 | 1 |
-| Dart | 👁️ orange one-eye dart | 1 | 260 | 5 | 1 | 1 |
-| Tank | 😬 purple armored hexagon | 12 | 80 | 40 | 3 | 3 |
+| Grunt | red strike fighter | 3 | 150 | 10 | 1 | 1 |
+| Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 |
+| Tank | purple heavy gunship | 12 | 80 | 40 | 3 | 3 |
 
-Tanks join the landing after 150 points, darts after 50 — the higher your score, the more often they show up.
+Darts join the landing after 50 points, tanks after 150 — the higher your score, the more often they show up.
+
+## 👑 Boss Fleet
+
+When the kill counter crosses the threshold, an alarm sounds, normal spawns halt, and a boss warship enters with its own HP bar. Each one fights differently, and every later encounter is tougher:
+
+| Boss | Look | Signature Skill |
+| --- | --- | --- |
+| 🔴 **Destructor** | triple-hull red battleship | rotating 14-shot ring barrages |
+| 🟣 **Interceptor** | twin-prong stealth cruiser | player-seeking 5-shot fans + slow rings |
+| 🟢 **Fortress** | teal mega-carrier | triple rotating spiral streams |
+
+Defeating a boss showers the screen in explosions and drops a **power core** — catch it before it drifts off-screen to transform your fighter.
+
+## 🛩️ Ship Forms
+
+| Form | Trigger | Visual | Bonus |
+| --- | --- | --- | --- |
+| **Falcon** | start | cyan delta fighter | 3-gun volley |
+| **Vanguard** | 1st core | wing pods, orange trim | +1 volley gun |
+| **Bastion** | 2nd core | heavy teal gunship | damage +2, max HP +4 (heal 4) |
+| **Nova** | 3rd core | magenta forward-swept X-wing | +1 gun, fire rate −25%, speed +10% |
+
+Cores caught after Nova overload the ship: damage +2, full heal, faster fire.
 
 ## 🧬 Level-Up: The Evolution Moment
 
-Every level-up freezes time for a full "evolution" beat:
-
-1. ⏸️ the game pauses, a golden flash sweeps the screen
-2. 💥 a golden shockwave ring bursts out of your ship while confetti sparks rain down
-3. 🛸 your ship pulses bigger with the beat
-4. 🎴 a panel springs in with **3 random upgrade cards** — pick one and the fire continue
+Every level-up freezes time for a full "evolution" beat: a golden flash sweeps the screen, a shockwave ring bursts out of your ship, confetti sparks rain down, and a panel springs in with **3 random upgrade cards**:
 
 | Upgrade | Effect |
 | --- | --- |
@@ -70,20 +91,22 @@ Every level-up freezes time for a full "evolution" beat:
 | 👟 Sprint | move speed +12% |
 | 🛡️ Armor | max HP +2 and heal 4 |
 
-Upgrades stack — a maxed build sprays a 7-bullet fan of glowing rounds.
+<img src="./screenshots/evolution.png" width="62%" alt="Level-up panel" />
 
 ## ✨ Game Feel
 
+- 🌌 four-layer parallax starfield (nebula → far → mid → near) scrolling toward you for constant motion
+- 🔊 fully synthesized sound effects — laser fire, hits, explosions, pickups, level-up chime, boss siren, transformation sweep (no audio files, all generated by script)
 - 💫 bullets glow with soft trails; every hit bursts into sparks
-- 💥 kills explode into color-matched glow puffs + sparks + an expanding shockwave ring
-- 📳 camera shake scaled by the kill (tanks shake the screen hard)
-- 💎 gems breathe and spin, magnetizing to you when close
-- 🌌 deep-space starfield backdrop with a faint sea haze rolling in from the landing zone
+- 💥 kills explode into color-matched glow puffs + sparks + an expanding shockwave ring; bosses chain-detonate
+- 📳 camera shake scaled by the event (bosses shake the screen hard)
+- 🩸 0.35s invulnerability window after taking damage, with red damage flash
 
 ## 🧠 Tech Highlights
 
 - 🎮 **Godot 4.7 / GDScript**, GL Compatibility renderer for maximum browser reach
-- 🎨 **All art is procedurally generated** by `tools/gen_assets.py` (Python + Pillow) — one cohesive rounded-neon style, regenerable in seconds
+- 🎨 **All art is procedurally generated** by `tools/gen_assets.py` (Python + Pillow) — planes, bosses, FX textures and the parallax starfield in one cohesive rounded-neon style
+- 🔈 **All sound is procedurally synthesized** by `tools/gen_sounds.py` (pure math → WAV) — zero audio assets shipped
 - 🀄 **Embedded rounded CJK font** (ZCOOL KuaiLe) so the Chinese UI renders identically in the browser, where system fonts are unavailable
 - 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, so it runs on GitHub Pages as-is
 - ✨ All effects use `CPUParticles2D` + additive-blend sprites: no GPU particles, no shaders, friendly to weak devices
@@ -92,26 +115,31 @@ Upgrades stack — a maxed build sprays a 7-bullet fan of glowing rounds.
 
 ```text
 no-survivor-game/
-├── assets/                # generated art + embedded font
+├── assets/
 │   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
-│   └── *.png              # player, enemies, bullet, gem, particles, starfield
+│   ├── sounds/            # synthesized WAVs (from tools/gen_sounds.py)
+│   └── *.png              # ships, bosses, bullets, gems, particles, star layers
 ├── tools/
-│   └── gen_assets.py      # regenerates every PNG in assets/ (Python + Pillow)
+│   ├── gen_assets.py      # regenerates every PNG in assets/ (Python + Pillow)
+│   └── gen_sounds.py      # regenerates every WAV in assets/sounds/
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
 ├── screenshots/           # README screenshots
-├── world.gd / world.tscn  # game state: score, HP, XP, level-ups, all FX helpers
-├── player.gd / .tscn      # movement, mouse aim, hold-to-fire, multishot
+├── world.gd / .tscn       # game state, waves/bosses, SFX manager, all FX helpers
+├── player.gd / .tscn      # mouse piloting, hold-to-fire, 4 evolution forms
 ├── enemy.gd / .tscn       # chase AI, 3 types via setup(), death FX
-├── bullet.gd / .tscn      # glowing round + trail + hit sparks
-├── gem.gd / .tscn         # XP crystal with magnet pickup
+├── boss.gd / .tscn        # 3 boss patterns, HP bar signal, chain explosion
+├── enemy_bullet.gd / .tscn# boss bullet-hell rounds
+├── core.gd / .tscn        # boss-drop pickup that transforms the ship
+├── bullet / gem / hit_spk # player bullets, XP gems, hit sparks
 ├── camera.gd              # decaying screen shake
+├── bg_scroll.gd           # parallax scrolling starfield
 ├── panel_fx.gd            # scale-in animation for panels
 └── export_presets.cfg     # Web preset (threads off)
 ```
 
 ## 🚀 Quick Start
 
-**Play online** — open <https://mocas-12.github.io/no-survivor-game/> and click into the page. First load is ~40 MB (the engine itself), cached by the browser afterwards.
+**Play online** — open <https://mocas-12.github.io/no-survivor-game/>. First load is ~40 MB (the engine itself), cached by the browser afterwards.
 
 **Run from source**:
 
@@ -127,10 +155,11 @@ godot --headless --path . --export-release "Web" build/web/index.html
 cp -r build/web/* docs/    # then commit & push to redeploy
 ```
 
-**Regenerate all art** (optional):
+**Regenerate all art / sound** (optional):
 
 ```bash
 python tools/gen_assets.py
+python tools/gen_sounds.py
 ```
 
 ## ❓ FAQ
@@ -139,13 +168,13 @@ python tools/gen_assets.py
 The 39 MB WebAssembly engine is downloaded once; the browser caches it and later visits start instantly.
 
 **Does it work on phones?**
-It loads and runs, but it's tuned for mouse aim + keyboard — desktop is the intended way to play.
+It loads and runs, but it's tuned for mouse piloting — desktop is the intended way to play.
 
-**Where are the image files from?**
-None are downloaded — every sprite and particle texture is drawn by `tools/gen_assets.py`. Tweak the palette there and rerun to restyle the whole game.
+**Where are the image / sound files from?**
+None are downloaded — every sprite, texture and sound effect is generated by the two scripts in `tools/`. Tweak a palette or a synth parameter, rerun, and the whole game gets a new skin.
 
 ## 📄 License & Credits
 
-- **Code & generated art**: © Mocas-12, all rights reserved
+- **Code & generated art/sound**: © Mocas-12, all rights reserved
 - **Font**: [ZCOOL KuaiLe](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
 - **Engine**: [Godot Engine](https://godotengine.org/) 4.7 — MIT License

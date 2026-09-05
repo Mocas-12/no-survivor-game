@@ -2,9 +2,13 @@
 
 [ext_resource type="PackedScene" uid="uid://bjorh24wlg2gc" path="res://player.tscn" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://bfg1yeodd41of" path="res://world.gd" id="1_tlwt5"]
-[ext_resource type="Texture2D" path="res://assets/starfield.png" id="3_bg"]
-[ext_resource type="Script" path="res://camera.gd" id="4_cam"]
-[ext_resource type="Script" path="res://panel_fx.gd" id="5_pfx"]
+[ext_resource type="Script" path="res://bg_scroll.gd" id="3_bg"]
+[ext_resource type="Texture2D" path="res://assets/nebula.png" id="4_neb"]
+[ext_resource type="Texture2D" path="res://assets/stars_far.png" id="5_far"]
+[ext_resource type="Texture2D" path="res://assets/stars_mid.png" id="6_mid"]
+[ext_resource type="Texture2D" path="res://assets/stars_near.png" id="7_near"]
+[ext_resource type="Script" path="res://camera.gd" id="8_cam"]
+[ext_resource type="Script" path="res://panel_fx.gd" id="9_pfx"]
 
 [sub_resource type="StyleBoxFlat" id="sb_bar_bg"]
 bg_color = Color(0.07, 0.09, 0.18, 0.85)
@@ -22,6 +26,13 @@ corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="sb_xp_fill"]
 bg_color = Color(0.3, 0.8, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="sb_boss_fill"]
+bg_color = Color(0.85, 0.3, 0.95, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
@@ -88,14 +99,43 @@ Button/styles/pressed = SubResource("sb_btn_p")
 [node name="World" type="Node2D" unique_id=1247086468]
 script = ExtResource("1_tlwt5")
 
-[node name="Background" type="Sprite2D" parent="."]
-texture = ExtResource("3_bg")
+[node name="Background" type="Node2D" parent="."]
+script = ExtResource("3_bg")
+
+[node name="Nebula" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.85)
+texture_repeat = 2
+texture = ExtResource("4_neb")
 centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 1152, 648)
+
+[node name="Far" type="Sprite2D" parent="Background"]
+modulate = Color(1, 1, 1, 0.8)
+texture_repeat = 2
+texture = ExtResource("5_far")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 1152, 648)
+
+[node name="Mid" type="Sprite2D" parent="Background"]
+texture_repeat = 2
+texture = ExtResource("6_mid")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 1152, 648)
+
+[node name="Near" type="Sprite2D" parent="Background"]
+texture_repeat = 2
+texture = ExtResource("7_near")
+centered = false
+region_enabled = true
+region_rect = Rect2(0, 0, 1152, 648)
 
 [node name="Camera" type="Camera2D" parent="."]
 process_mode = 3
 position = Vector2(576, 324)
-script = ExtResource("4_cam")
+script = ExtResource("8_cam")
 
 [node name="Player" parent="." unique_id=351119110 instance=ExtResource("1_fj7yv")]
 position = Vector2(557, 600)
@@ -148,6 +188,44 @@ max_value = 10.0
 value = 10.0
 show_percentage = false
 
+[node name="BossName" type="Label" parent="UI"]
+visible = false
+offset_left = 350.0
+offset_top = 40.0
+offset_right = 800.0
+offset_bottom = 62.0
+theme_override_colors/font_color = Color(1, 0.5, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 16
+text = "【 BOSS 】"
+horizontal_alignment = 1
+
+[node name="BossBar" type="ProgressBar" parent="UI"]
+visible = false
+offset_left = 350.0
+offset_top = 64.0
+offset_right = 800.0
+offset_bottom = 78.0
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_boss_fill")
+max_value = 100.0
+value = 100.0
+show_percentage = false
+
+[node name="WarningLabel" type="Label" parent="UI"]
+visible = false
+offset_left = 0.0
+offset_top = 220.0
+offset_right = 1151.0
+offset_bottom = 290.0
+theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 46
+text = "—— BOSS 来袭 ——"
+horizontal_alignment = 1
+
 [node name="LevelUpFlash" type="ColorRect" parent="UI"]
 offset_right = 1151.0
 offset_bottom = 642.0
@@ -159,7 +237,7 @@ process_mode = 3
 offset_right = 1151.0
 offset_bottom = 642.0
 color = Color(0.05, 0.05, 0.09, 0.85)
-script = ExtResource("5_pfx")
+script = ExtResource("9_pfx")
 
 [node name="Label" type="Label" parent="UI/GameOverPanel" unique_id=797297302]
 modulate = Color(1, 0.25, 0.25, 1)
@@ -232,7 +310,7 @@ visible = false
 offset_right = 1151.0
 offset_bottom = 642.0
 color = Color(0.03, 0.03, 0.08, 0.82)
-script = ExtResource("5_pfx")
+script = ExtResource("9_pfx")
 
 [node name="Box" type="VBoxContainer" parent="UI/LevelUpPanel"]
 anchors_preset = 8

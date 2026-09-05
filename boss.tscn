@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://boss.gd" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assets/particle_soft.png" id="2_soft"]
+[ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="3_spark"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_b"]
+size = Vector2(210, 120)
+
+[node name="Boss" type="CharacterBody2D" groups=["boss"]]
+script = ExtResource("1_boss")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="ExplosionParticles" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 40
+lifetime = 0.7
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 180.0
+initial_velocity_max = 420.0
+scale_amount_min = 0.4
+scale_amount_max = 1.0
+texture = ExtResource("2_soft")
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 24
+lifetime = 0.4
+one_shot = true
+explosiveness = 1.0
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 260.0
+initial_velocity_max = 480.0
+scale_amount_min = 0.3
+scale_amount_max = 0.6
+texture = ExtResource("3_spark")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_b")
