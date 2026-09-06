@@ -1,16 +1,18 @@
-extends CharacterBody2D
+extends CharacterBody3D
 
-# 被击杀时发出信号：位置 + 积分 + 特效颜色（world 用它来加分、震屏和掉落经验）
-signal died(pos: Vector2, value: int, fx_color: Color)
+# 敌机（3D）：6 种机型，滚转朝向玩家，追击 + 撞击 + 炮手机开火
 
-# 六种敌机贴图与数值表（模型整体缩小了一号）
-const TEX := {
-	"normal": preload("res://assets/enemy_normal.png"),
-	"fast": preload("res://assets/enemy_fast.png"),
-	"swift": preload("res://assets/enemy_swift.png"),
-	"shooter": preload("res://assets/enemy_shooter.png"),
-	"shield": preload("res://assets/enemy_shield.png"),
-	"tank": preload("res://assets/enemy_tank.png"),
+signal died(pos: Vector3, value: int, fx_color: Color)
+
+const MB := preload("res://model_builder.gd")
+
+const STATS := {
+	"normal": {"speed": 150, "hp": 3, "score": 10, "damage": 1, "scale": 0.8},
+	"fast": {"speed": 260, "hp": 1, "score": 5, "damage": 1, "scale": 0.75},
+	"swift": {"speed": 300, "hp": 1, "score": 8, "damage": 1, "scale": 0.7},
+	"shooter": {"speed": 110, "hp": 4, "score": 15, "damage": 1, "scale": 0.75},
+	"shield": {"speed": 80, "hp": 8, "score": 25, "damage": 2, "scale": 0.9},
+	"tank": {"speed": 80, "hp": 12, "score": 40, "damage": 3, "scale": 1.0},
 }
 const COLORS := {
 	"normal": Color(1, 0.3, 0.4),
@@ -20,14 +22,6 @@ const COLORS := {
 	"shield": Color(0.85, 0.88, 0.95),
 	"tank": Color(0.72, 0.4, 1),
 }
-const STATS := {
-	"normal": {"speed": 150, "hp": 3, "score": 10, "damage": 1, "scale": 0.8},
-	"fast": {"speed": 260, "hp": 1, "score": 5, "damage": 1, "scale": 0.75},
-	"swift": {"speed": 300, "hp": 1, "score": 8, "damage": 1, "scale": 0.7},
-	"shooter": {"speed": 110, "hp": 4, "score": 15, "damage": 1, "scale": 0.75},
-	"shield": {"speed": 80, "hp": 8, "score": 25, "damage": 2, "scale": 0.9},
-	"tank": {"speed": 80, "hp": 12, "score": 40, "damage": 3, "scale": 1.0},
-}
 
 var kind = "normal"
 var speed = 150
@@ -36,14 +30,13 @@ var score_value = 10
 var damage = 1
 var dead = false
 var fx_color = Color(1, 0.3, 0.4)
-var slow_timer = 0.0   # 冰元素减速剩余时间
-var sway_t = 0.0       # 蛇形走位计时
-var fire_cd = 0.0      # 炮手机开火冷却
+var slow_timer = 0.0
+var sway_t = 0.0
+var fire_cd = 0.0
+var model: Node3D = null
 
-# 自动寻找玩家（玩家在 player 分组里）
 @onready var player = get_tree().get_first_node_in_group("player")
 
-# 由 world.gd 生成敌机时调用
 func setup(type: String):
 	kind = type
 	var st: Dictionary = STATS[type]
@@ -51,8 +44,11 @@ func setup(type: String):
 	health = st["hp"]
 	score_value = st["score"]
 	damage = st["damage"]
-	scale = Vector2.ONE * st["scale"]
-	$Sprite2D.texture = TEX[type]
+	scale = Vector3.ONE * st["scale"]
+	if model:
+		model.queue_free()
+	model = MB.build_enemy(type)
+	add_child(model)
 	fx_color = COLORS[type]
 	$ExplosionParticles.color = fx_color
 	$Sparks.color = Color(1, 0.92, 0.75)
@@ -64,45 +60,54 @@ func _physics_process(delta):
 		return
 	slow_timer = maxf(0.0, slow_timer - delta)
 	if player:
-		# 1. 追踪逻辑
-		look_at(player.global_position)
-		var direction = global_position.direction_to(player.global_position)
+		var to_p = player.global_position - global_position
+		var dir2 = Vector2(to_p.x, to_p.y).normalized()
+		# 滚转朝向玩家（模型机头朝 -Y）
+		rotation.z = dir2.angle() + PI / 2
 		var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
-		velocity = direction * cur_speed
+		velocity = Vector3(dir2.x, dir2.y, 0.0) * cur_speed
 		if kind == "swift":
 			# 蛇形走位：垂直于航向叠加正弦摆动
 			sway_t += delta * 6.0
-			velocity += transform.y * sin(sway_t) * 90.0
+			velocity += Vector3(-dir2.y, dir2.x, 0.0) * sin(sway_t) * 90.0
 		move_and_slide()
 
-		# 2. 炮手机：周期性朝玩家开火
+		# 炮手机：周期性朝玩家开火
 		if kind == "shooter":
 			fire_cd -= delta
 			if fire_cd <= 0.0:
 				fire_cd = randf_range(2.0, 2.8)
 				var world = get_tree().current_scene
 				if world.has_method("spawn_enemy_bullet"):
-					world.spawn_enemy_bullet(global_position + direction * 30.0, direction, 210.0)
+					world.spawn_enemy_bullet(global_position + Vector3(dir2.x, dir2.y, 0.0) * 30.0, Vector3(dir2.x, dir2.y, 0.0), 210.0)
 
-		# 3. 碰撞玩家逻辑
+		# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
 		for i in get_slide_collision_count():
 			var target = get_slide_collision(i).get_collider()
 			if target and target.is_in_group("player"):
-				# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
 				if get_tree().current_scene.has_method("take_damage"):
 					get_tree().current_scene.take_damage(damage)
 				queue_free()
 				return
 
-# --- 冰元素：减速 ---
 func slow_down(t: float):
 	slow_timer = maxf(slow_timer, t)
 
-# --- 风元素：击退 ---
-func knockback(v: Vector2):
+func knockback(v: Vector3):
 	global_position += v
 
-# --- 激光持续伤害：不触发闪白（避免每帧刷屏） ---
+func take_damage(amount):
+	if dead:
+		return
+	health -= amount
+	# 受击反馈：轻微膨胀
+	var base = Vector3.ONE * STATS[kind]["scale"]
+	var tw = create_tween()
+	tw.tween_property(self, "scale", base * 1.12, 0.04)
+	tw.tween_property(self, "scale", base, 0.08)
+	if health <= 0:
+		die()
+
 func take_damage_silent(amount):
 	if dead:
 		return
@@ -110,41 +115,16 @@ func take_damage_silent(amount):
 	if health <= 0:
 		die()
 
-# --- 被子弹打中时调用的函数 ---
-func take_damage(amount):
-	if dead:
-		return
-	health -= amount
-
-	# 视觉反馈：受伤闪白
-	modulate = Color(10, 10, 10)  # 瞬间极亮
-	await get_tree().create_timer(0.05).timeout
-	modulate = Color(1, 1, 1)     # 恢复原色
-
-	if health <= 0:
-		die()
-
-# --- 死亡逻辑（粒子特效；加分和掉落由 world 处理） ---
 func die():
 	if dead:
 		return
 	dead = true
-
-	# 1. 停止一切逻辑，防止死掉的怪还在移动或挡子弹
 	set_physics_process(false)
-	$CollisionShape2D.set_deferred("disabled", true)
-
-	# 2. 通知 world：击杀成功（加分 + 特效 + 掉经验水晶）
+	$Collision.set_deferred("disabled", true)
 	died.emit(global_position, score_value, fx_color)
-
-	# 3. 播放死亡粒子（光雾 + 火花），隐藏本体
-	if has_node("ExplosionParticles"):
-		$ExplosionParticles.emitting = true
-	if has_node("Sparks"):
-		$Sparks.emitting = true
-	if has_node("Sprite2D"):
-		$Sprite2D.hide()
-
-	# 4. 延迟删除：给粒子特效留出播放时间
+	$ExplosionParticles.emitting = true
+	$Sparks.emitting = true
+	if model:
+		model.visible = false
 	await get_tree().create_timer(0.6).timeout
 	queue_free()

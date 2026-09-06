@@ -1,47 +1,64 @@
 [gd_scene format=3 uid="uid://bjorh24wlg2gc"]
 
 [ext_resource type="Script" uid="uid://bnst2fb87h5jv" path="res://player.gd" id="1_4flbx"]
-[ext_resource type="Texture2D" path="res://assets/player_form1.png" id="2_tex"]
-[ext_resource type="Texture2D" path="res://assets/particle_soft.png" id="3_soft"]
-[ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="4_spark"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_p"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_p"]
 radius = 20.0
 
-[node name="Player" type="CharacterBody2D" unique_id=351119110 groups=["player"]]
+[sub_resource type="StandardMaterial3D" id="StdMat_trail"]
+shading_mode = 0
+albedo_color = Color(0.4, 0.85, 1, 0.55)
+emission_enabled = true
+emission = Color(0.4, 0.85, 1, 1)
+emission_energy_multiplier = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_trail"]
+material = SubResource("StdMat_trail")
+size = Vector3(2.4, 2.4, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="StdMat_mf"]
+shading_mode = 0
+albedo_color = Color(1, 1, 1, 0.9)
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_mf"]
+material = SubResource("StdMat_mf")
+size = Vector3(1.8, 1.8, 1.8)
+
+[node name="Player" type="CharacterBody3D" unique_id=351119110 groups=["player"]]
 script = ExtResource("1_4flbx")
 
-[node name="EngineTrail" type="CPUParticles2D" parent="."]
-position = Vector2(0, 48)
-amount = 30
-lifetime = 0.35
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_p")
+
+[node name="EngineTrail" type="CPUParticles3D" parent="."]
+position = Vector3(0, 42, 0)
+amount = 26
+lifetime = 0.4
 spread = 8.0
-direction = Vector2(0, 1)
+direction = Vector3(0, 1, 0)
+gravity = Vector3(0, 0, 0)
 initial_velocity_min = 60.0
 initial_velocity_max = 110.0
-scale_amount_min = 0.15
-scale_amount_max = 0.35
-color = Color(0.4, 0.85, 1, 0.45)
-texture = ExtResource("3_soft")
+scale_amount_min = 0.5
+scale_amount_max = 1.1
+color = Color(0.4, 0.85, 1, 0.55)
+mesh = SubResource("BoxMesh_trail")
 
-[node name="MuzzleFlash" type="CPUParticles2D" parent="."]
-position = Vector2(0, -48)
+[node name="MuzzleFlash" type="CPUParticles3D" parent="."]
+position = Vector3(0, -48, 0)
 emitting = false
 amount = 6
-lifetime = 0.1
+lifetime = 0.12
 one_shot = true
 explosiveness = 1.0
-direction = Vector2(0, -1)
-spread = 16.0
-gravity = Vector2(0, 0)
+direction = Vector3(0, -1, 0)
+spread = 14.0
+gravity = Vector3(0, 0, 0)
 initial_velocity_min = 160.0
 initial_velocity_max = 300.0
-scale_amount_min = 0.3
-scale_amount_max = 0.6
-texture = ExtResource("4_spark")
-
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_tex")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_p")
+scale_amount_min = 0.4
+scale_amount_max = 1.0
+mesh = SubResource("BoxMesh_mf")

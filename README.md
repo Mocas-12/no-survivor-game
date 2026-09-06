@@ -2,7 +2,7 @@
 
 # No Survivor Game
 
-**A Godot 4 vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5-boss fleet, elemental weapons, evolution forms**
+**A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5-boss fleet, elemental weapons, 20 evolving 3D ship forms**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)

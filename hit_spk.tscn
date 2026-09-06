@@ -1,19 +1,29 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://4b6d8a0c2e1f"]
 
 [ext_resource type="Script" path="res://hit_spk.gd" id="1_hs"]
-[ext_resource type="Texture2D" path="res://assets/particle_spark.png" id="2_tex"]
 
-[node name="HitSpark" type="CPUParticles2D"]
+[sub_resource type="StandardMaterial3D" id="StdMat_hs"]
+shading_mode = 0
+albedo_color = Color(1, 1, 1, 1)
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 2.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_hs"]
+material = SubResource("StdMat_hs")
+size = Vector3(1.8, 1.8, 1.8)
+
+[node name="HitSpark" type="CPUParticles3D"]
 emitting = false
 amount = 8
 lifetime = 0.22
 one_shot = true
 explosiveness = 1.0
 spread = 180.0
-gravity = Vector2(0, 0)
+gravity = Vector3(0, 0, 0)
 initial_velocity_min = 120.0
 initial_velocity_max = 260.0
-scale_amount_min = 0.3
-scale_amount_max = 0.55
-texture = ExtResource("2_tex")
+scale_amount_min = 0.6
+scale_amount_max = 1.3
+mesh = SubResource("BoxMesh_hs")
 script = ExtResource("1_hs")

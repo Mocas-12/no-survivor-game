@@ -1,18 +1,27 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://6k2m8p4q7r1s"]
 
 [ext_resource type="Script" path="res://enemy_bullet.gd" id="1_eb"]
-[ext_resource type="Texture2D" path="res://assets/enemy_bullet.png" id="2_tex"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_eb"]
+[sub_resource type="StandardMaterial3D" id="StdMat_eb"]
+shading_mode = 0
+albedo_color = Color(1, 0.35, 0.75, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.75, 1)
+emission_energy_multiplier = 2.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_eb"]
+material = SubResource("StdMat_eb")
+radius = 6.0
+height = 12.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_eb"]
 radius = 8.0
 
-[node name="EnemyBullet" type="Area2D" groups=["enemy_bullets"]]
+[node name="EnemyBullet" type="Area3D" groups=["enemy_bullets"]]
 script = ExtResource("1_eb")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_tex")
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_eb")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_eb")
-
-[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_eb")

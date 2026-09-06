@@ -1,4 +1,4 @@
-extends Node2D
+extends Node3D
 
 # 1. 模板场景
 @export var enemy_scene: PackedScene = preload("res://enemy.tscn")
@@ -8,8 +8,6 @@ extends Node2D
 @export var enemy_bullet_scene: PackedScene = preload("res://enemy_bullet.tscn")
 @export var boss_scene: PackedScene = preload("res://boss.tscn")
 
-const RING_TEX := preload("res://assets/ring.png")
-const SOFT_TEX := preload("res://assets/particle_soft.png")
 const SPARK_TEX := preload("res://assets/particle_spark.png")
 const BGM := preload("res://assets/sounds/bgm.wav")
 const GOLD := Color(1, 0.84, 0.35)
@@ -29,20 +27,20 @@ const SFX := {
 }
 
 # 2. 核心变量
-var score = 0              # 积分
-var health = 10            # 当前血量
-var max_health = 10        # 血量上限
-var xp = 0                 # 当前经验
-var level = 1              # 当前等级
-var xp_to_next = 5         # 升到下一级需要的经验
-var pending_level_ups = 0  # 待选择的升级次数
+var score = 0
+var health = 10
+var max_health = 10
+var xp = 0
+var level = 1
+var xp_to_next = 5
+var pending_level_ups = 0
 
 # 3. 波次与 Boss
-var kill_count = 0         # 累计击杀数
-var next_boss_at = 25      # 击杀数达到该值触发 Boss 战
-var boss_tier = 0          # 已出现的 Boss 次数（血量伤害递增）
-var boss_active = false    # Boss 战进行中（停止刷小怪）
-var last_hurt_ms = -10000  # 受伤无敌帧计时
+var kill_count = 0
+var next_boss_at = 25
+var boss_tier = 0
+var boss_active = false
+var last_hurt_ms = -10000
 
 # 4. 引用节点
 @onready var player = $Player
@@ -65,16 +63,20 @@ var last_hurt_ms = -10000  # 受伤无敌帧计时
 	$UI/LevelUpPanel/Box/Buttons/Btn1,
 	$UI/LevelUpPanel/Box/Buttons/Btn2,
 ]
+@onready var star_mats = [
+	$Background/Nebula.material_override,
+	$Background/Far.material_override,
+	$Background/Mid.material_override,
+	$Background/Near.material_override,
+]
+var star_speeds := [16.0, 40.0, 90.0, 170.0]
+var star_tex_h := [1024.0, 512.0, 512.0, 512.0]
 
-# 升级强化池（12 张：基础 5 + 元素 4 + 弹道 3），每次升级随机抽 3 张
+# 升级强化池（12 张），每次升级随机抽 3 张
 var upgrade_pool = []
-var add_mat: CanvasItemMaterial
 var bgm_player: AudioStreamPlayer
 
 func _ready():
-	add_mat = CanvasItemMaterial.new()
-	add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-
 	upgrade_pool = [
 		{"title": "射速强化", "desc": "射击间隔 -20%", "apply": _upgrade_fire_rate, "can": func(): return player.fire_cooldown > 0.06},
 		{"title": "威力强化", "desc": "子弹伤害 +1", "apply": _upgrade_damage, "can": func(): return true},
@@ -86,7 +88,7 @@ func _ready():
 		{"title": "雷电弹头", "desc": "雷元素：链式电击邻近目标", "apply": _upgrade_lightning_element, "can": func(): return player.element != "lightning"},
 		{"title": "疾风弹头", "desc": "风元素：弹速 +40% 并击退", "apply": _upgrade_wind_element, "can": func(): return player.element != "wind"},
 		{"title": "追踪导弹", "desc": "发射自动追踪敌机的导弹", "apply": _upgrade_homing, "can": func(): return player.pattern != "homing"},
-		{"title": "扩散弹幕", "desc": "扇形张开，弹道 +1", "apply": _upgrade_wide, "can": func(): return player.spacing_scale < 1.6 and player.pattern != "stream"},
+		{"title": "扩散弹幕", "desc": "扇形张开，弹道 +1", "apply": _upgrade_wide, "can": func(): return player.spacing_scale < 1.6 and player.pattern != "homing"},
 		{"title": "波浪弹道", "desc": "子弹蛇行，覆盖更广", "apply": _upgrade_wave, "can": func(): return player.pattern != "wave"},
 	]
 	for i in upgrade_buttons.size():
@@ -95,15 +97,13 @@ func _ready():
 	# 手机摇杆输入接入玩家
 	$TouchUI.moved.connect(func(d): player.touch_move = d)
 
-	# 背景音乐：无缝循环（等开始面板点击后再播放，满足浏览器音频手势要求）
+	# 背景音乐：导入时已设置无缝循环（bgm.wav.import loop_mode=1），
+	# 播完自动重播作为保险（等开始面板点击后再播放，满足浏览器音频手势要求）
 	bgm_player = AudioStreamPlayer.new()
-	var bgm_stream: AudioStreamWAV = BGM
-	bgm_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	bgm_stream.loop_begin = 0
-	bgm_stream.loop_end = bgm_stream.data.size() / 2
-	bgm_player.stream = bgm_stream
+	bgm_player.stream = BGM
 	bgm_player.volume_db = -13.0
 	add_child(bgm_player)
+	bgm_player.finished.connect(func(): bgm_player.play())
 
 	update_ui()
 	game_over_panel.hide()
@@ -114,6 +114,11 @@ func _ready():
 	get_tree().paused = true
 	start_panel.show()
 	start_button.pressed.connect(_on_start_pressed)
+
+func _process(delta):
+	# 多层星空向下滚动（UV 偏移驱动）
+	for i in star_mats.size():
+		star_mats[i].uv1_offset.y -= star_speeds[i] * delta / star_tex_h[i]
 
 # --- 音效 ---
 
@@ -131,13 +136,12 @@ func play_sfx(name: String, volume_db := 0.0, pitch_jitter := 0.05):
 func _on_timer_timeout():
 	var enemy = enemy_scene.instantiate()
 	# 抢滩登陆：敌机从屏幕上方随机位置出现
-	enemy.position = Vector2(randf_range(0, 1152), -80)
+	enemy.position = Vector3(randf_range(-576.0, 576.0), 404.0, 0.0)
 	enemy.setup(pick_enemy_type())
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
 
 func pick_enemy_type() -> String:
-	# 分数越高，新兵种与强力兵种陆续登场
 	var roll = randf()
 	if score >= 150 and roll < 0.12:
 		return "tank"
@@ -153,16 +157,17 @@ func pick_enemy_type() -> String:
 
 # --- 击杀与经验 ---
 
-func _on_enemy_died(pos, value, fx_color):
+func _on_enemy_died(pos: Vector3, value, fx_color):
 	score += value
 	kill_count += 1
 
-	# 击杀演出：冲击波 + 音效 + 震屏
+	# 击杀演出：3D 爆炸粒子 + 冲击波环 + 音效 + 震屏
+	spawn_explosion(pos, fx_color, value >= 30)
 	spawn_ring(pos, fx_color, 0.35, 2.0, 0.35)
 	play_sfx("explode", -8.0, 0.12)
 	camera.add_shake(6.0 if value >= 30 else 2.5)
 
-	# 敌机死亡处掉落经验水晶（重型机更值钱）
+	# 掉落经验水晶
 	var gem = gem_scene.instantiate()
 	gem.position = pos
 	gem.xp_value = 3 if value >= 30 else (2 if value >= 20 else 1)
@@ -193,10 +198,9 @@ func _maybe_boss():
 
 func _start_boss():
 	boss_active = true
-	$Timer.stop()  # Boss 战期间停止刷小怪
+	$Timer.stop()
 	play_sfx("warning", -2.0, 0.0)
 
-	# 警报横幅闪烁 2.2 秒
 	warning_label.text = "—— 第 %d 波 BOSS 来袭 ——" % (boss_tier + 1)
 	warning_label.modulate.a = 1.0
 	warning_label.show()
@@ -226,16 +230,15 @@ func _spawn_boss():
 	boss_bar.value = boss.max_hp
 	boss_bar.show()
 
-	spawn_ring(Vector2(576, 150), Color(1, 0.4, 0.4), 0.4, 3.0, 0.7)
+	spawn_ring(Vector3(0, 174, 0), Color(1, 0.4, 0.4), 0.4, 3.0, 0.7)
 	camera.add_shake(8.0)
 
 func _on_boss_hp(hp, max_hp):
 	boss_bar.max_value = max_hp
 	boss_bar.value = hp
 
-func _on_boss_died(pos):
+func _on_boss_died(pos: Vector3):
 	boss_active = false
-	# 波次间隔：越来越久才遇到下一个 Boss
 	next_boss_at = kill_count + 50 + boss_tier * 10
 	boss_name_label.hide()
 	boss_bar.hide()
@@ -245,7 +248,7 @@ func _on_boss_died(pos):
 	camera.add_shake(18.0)
 	flash_ui(Color(1, 0.6, 0.3), 0.45)
 	for i in 3:
-		spawn_ring(pos + Vector2(randf_range(-60, 60), randf_range(-40, 40)), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
+		spawn_ring(pos + Vector3(randf_range(-60, 60), randf_range(-40, 40), 0.0), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
 
 	# 掉落核心装备：接住后战机渐进变形
 	var core = core_scene.instantiate()
@@ -254,9 +257,9 @@ func _on_boss_died(pos):
 	add_child(core)
 
 	update_ui()
-	$Timer.start()  # 恢复刷小怪
+	$Timer.start()
 
-func spawn_enemy_bullet(pos, dir, speed, damage := 1, homing := 0.0, homing_time := 0.0):
+func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing := 0.0, homing_time := 0.0):
 	var b = enemy_bullet_scene.instantiate()
 	b.position = pos
 	b.dir = dir
@@ -266,20 +269,28 @@ func spawn_enemy_bullet(pos, dir, speed, damage := 1, homing := 0.0, homing_time
 	b.homing_time = homing_time
 	add_child(b)
 
-func spawn_lightning(from: Vector2, to: Vector2):
-	# 雷电链电弧：中间抖动的电光线
-	var line = Line2D.new()
-	line.default_color = Color(0.8, 0.7, 1)
-	line.width = 3.0
-	line.material = add_mat
-	var mid = (from + to) / 2.0 + Vector2(randf_range(-14, 14), randf_range(-14, 14))
-	line.points = PackedVector2Array([from, mid, to])
-	add_child(line)
-	var tw = line.create_tween()
-	tw.tween_property(line, "modulate:a", 0.0, 0.12)
-	tw.tween_callback(line.queue_free)
+func spawn_lightning(from: Vector3, to: Vector3):
+	# 雷电链电弧：中间抖动的发光柱
+	var mid = (from + to) * 0.5 + Vector3(randf_range(-12, 12), randf_range(-12, 12), 0.0)
+	var length = from.distance_to(to)
+	var mi = MeshInstance3D.new()
+	var bm = BoxMesh.new()
+	bm.size = Vector3(3, 3, length)
+	mi.mesh = bm
+	var m = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(0.85, 0.75, 1, 1)
+	m.emission_enabled = true
+	m.emission = Color(0.8, 0.65, 1)
+	m.emission_energy_multiplier = 2.0
+	mi.material_override = m
+	mi.look_at_from_position(mid, to)
+	add_child(mi)
+	var tw = mi.create_tween()
+	tw.tween_property(mi, "transparency", 1.0, 0.12)
+	tw.tween_callback(mi.queue_free)
 
-# --- 核心装备：渐进变形演出 ---
+# --- 核心装备：连贯 3D 变形演出 ---
 
 func apply_core(form):
 	play_sfx("transform")
@@ -289,17 +300,17 @@ func apply_core(form):
 	_apply_form_bonus(form)
 	update_ui()
 
-	# 连贯变形演出（不暂停）：旧机体收缩白化 → 光柱冲天 → 新机体弹性放大 → 回落
+	# 渐进变形（不暂停）：旧机体收缩 + 3D 翻滚白化 → 光柱冲天 → 新机体弹性放大登场
 	var tw = create_tween()
-	tw.tween_property(player, "scale", Vector2.ONE * 0.25, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tw.parallel().tween_property(player, "modulate", Color(6, 6, 8), 0.18)
+	tw.tween_property(player, "scale", Vector3.ONE * 0.25, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_callback(func():
 		player.set_form(form)
 		_spawn_evolution_beam()
 		var tw2 = create_tween()
-		tw2.tween_property(player, "modulate", Color(1, 1, 1), 0.18)
-		tw2.parallel().tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw2.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.2)
+		tw2.set_parallel(true)
+		tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.2)
 	)
 	# 连环冲击波
 	for i in 3:
@@ -309,18 +320,27 @@ func apply_core(form):
 
 func _spawn_evolution_beam():
 	# 冲天光柱
-	var beam = Sprite2D.new()
-	beam.texture = SOFT_TEX
-	beam.material = add_mat
-	beam.position = player.position
-	beam.scale = Vector2(0.45, 3.2)
-	beam.modulate = Color(0.7, 0.95, 1, 0.9)
-	add_child(beam)
-	var tw = beam.create_tween()
+	var mi = MeshInstance3D.new()
+	var cm = CylinderMesh.new()
+	cm.top_radius = 10.0
+	cm.bottom_radius = 26.0
+	cm.height = 760.0
+	mi.mesh = cm
+	var m = StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.6, 0.9, 1, 0.5)
+	m.emission_enabled = true
+	m.emission = Color(0.6, 0.9, 1)
+	m.emission_energy_multiplier = 1.8
+	mi.material_override = m
+	mi.position = player.position + Vector3(0, 320, 0)
+	add_child(mi)
+	var tw = mi.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(beam, "scale", Vector2(1.1, 4.5), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(beam, "modulate:a", 0.0, 0.5)
-	tw.chain().tween_callback(beam.queue_free)
+	tw.tween_property(mi, "scale", Vector3(2.2, 1.15, 2.2), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(m, "albedo_color:a", 0.0, 0.5)
+	tw.chain().tween_callback(mi.queue_free)
 
 func _apply_form_bonus(n):
 	# 每次变形的渐进成长：弹道/伤害/射速/生命交替增强
@@ -375,21 +395,20 @@ func _on_upgrade_button_pressed(index):
 # --- 各种强化的具体效果 ---
 
 func _upgrade_fire_rate():
-	player.fire_cooldown = maxf(0.06, player.fire_cooldown * 0.8)
+	player.fire_cooldown = maxf(0.055, player.fire_cooldown * 0.8)
 
 func _upgrade_damage():
 	player.damage += 1
 
 func _upgrade_multishot():
-	player.bullet_count += 1
+	player.bullet_count = mini(player.bullet_count + 1, 8)
 
 func _upgrade_speed():
 	player.speed = int(player.speed * 1.12)
 
 func _upgrade_health():
 	max_health += 2
-	health = min(health + 4, max_health)
-	update_ui()
+	health = mini(health + 3, max_health)
 
 func _upgrade_fire_element():
 	player.element = "fire"
@@ -409,48 +428,94 @@ func _upgrade_homing():
 
 func _upgrade_wide():
 	player.spacing_scale = 1.6
-	player.bullet_count = mini(player.bullet_count + 1, 7)
+	player.bullet_count = mini(player.bullet_count + 1, 8)
 
 func _upgrade_wave():
 	player.pattern = "wave"
 
 # --- 特效工具函数 ---
 
-func spawn_ring(pos: Vector2, color: Color, from_scale: float, to_scale: float, dur: float):
-	# 扩散冲击波圆环：放大 + 淡出后自毁
-	var ring := Sprite2D.new()
-	ring.texture = RING_TEX
-	ring.material = add_mat
+func spawn_ring(pos: Vector3, color: Color, from_scale: float, to_scale: float, dur: float):
+	# 3D 冲击波圆环：放大 + 淡出后自毁
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 9.0
+	torus.outer_radius = 11.0
+	ring.mesh = torus
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = color
+	m.emission_enabled = true
+	m.emission = color
+	m.emission_energy_multiplier = 1.8
+	ring.material_override = m
 	ring.position = pos
-	ring.modulate = color
-	ring.scale = Vector2.ONE * from_scale
+	ring.rotation_degrees = Vector3(90, 0, 0)
+	ring.scale = Vector3.ONE * from_scale
 	add_child(ring)
 	var tw := ring.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2.ONE * to_scale, dur).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "modulate:a", 0.0, dur)
+	tw.tween_property(ring, "scale", Vector3.ONE * to_scale, dur).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(m, "albedo_color:a", 0.0, dur)
 	tw.chain().tween_callback(ring.queue_free)
 
-func spawn_hit_spark(pos: Vector2):
+func spawn_explosion(pos: Vector3, color: Color, big := false):
+	var p := CPUParticles3D.new()
+	p.amount = 40 if big else 22
+	p.lifetime = 0.55
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3.ZERO
+	p.initial_velocity_min = 130.0
+	p.initial_velocity_max = 320.0
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 3.2 if big else 2.2
+	var m := SphereMesh.new()
+	m.radius = 2.6
+	m.height = 5.2
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.albedo_color = color
+	mm.emission_enabled = true
+	mm.emission = color
+	mm.emission_energy_multiplier = 2.0
+	m.material = mm
+	p.mesh = m
+	p.position = pos
+	add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+
+func spawn_hit_spark(pos: Vector3):
 	play_sfx("hit", -10.0, 0.15)
 	var s := hit_spark_scene.instantiate()
 	s.position = pos
 	add_child(s)
 
-func confetti_burst(pos: Vector2, amount: int, color: Color = GOLD):
-	var p := CPUParticles2D.new()
-	p.texture = SPARK_TEX
+func confetti_burst(pos: Vector3, amount: int, color: Color = GOLD):
+	var p := CPUParticles3D.new()
 	p.amount = amount
 	p.lifetime = 0.9
 	p.one_shot = true
 	p.explosiveness = 1.0
 	p.spread = 180.0
-	p.gravity = Vector2(0, 520)
+	p.gravity = Vector3(0, -500, 0)
 	p.initial_velocity_min = 220.0
 	p.initial_velocity_max = 480.0
-	p.scale_amount_min = 0.3
-	p.scale_amount_max = 0.7
-	p.color = color
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.8
+	var m := BoxMesh.new()
+	m.size = Vector3(2.2, 2.2, 2.2)
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.albedo_color = color
+	mm.emission_enabled = true
+	mm.emission = color
+	mm.emission_energy_multiplier = 2.0
+	m.material = mm
+	p.mesh = m
 	p.position = pos
 	p.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(p)
@@ -467,8 +532,8 @@ func flash_ui(color: Color, peak: float):
 func pulse_player():
 	var tw := create_tween()
 	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale * 1.3, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(player, "scale", Vector2.ONE * player.base_scale, 0.3)
+	tw.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.3, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.3)
 
 # --- 受伤与结算 ---
 
@@ -481,9 +546,6 @@ func take_damage(amount):
 
 	health -= amount
 	play_sfx("hit", -2.0, 0.15)
-	player.modulate = Color(3, 0.6, 0.6)
-	var tw := create_tween()
-	tw.tween_property(player, "modulate", Color(1, 1, 1), 0.25)
 	update_ui()
 	if health <= 0:
 		game_over()
@@ -503,7 +565,7 @@ func update_ui():
 	$Timer.wait_time = max(0.3, 0.9 - score * 0.002)
 
 func game_over():
-	$TouchUI.reset()   # 暂停前复位摇杆
+	$TouchUI.reset()
 	final_score_label.text = "最终积分: %d    等级: %d" % [score, level]
 	game_over_panel.show()
 	if game_over_panel.has_method("animate_in"):

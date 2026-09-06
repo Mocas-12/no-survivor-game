@@ -2,17 +2,68 @@
 
 [ext_resource type="PackedScene" uid="uid://bjorh24wlg2gc" path="res://player.tscn" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://bfg1yeodd41of" path="res://world.gd" id="1_tlwt5"]
-[ext_resource type="Script" path="res://bg_scroll.gd" id="3_bg"]
+[ext_resource type="Script" path="res://camera.gd" id="8_cam"]
+[ext_resource type="Script" path="res://touch_ui.gd" id="10_tui"]
+[ext_resource type="Script" path="res://panel_fx.gd" id="9_pfx"]
 [ext_resource type="Texture2D" path="res://assets/nebula.png" id="4_neb"]
 [ext_resource type="Texture2D" path="res://assets/stars_far.png" id="5_far"]
 [ext_resource type="Texture2D" path="res://assets/stars_mid.png" id="6_mid"]
 [ext_resource type="Texture2D" path="res://assets/stars_near.png" id="7_near"]
-[ext_resource type="Script" path="res://camera.gd" id="8_cam"]
-[ext_resource type="Script" path="res://panel_fx.gd" id="9_pfx"]
-[ext_resource type="Script" path="res://touch_ui.gd" id="10_tui"]
 [ext_resource type="Texture2D" path="res://assets/joystick_base.png" id="11_jb"]
 [ext_resource type="Texture2D" path="res://assets/joystick_thumb.png" id="12_jt"]
 [ext_resource type="Texture2D" path="res://assets/fire_button.png" id="13_fb"]
+
+[sub_resource type="Environment" id="Env_main"]
+background_mode = 1
+background_color = Color(0.008, 0.012, 0.035, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.6, 0.85, 1)
+ambient_light_energy = 0.8
+glow_enabled = true
+glow_intensity = 0.9
+
+[sub_resource type="StandardMaterial3D" id="Mat_neb"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("4_neb")
+albedo_color = Color(1, 1, 1, 0.85)
+texture_repeat = 2
+uv1_scale = Vector3(1.4, 0.8, 1)
+
+[sub_resource type="QuadMesh" id="Quad_neb"]
+size = Vector2(3700, 2100)
+
+[sub_resource type="StandardMaterial3D" id="Mat_far"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("5_far")
+albedo_color = Color(1, 1, 1, 0.8)
+texture_repeat = 2
+uv1_scale = Vector3(6, 3.5, 1)
+
+[sub_resource type="QuadMesh" id="Quad_far"]
+size = Vector2(3200, 1850)
+
+[sub_resource type="StandardMaterial3D" id="Mat_mid"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("6_mid")
+albedo_color = Color(1, 1, 1, 0.9)
+texture_repeat = 2
+uv1_scale = Vector3(5.5, 3, 1)
+
+[sub_resource type="QuadMesh" id="Quad_mid"]
+size = Vector2(2900, 1650)
+
+[sub_resource type="StandardMaterial3D" id="Mat_near"]
+transparency = 1
+shading_mode = 0
+albedo_texture = ExtResource("7_near")
+texture_repeat = 2
+uv1_scale = Vector3(5, 2.8, 1)
+
+[sub_resource type="QuadMesh" id="Quad_near"]
+size = Vector2(2600, 1500)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_fire"]
 radius = 92.0
@@ -103,51 +154,48 @@ Button/styles/hover = SubResource("sb_btn_h")
 Button/styles/normal = SubResource("sb_btn_n")
 Button/styles/pressed = SubResource("sb_btn_p")
 
-[node name="World" type="Node2D" unique_id=1247086468]
+[node name="World" type="Node3D"]
 script = ExtResource("1_tlwt5")
 
-[node name="Background" type="Node2D" parent="."]
-script = ExtResource("3_bg")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_main")
 
-[node name="Nebula" type="Sprite2D" parent="Background"]
-modulate = Color(1, 1, 1, 0.85)
-texture_repeat = 2
-texture = ExtResource("4_neb")
-centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 1152, 648)
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -25, 0)
+light_energy = 1.25
 
-[node name="Far" type="Sprite2D" parent="Background"]
-modulate = Color(1, 1, 1, 0.8)
-texture_repeat = 2
-texture = ExtResource("5_far")
-centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 1152, 648)
+[node name="Background" type="Node3D" parent="."]
 
-[node name="Mid" type="Sprite2D" parent="Background"]
-texture_repeat = 2
-texture = ExtResource("6_mid")
-centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 1152, 648)
+[node name="Nebula" type="MeshInstance3D" parent="Background"]
+position = Vector3(0, 0, -1500)
+mesh = SubResource("Quad_neb")
+material_override = SubResource("Mat_neb")
 
-[node name="Near" type="Sprite2D" parent="Background"]
-texture_repeat = 2
-texture = ExtResource("7_near")
-centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 1152, 648)
+[node name="Far" type="MeshInstance3D" parent="Background"]
+position = Vector3(0, 0, -1200)
+mesh = SubResource("Quad_far")
+material_override = SubResource("Mat_far")
 
-[node name="Camera" type="Camera2D" parent="."]
+[node name="Mid" type="MeshInstance3D" parent="Background"]
+position = Vector3(0, 0, -1000)
+mesh = SubResource("Quad_mid")
+material_override = SubResource("Mat_mid")
+
+[node name="Near" type="MeshInstance3D" parent="Background"]
+position = Vector3(0, 0, -800)
+mesh = SubResource("Quad_near")
+material_override = SubResource("Mat_near")
+
+[node name="Camera" type="Camera3D" parent="."]
 process_mode = 3
-position = Vector2(576, 324)
+position = Vector3(0, 0, 695)
+fov = 50.0
 script = ExtResource("8_cam")
 
-[node name="Player" parent="." unique_id=351119110 instance=ExtResource("1_fj7yv")]
-position = Vector2(557, 600)
+[node name="Player" parent="." instance=ExtResource("1_fj7yv")]
+position = Vector3(0, -276, 0)
 
-[node name="Timer" type="Timer" parent="." unique_id=1903243666]
+[node name="Timer" type="Timer" parent="."]
 wait_time = 0.9
 autostart = true
 
@@ -157,10 +205,12 @@ script = ExtResource("10_tui")
 
 [node name="JoystickBase" type="Sprite2D" parent="TouchUI"]
 visible = false
+position = Vector2(200, 480)
 texture = ExtResource("11_jb")
 
 [node name="JoystickThumb" type="Sprite2D" parent="TouchUI"]
 visible = false
+position = Vector2(200, 480)
 texture = ExtResource("12_jt")
 
 [node name="FireButton" type="TouchScreenButton" parent="TouchUI"]
@@ -169,9 +219,9 @@ texture_normal = ExtResource("13_fb")
 shape = SubResource("CircleShape2D_fire")
 action = "shoot"
 
-[node name="UI" type="CanvasLayer" parent="." unique_id=305512950]
+[node name="UI" type="CanvasLayer" parent="."]
 
-[node name="ScoreLabel" type="Label" parent="UI" unique_id=962958952]
+[node name="ScoreLabel" type="Label" parent="UI"]
 offset_left = 18.0
 offset_top = 12.0
 offset_right = 300.0
@@ -202,7 +252,7 @@ theme_override_styles/fill = SubResource("sb_xp_fill")
 max_value = 5.0
 show_percentage = false
 
-[node name="HealthBar" type="ProgressBar" parent="UI" unique_id=2693795]
+[node name="HealthBar" type="ProgressBar" parent="UI"]
 offset_left = 1000.0
 offset_top = 16.0
 offset_right = 1134.0
@@ -257,14 +307,14 @@ offset_bottom = 642.0
 color = Color(1, 0.85, 0.4, 0)
 mouse_filter = 2
 
-[node name="GameOverPanel" type="ColorRect" parent="UI" unique_id=1858673827]
+[node name="GameOverPanel" type="ColorRect" parent="UI"]
 process_mode = 3
 offset_right = 1151.0
 offset_bottom = 642.0
 color = Color(0.05, 0.05, 0.09, 0.85)
 script = ExtResource("9_pfx")
 
-[node name="Label" type="Label" parent="UI/GameOverPanel" unique_id=797297302]
+[node name="Label" type="Label" parent="UI/GameOverPanel"]
 modulate = Color(1, 0.25, 0.25, 1)
 anchors_preset = 8
 anchor_left = 0.5
@@ -297,7 +347,7 @@ theme_override_font_sizes/font_size = 26
 text = "最终积分: 0"
 horizontal_alignment = 1
 
-[node name="RestartButton" type="Button" parent="UI/GameOverPanel" unique_id=1827834846]
+[node name="RestartButton" type="Button" parent="UI/GameOverPanel"]
 custom_minimum_size = Vector2(130, 48)
 anchors_preset = 8
 anchor_left = 0.5
@@ -313,7 +363,7 @@ grow_vertical = 2
 theme = SubResource("Theme_ui")
 text = "重新开始"
 
-[node name="QuitButton" type="Button" parent="UI/GameOverPanel" unique_id=105855657]
+[node name="QuitButton" type="Button" parent="UI/GameOverPanel"]
 custom_minimum_size = Vector2(130, 48)
 anchors_preset = 8
 anchor_left = 0.5
