@@ -5,7 +5,7 @@
 **A Godot 4 vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5-boss fleet, elemental weapons, evolution forms**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
-[![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
+[![Godot](https://img.shields.io/badge/Godot-4.6-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
 [![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/)
 
@@ -54,7 +54,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 | Grunt | red strike fighter | 3 | 150 | 10 | 1 | 1 | — |
 | Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 | — |
 | Swift | green micro-fighter | 1 | 300 | 8 | 1 | 1 | serpentine weaving |
-| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 2 | fires at the player |
+| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 1 | fires at the player |
 | Guard | silver armored wedge | 8 | 80 | 25 | 2 | 2 | — |
 | Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 3 | — |
 

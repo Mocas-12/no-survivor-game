@@ -5,7 +5,7 @@
 **Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大 Boss 舰队、元素武器、形态进化**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-立即游玩-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
-[![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
+[![Godot](https://img.shields.io/badge/Godot-4.6-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
 [![Web](https://img.shields.io/badge/Platform-浏览器%20%7C%20手机-525252)](https://mocas-12.github.io/no-survivor-game/)
 
@@ -54,7 +54,7 @@
 | 普通机 | 红色攻击机 | 3 | 150 | 10 | 1 | 1 | — |
 | 快速机 | 橙色单眼拦截机 | 1 | 260 | 5 | 1 | 1 | — |
 | 疾风机 | 黄绿微型战机 | 1 | 300 | 8 | 1 | 1 | 蛇形走位 |
-| 炮手机 | 蓝灰炮艇 | 4 | 110 | 15 | 1 | 2 | 会朝玩家开火 |
+| 炮手机 | 蓝灰炮艇 | 4 | 110 | 15 | 1 | 1 | 会朝玩家开火 |
 | 盾机 | 银色装甲楔 | 8 | 80 | 25 | 2 | 2 | — |
 | 重装机 | 紫色重型战列 | 12 | 80 | 40 | 3 | 3 | — |
 

@@ -189,16 +189,7 @@ func take_damage(amount):
 		return
 	hp -= amount
 	hp_changed.emit(hp, max_hp)
-	# 半血狂暴：一次性触发，攻速/弹速全面强化
-	if not enraged and hp <= max_hp * 0.5:
-		enraged = true
-		var world = get_tree().current_scene
-		if world.has_method("spawn_ring"):
-			world.spawn_ring(global_position, Color(1, 0.3, 0.2), 0.4, 3.0, 0.6)
-		if world.has_method("flash_ui"):
-			world.flash_ui(Color(1, 0.3, 0.2), 0.25)
-		if world.has_method("play_sfx"):
-			world.play_sfx("warning", -4.0, 0.2)
+	_try_enrage()
 	modulate = Color(8, 8, 8)
 	await get_tree().create_timer(0.05).timeout
 	modulate = Color(1, 1, 1)
@@ -211,6 +202,12 @@ func take_damage_silent(amount):
 		return
 	hp = maxf(hp - amount, 0.0)
 	hp_changed.emit(hp, max_hp)
+	_try_enrage()
+	if hp <= 0:
+		_die()
+
+# 半血狂暴：一次性触发，攻速/弹速全面强化
+func _try_enrage():
 	if not enraged and hp <= max_hp * 0.5:
 		enraged = true
 		var world = get_tree().current_scene
@@ -220,8 +217,6 @@ func take_damage_silent(amount):
 			world.flash_ui(Color(1, 0.3, 0.2), 0.25)
 		if world.has_method("play_sfx"):
 			world.play_sfx("warning", -4.0, 0.2)
-	if hp <= 0:
-		_die()
 
 func _die():
 	if dead:

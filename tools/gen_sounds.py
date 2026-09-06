@@ -181,24 +181,11 @@ def bgm():
         for (off_e, idx) in motif:
             idx2 = max(0, min(4, idx))
             f = pent[idx2] * (2 if rep % 2 == 1 and idx2 >= 3 else 1)
-            add_note((base_bar + rep * 0) * 0 + (base_bar - 8 + rep * 0 + 0) * 0 + (base_bar * beat) + off_e * beat, beat * 0.55, f, 0.09, math.sin, 0.5)
+            add_note(base_bar * beat + off_e * beat, beat * 0.55, f, 0.09, math.sin, 0.5)
 
     save("bgm", out, 0.6)
-
-
-
-def laser_loop():
-    """激光持续音：0.3 秒无缝循环（频率取整周期保证衔接）"""
-    total = seconds(0.3)
-    out = [0.0] * total
-    for i in range(total):
-        t = i / SR
-        v = math.sin(2 * math.pi * 760 * t) * 0.5 + math.sin(2 * math.pi * 1140 * t) * 0.3 + saw(2 * math.pi * 380 * t) * 0.2
-        out[i] = v
-    save("laser", out, 0.4)
 
 
 if __name__ == "__main__":
     main()
     bgm()
-    laser_loop()

@@ -66,9 +66,6 @@ func _on_body_entered(body):
 		body.take_damage(damage)
 		_apply_element(body, world)
 		queue_free()              # 销毁子弹自己
-	elif body.is_in_group("mobs"):
-		body.queue_free()
-		queue_free()
 
 # --- 元素命中特效 ---
 func _apply_element(hit_body, world):

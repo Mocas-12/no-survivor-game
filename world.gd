@@ -113,7 +113,6 @@ func _ready():
 	$TouchUI.reset()
 	get_tree().paused = true
 	start_panel.show()
-	start_button.pressed.connect(_on_start_pressed)
 
 # --- 音效 ---
 
