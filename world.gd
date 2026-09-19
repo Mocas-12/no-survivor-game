@@ -825,4 +825,9 @@ func _on_restart_button_pressed():
 	get_tree().reload_current_scene()
 
 func _on_quit_button_pressed():
-	get_tree().quit()
+	# 网页版浏览器禁止脚本关闭页面，quit() 会卡死引擎——改为刷新回开始界面
+	if OS.has_feature("web"):
+		get_tree().paused = false
+		JavaScriptBridge.eval("location.reload()", true)
+	else:
+		get_tree().quit()

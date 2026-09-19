@@ -7,22 +7,22 @@ const ACCENTS := [Color(0.35, 0.88, 1.0), Color(0.55, 1.0, 0.82), Color(0.43, 1.
 
 # 主角 20 形态：10 艘飞船，形态 1-10 蓝、11-20 绿，逐艘更换机型
 const PLAYER_SHIPS := ["Bob", "Spitfire", "Challenger", "Pancake", "Striker", "Dispatcher", "Executioner", "Insurgent", "Imperial", "Omen"]
-# 敌机 6 种：[飞船, 涂装, 归一化长度]
+# 敌机 6 种：[飞船, 涂装, 归一化长度, 辨识光色]
 const ENEMY_SHIPS := {
-	"normal": ["Spitfire", "Red", 54.0],
-	"fast": ["Striker", "Orange", 58.0],
-	"swift": ["Bob", "Purple", 46.0],
-	"shooter": ["Dispatcher", "Blue", 50.0],
-	"shield": ["Challenger", "Red", 48.0],
-	"tank": ["Imperial", "Purple", 72.0],
+	"normal": ["Spitfire", "Red", 54.0, Color(1, 0.35, 0.4)],
+	"fast": ["Striker", "Orange", 58.0, Color(1, 0.62, 0.25)],
+	"swift": ["Bob", "Purple", 46.0, Color(0.72, 1, 0.35)],
+	"shooter": ["Dispatcher", "Blue", 50.0, Color(0.55, 0.75, 1)],
+	"shield": ["Challenger", "Red", 48.0, Color(0.9, 0.92, 1.0)],
+	"tank": ["Imperial", "Purple", 72.0, Color(0.72, 0.4, 1)],
 }
 # Boss 5 种：毁灭者/拦截者/要塞/猎手/幻影
 const BOSS_SHIPS := {
-	1: ["Executioner", "Red", 210.0],
-	2: ["Omen", "Purple", 200.0],
-	3: ["Zenith", "Green", 230.0],
-	4: ["Imperial", "Orange", 200.0],
-	5: ["Insurgent", "Blue", 190.0],
+	1: ["Executioner", "Red", 210.0, Color(1, 0.35, 0.4)],
+	2: ["Omen", "Purple", 200.0, Color(0.7, 0.45, 1)],
+	3: ["Zenith", "Green", 230.0, Color(0.4, 1, 0.85)],
+	4: ["Imperial", "Orange", 200.0, Color(1, 0.8, 0.35)],
+	5: ["Insurgent", "Blue", 190.0, Color(0.55, 0.75, 1)],
 }
 
 # ---------- 主角：20 形态 ----------
@@ -30,20 +30,20 @@ const BOSS_SHIPS := {
 static func build_player_form(n: int) -> Node3D:
 	var ship: String = PLAYER_SHIPS[n % PLAYER_SHIPS.size()]
 	var color := "Blue" if n < 10 else "Green"
-	# bright = true：主角机体自发光提亮，暗星空中始终清晰可见
-	return _ship_model(ship, color, 115.0 + n * 1.8, false, true)
+	# 呼吸灯机体：返回节点带 glow_mat 元数据，供 player.gd 每帧调制发光强度
+	return _ship_model(ship, color, 115.0 + n * 1.8, false, Color(0.55, 0.7, 0.85), 1.1, true)
 
 # ---------- 敌机（6 种，机头朝玩家俯冲） ----------
 
 static func build_enemy(kind: String) -> Node3D:
 	var cfg: Array = ENEMY_SHIPS[kind]
-	return _ship_model(cfg[0], cfg[1], cfg[2], true)
+	return _ship_model(cfg[0], cfg[1], cfg[2], true, cfg[3], 0.8)
 
 # ---------- BOSS（5 种，机头朝下方面对玩家） ----------
 
 static func build_boss(id: int) -> Node3D:
 	var cfg: Array = BOSS_SHIPS[id]
-	return _ship_model(cfg[0], cfg[1], cfg[2], true)
+	return _ship_model(cfg[0], cfg[1], cfg[2], true, cfg[3], 0.6)
 
 # ---------- 通用飞船装配：涂装 + 归一化 + 朝向 ----------
 
@@ -63,7 +63,7 @@ static func _load_cached(path: String) -> Resource:
 		_cache[path] = load(path)
 	return _cache[path]
 
-static func _ship_model(ship: String, color: String, length: float, nose_down: bool, bright := false) -> Node3D:
+static func _ship_model(ship: String, color: String, length: float, nose_down: bool, glow: Color, glow_energy: float, breathing := false) -> Node3D:
 	var outer := Node3D.new()
 	var inner := Node3D.new()
 	outer.add_child(inner)
@@ -72,15 +72,17 @@ static func _ship_model(ship: String, color: String, length: float, nose_down: b
 	mi.mesh = mesh
 	mi.position = -mesh.get_aabb().get_center()
 	inner.add_child(mi)
-	# 涂装材质（轻微金属感 + 微自发光提亮暗部，贴合星空霓虹画风）
+	# 涂装材质：辨识光色自发光，保证暗星空中敌我清晰可见
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = _load_cached("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
 	m.metallic = 0.35
 	m.roughness = 0.5
 	m.emission_enabled = true
-	m.emission = Color(0.4, 0.45, 0.55) if not bright else Color(0.55, 0.7, 0.85)
-	m.emission_energy_multiplier = 0.45 if not bright else 1.1
+	m.emission = glow
+	m.emission_energy_multiplier = glow_energy
 	mi.material_override = m
+	if breathing:
+		outer.set_meta("glow_mat", m)
 	# 归一化：最长边缩放到目标长度，模型中心对齐节点原点
 	var aabb := mesh.get_aabb()
 	var longest: float = maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))

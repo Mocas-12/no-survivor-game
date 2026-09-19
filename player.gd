@@ -20,16 +20,14 @@ var fire_timer = 0.0
 var use_touch = false              # 触屏设备：摇杆专属移动
 var model: Node3D = null           # 当前 3D 机体模型
 
+var glow_t := 0.0                   # 呼吸灯计时
+var _glow_mat: StandardMaterial3D = null
+
 func _ready():
 	use_touch = DisplayServer.is_touchscreen_available()
 	_update_base_scale()
 	scale = Vector3.ONE * base_scale
 	_set_model(0)
-	# 自机指示光环呼吸：暗星空中始终能一眼定位主角
-	var halo_mat: Material = $Halo.material_override
-	var tw := create_tween().set_loops()
-	tw.tween_property(halo_mat, "albedo_color:a", 0.14, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(halo_mat, "albedo_color:a", 0.38, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _update_base_scale():
 	base_scale = 0.60 + 0.021 * form   # 形态越高机体越大：0.60 → 1.0
@@ -39,6 +37,8 @@ func _set_model(n: int):
 		model.queue_free()
 	model = MB.build_player_form(n)
 	add_child(model)
+	# 呼吸灯：拾取机体材质引用，每帧调制自发光强度
+	_glow_mat = model.get_meta("glow_mat") if model.has_meta("glow_mat") else null
 
 func set_form(n: int):
 	# 只换 3D 模型（变形演出由 world 驱动）
@@ -64,6 +64,13 @@ func _physics_process(delta):
 		else:
 			bank = clampf((m.x - 576.0 - position.x) * 0.0015, -0.3, 0.3)
 		model.rotation.z = lerpf(model.rotation.z, bank, minf(10.0 * delta, 1.0))
+
+	# 呼吸灯：机体自发光与跟随灯同步起伏，暗星空中始终清晰
+	glow_t += delta
+	var breath := 0.5 + 0.5 * sin(glow_t * 2.6)
+	if _glow_mat:
+		_glow_mat.emission_energy_multiplier = 0.8 + 0.6 * breath
+	$Glow.light_energy = 1.0 + 0.6 * breath
 
 	# 攻击：按住连射（扇形 / 追踪导弹 / 波浪共用冷却）
 	fire_timer -= delta
