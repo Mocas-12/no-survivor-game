@@ -22,12 +22,38 @@ const ELEMENT_COLORS := {
 func _ready():
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(1, 1, 1)
+	# 元素在 add_child 前已由 set_element 设定，这里直接按元素取色
+	# （否则此处的白色新材质会覆盖 set_element 染过的场景材质，元素弹体永远发白）
+	var c: Color = ELEMENT_COLORS[element]
+	m.albedo_color = c
 	m.emission_enabled = true
-	m.emission = Color(1, 1, 1)
+	m.emission = c
 	m.emission_energy_multiplier = 2.6
 	$Mesh.material_override = m
+	_setup_fx()
 	body_entered.connect(_on_body_entered)
+
+# 弹丸特效：元素色拖尾；波浪弹道附加水花（飞行喷溅 + 命中绽开）
+func _setup_fx():
+	var c: Color = ELEMENT_COLORS[element]
+	$Trail.mesh = _droplet_mesh(c, 1.4)
+	$Trail.emitting = true
+	if wave_amp > 0.0:
+		$Splash.mesh = _droplet_mesh(Color(0.75, 0.95, 1.0), 1.1)
+		$Splash.emitting = true
+
+func _droplet_mesh(c: Color, radius: float) -> SphereMesh:
+	var sm := SphereMesh.new()
+	sm.radius = radius
+	sm.height = radius * 2.0
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.albedo_color = c
+	mm.emission_enabled = true
+	mm.emission = c
+	mm.emission_energy_multiplier = 1.8
+	sm.material = mm
+	return sm
 
 func set_element(e):
 	element = e
@@ -81,9 +107,30 @@ func _on_body_entered(body):
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
 			world.spawn_hit_spark(global_position)
+		if wave_amp > 0.0:
+			_splash_burst(world)
 		body.take_damage(damage)
 		_apply_element(body, world)
 		queue_free()
+
+# 波浪弹命中：绽开一圈水花后自毁
+func _splash_burst(world):
+	var p := CPUParticles3D.new()
+	p.amount = 18
+	p.lifetime = 0.5
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3(0, -500, 0)
+	p.initial_velocity_min = 120.0
+	p.initial_velocity_max = 280.0
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.4
+	p.mesh = _droplet_mesh(Color(0.75, 0.95, 1.0), 1.3)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
 
 # --- 元素命中特效 ---
 func _apply_element(hit_body, world):

@@ -29,6 +29,7 @@ material = SubResource("StdMat_sp")
 size = Vector3(1.8, 1.8, 1.8)
 
 [node name="Enemy" type="CharacterBody3D" unique_id=405132097 groups=["mobs"]]
+motion_mode = 1
 script = ExtResource("1_7k104")
 
 [node name="Collision" type="CollisionShape3D" parent="."]

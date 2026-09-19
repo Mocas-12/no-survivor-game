@@ -59,36 +59,39 @@ func _physics_process(delta):
 	if dead:
 		return
 	slow_timer = maxf(0.0, slow_timer - delta)
-	if player:
-		var to_p = player.global_position - global_position
-		var dir2 = Vector2(to_p.x, to_p.y).normalized()
-		# 滚转朝向玩家（模型机头朝 -Y）
-		rotation.z = dir2.angle() + PI / 2
-		var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
-		velocity = Vector3(dir2.x, dir2.y, 0.0) * cur_speed
-		if kind == "swift":
-			# 蛇形走位：垂直于航向叠加正弦摆动
-			sway_t += delta * 6.0
-			velocity += Vector3(-dir2.y, dir2.x, 0.0) * sin(sway_t) * 90.0
-		move_and_slide()
+	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
+	var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
+	velocity = Vector3(0.0, -cur_speed, 0.0)
+	if kind == "swift":
+		# 蛇形走位：固定航向下叠加水平正弦摆动
+		sway_t += delta * 6.0
+		velocity.x = sin(sway_t) * 90.0
+	move_and_slide()
 
-		# 炮手机：周期性朝玩家开火
-		if kind == "shooter":
-			fire_cd -= delta
-			if fire_cd <= 0.0:
-				fire_cd = randf_range(2.0, 2.8)
-				var world = get_tree().current_scene
-				if world.has_method("spawn_enemy_bullet"):
-					world.spawn_enemy_bullet(global_position + Vector3(dir2.x, dir2.y, 0.0) * 30.0, Vector3(dir2.x, dir2.y, 0.0), 210.0)
+	# 飞出屏幕底部即回收（正常弹幕游戏：漏过的敌机直接离场）
+	if position.y < -420.0:
+		queue_free()
+		return
 
-		# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
-		for i in get_slide_collision_count():
-			var target = get_slide_collision(i).get_collider()
-			if target and target.is_in_group("player"):
-				if get_tree().current_scene.has_method("take_damage"):
-					get_tree().current_scene.take_damage(damage)
-				queue_free()
-				return
+	# 炮手机：机身不转向，炮口仍瞄准玩家开火
+	if kind == "shooter" and player:
+		fire_cd -= delta
+		if fire_cd <= 0.0:
+			fire_cd = randf_range(2.0, 2.8)
+			var to_p = player.global_position - global_position
+			var aim = Vector2(to_p.x, to_p.y).normalized()
+			var world = get_tree().current_scene
+			if world.has_method("spawn_enemy_bullet"):
+				world.spawn_enemy_bullet(global_position + Vector3(aim.x, aim.y, 0.0) * 30.0, Vector3(aim.x, aim.y, 0.0), 210.0)
+
+	# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
+	for i in get_slide_collision_count():
+		var target = get_slide_collision(i).get_collider()
+		if target and target.is_in_group("player"):
+			if get_tree().current_scene.has_method("take_damage"):
+				get_tree().current_scene.take_damage(damage)
+			queue_free()
+			return
 
 func slow_down(t: float):
 	slow_timer = maxf(slow_timer, t)
