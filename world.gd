@@ -61,13 +61,13 @@ var regen_accum = 0.0   # 脱战回血的小数累积
 
 # 3.5 形态能力
 var ability := ""                # 当前形态能力 id（空 = 初始形态无能力）
-var ability_aura: Node3D = null  # 持续型能力的光环
 var ability_tick := 0.0          # 光环效果计时
 var buff_kind := ""              # 限时增益类型
 var buff_left := 0.0
 var _buff_cooldown0 := 0.0
 var _buff_speed0 := 0
 var _buff_count0 := 0
+var _prebuilt_model: Node3D = null  # 变形预建的新机体（提前分摊构建开销）
 
 # 4. 引用节点
 @onready var player = $Player
@@ -190,13 +190,16 @@ func play_sfx(name: String, volume_db := 0.0, pitch_jitter := 0.05):
 
 # --- 刷怪 ---
 
-func _on_timer_timeout():
+func _spawn_enemy():
 	var enemy = enemy_scene.instantiate()
 	# 抢滩登陆：敌机从屏幕上方随机位置出现
 	enemy.position = Vector3(randf_range(-576.0, 576.0), 404.0, 0.0)
 	enemy.setup(pick_enemy_type())
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
+
+func _on_timer_timeout():
+	_spawn_enemy()
 
 func pick_enemy_type() -> String:
 	var roll = randf()
@@ -317,6 +320,22 @@ func _on_boss_died(pos: Vector3):
 	core.form_target = mini(player.form + 1, 19)
 	add_child(core)
 
+	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
+	var wave := mini(10 + boss_tier * 2, 22)
+	warning_label.text = "—— 敌机增援来袭 ——"
+	warning_label.modulate.a = 1.0
+	warning_label.show()
+	var wtw = create_tween()
+	wtw.tween_interval(1.1)
+	wtw.tween_property(warning_label, "modulate:a", 0.0, 0.4)
+	wtw.tween_callback(warning_label.hide)
+	play_sfx("warning", -6.0, 0.1)
+	for i in wave:
+		get_tree().create_timer(0.3 + i * 0.16, true).timeout.connect(func():
+			# 主角阵亡或下一 Boss 已入场则停止增援
+			if health > 0 and not boss_active:
+				_spawn_enemy())
+
 	update_ui()
 	$Timer.start()
 
@@ -391,6 +410,8 @@ func apply_core(form):
 	_end_buff()   # 旧形态的限时增益随变形结束
 	_apply_form_bonus(form)
 	update_ui()
+	# 立刻预建新机体：构建开销落在有白闪+震屏掩护的这一帧，换装瞬间零生成
+	_prebuilt_model = MB.build_player_form(form)
 
 	# 渐进变形（不暂停）：机体收缩 → 能量茧包裹 → 茧内脉冲重塑 → 破茧揭示新形态 + 形态能力
 	var accent: Color = MB.ACCENTS[form % MB.ACCENTS.size()]
@@ -421,7 +442,8 @@ func _morph_cocoon(form, accent: Color):
 	cocoon.position = player.position
 	add_child(cocoon)
 
-	player.set_form(form)
+	player.set_form(form, _prebuilt_model)
+	_prebuilt_model = null
 
 	var tw := cocoon.create_tween()
 	# 包裹：茧体胀起并显现
@@ -434,14 +456,13 @@ func _morph_cocoon(form, accent: Color):
 	for i in 3:
 		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.24 + 0.1 * i), 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# 破茧：能量迸发，新机体翻滚着登场，同时激活本形态特殊能力
+	# 破茧：能量迸发，新机体翻滚着登场；能力激活分到下一帧，避免同一帧挤爆
 	tw.tween_callback(func():
 		spawn_explosion(cocoon.position, accent, false)
 		spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
-		confetti_burst(cocoon.position, 18, accent)
 		cocoon.queue_free()
 		_spawn_reveal()
-		_activate_ability(form))
+		get_tree().create_timer(0.05, true).timeout.connect(func(): _activate_ability(form)))
 
 func _spawn_reveal():
 	_spawn_evolution_beam()
@@ -458,27 +479,6 @@ func _activate_ability(form: int):
 	ability = ABILITY_ORDER[form % ABILITY_ORDER.size()]
 	var info: Dictionary = ABILITIES[ability]
 	var col: Color = info["color"]
-	# 持续型能力：主角身上挂常驻能力光环
-	if ability_aura:
-		ability_aura.queue_free()
-		ability_aura = null
-	match ability:
-		"frost", "flame", "magnet", "gravity", "aegis":
-			ability_aura = MeshInstance3D.new()
-			var torus := TorusMesh.new()
-			torus.inner_radius = 31.0
-			torus.outer_radius = 35.0
-			ability_aura.mesh = torus
-			var am := StandardMaterial3D.new()
-			am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-			am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			am.albedo_color = Color(col.r, col.g, col.b, 0.42)
-			am.emission_enabled = true
-			am.emission = col
-			am.emission_energy_multiplier = 1.7
-			ability_aura.material_override = am
-			ability_aura.rotation_degrees = Vector3(90, 0, 0)
-			player.add_child(ability_aura)
 	player.set_meta("magnet_mul", 2.2 if ability == "magnet" else 1.0)
 	# 公告横幅
 	ability_label.text = "✦ 形态能力 · %s ✦" % info["name"]

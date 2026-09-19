@@ -63,6 +63,20 @@ static func _load_cached(path: String) -> Resource:
 		_cache[path] = load(path)
 	return _cache[path]
 
+# 涂装材质共享缓存：同舰同色同强度只建一份，变形换装零材质分配
+static func _load_mat(ship: String, color: String, glow: Color, energy: float) -> StandardMaterial3D:
+	var key := "mat:%s:%s:%s:%.2f" % [ship, color, glow.to_html(), energy]
+	if not _cache.has(key):
+		var m := StandardMaterial3D.new()
+		m.albedo_texture = _load_cached("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
+		m.metallic = 0.35
+		m.roughness = 0.5
+		m.emission_enabled = true
+		m.emission = glow
+		m.emission_energy_multiplier = energy
+		_cache[key] = m
+	return _cache[key]
+
 static func _ship_model(ship: String, color: String, length: float, nose_down: bool, glow: Color, glow_energy: float, breathing := false) -> Node3D:
 	var outer := Node3D.new()
 	var inner := Node3D.new()
@@ -72,14 +86,7 @@ static func _ship_model(ship: String, color: String, length: float, nose_down: b
 	mi.mesh = mesh
 	mi.position = -mesh.get_aabb().get_center()
 	inner.add_child(mi)
-	# 涂装材质：辨识光色自发光，保证暗星空中敌我清晰可见
-	var m := StandardMaterial3D.new()
-	m.albedo_texture = _load_cached("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
-	m.metallic = 0.35
-	m.roughness = 0.5
-	m.emission_enabled = true
-	m.emission = glow
-	m.emission_energy_multiplier = glow_energy
+	var m := _load_mat(ship, color, glow, glow_energy)
 	mi.material_override = m
 	if breathing:
 		outer.set_meta("glow_mat", m)

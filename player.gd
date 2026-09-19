@@ -32,18 +32,18 @@ func _ready():
 func _update_base_scale():
 	base_scale = 0.60 + 0.021 * form   # 形态越高机体越大：0.60 → 1.0
 
-func _set_model(n: int):
+func _set_model(n: int, prebuilt: Node3D = null):
 	if model:
 		model.queue_free()
-	model = MB.build_player_form(n)
+	model = prebuilt if prebuilt else MB.build_player_form(n)
 	add_child(model)
 	# 呼吸灯：拾取机体材质引用，每帧调制自发光强度
 	_glow_mat = model.get_meta("glow_mat") if model.has_meta("glow_mat") else null
 
-func set_form(n: int):
-	# 只换 3D 模型（变形演出由 world 驱动）
+func set_form(n: int, prebuilt: Node3D = null):
+	# 只换 3D 模型（变形演出由 world 驱动）；prebuilt 为提前构建好的新机体
 	form = n
-	_set_model(n)
+	_set_model(n, prebuilt)
 	_update_base_scale()
 
 func _physics_process(delta):
@@ -65,12 +65,12 @@ func _physics_process(delta):
 			bank = clampf((m.x - 576.0 - position.x) * 0.0015, -0.3, 0.3)
 		model.rotation.z = lerpf(model.rotation.z, bank, minf(10.0 * delta, 1.0))
 
-	# 呼吸灯：机体自发光与跟随灯同步起伏，暗星空中始终清晰
+	# 呼吸灯：机体自发光与跟随灯同步起伏（0.8Hz），暗星空中始终清晰
 	glow_t += delta
-	var breath := 0.5 + 0.5 * sin(glow_t * 2.6)
+	var breath := 0.5 + 0.5 * sin(glow_t * 5.2)
 	if _glow_mat:
-		_glow_mat.emission_energy_multiplier = 0.8 + 0.6 * breath
-	$Glow.light_energy = 1.0 + 0.6 * breath
+		_glow_mat.emission_energy_multiplier = 0.75 + 0.7 * breath
+	$Glow.light_energy = 1.0 + 0.7 * breath
 
 	# 攻击：按住连射（扇形 / 追踪导弹 / 波浪共用冷却）
 	fire_timer -= delta
