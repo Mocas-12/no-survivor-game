@@ -5,6 +5,18 @@
 [sub_resource type="SphereShape3D" id="SphereShape3D_p"]
 radius = 20.0
 
+[sub_resource type="TorusMesh" id="TorusMesh_halo"]
+inner_radius = 27.0
+outer_radius = 31.0
+
+[sub_resource type="StandardMaterial3D" id="StdMat_halo"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.4, 0.85, 1, 0.3)
+emission_enabled = true
+emission = Color(0.4, 0.85, 1, 1)
+emission_energy_multiplier = 1.7
+
 [sub_resource type="StandardMaterial3D" id="StdMat_trail"]
 shading_mode = 0
 albedo_color = Color(0.4, 0.85, 1, 0.55)
@@ -32,6 +44,18 @@ script = ExtResource("1_4flbx")
 
 [node name="Collision" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_p")
+
+[node name="Halo" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -2)
+mesh = SubResource("TorusMesh_halo")
+material_override = SubResource("StdMat_halo")
+
+[node name="Glow" type="OmniLight3D" parent="."]
+position = Vector3(0, 0, 60)
+light_color = Color(0.45, 0.8, 1, 1)
+light_energy = 1.3
+omni_range = 340.0
+shadow_enabled = false
 
 [node name="EngineTrail" type="CPUParticles3D" parent="."]
 position = Vector3(0, -110, 0)

@@ -21,9 +21,10 @@ func _physics_process(delta):
 	rotation.z += 1.5 * delta
 	scale = Vector3.ONE * (1.0 + 0.15 * sin(t))
 
-	# 缓缓下落 + 磁吸
+	# 缓缓下落 + 磁吸（磁力核心能力可成倍扩大磁吸范围）
+	var magnet_mul: float = player.get_meta("magnet_mul", 1.0) if player else 1.0
 	position.y -= fall_speed * delta
-	if player and global_position.distance_to(player.global_position) < magnet_range:
+	if player and global_position.distance_to(player.global_position) < magnet_range * magnet_mul:
 		global_position = global_position.move_toward(player.global_position, magnet_speed * delta)
 
 	# 掉出屏幕底部就没收了

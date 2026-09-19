@@ -30,7 +30,8 @@ const BOSS_SHIPS := {
 static func build_player_form(n: int) -> Node3D:
 	var ship: String = PLAYER_SHIPS[n % PLAYER_SHIPS.size()]
 	var color := "Blue" if n < 10 else "Green"
-	return _ship_model(ship, color, 115.0 + n * 1.8, false)
+	# bright = true：主角机体自发光提亮，暗星空中始终清晰可见
+	return _ship_model(ship, color, 115.0 + n * 1.8, false, true)
 
 # ---------- 敌机（6 种，机头朝玩家俯冲） ----------
 
@@ -46,23 +47,39 @@ static func build_boss(id: int) -> Node3D:
 
 # ---------- 通用飞船装配：涂装 + 归一化 + 朝向 ----------
 
-static func _ship_model(ship: String, color: String, length: float, nose_down: bool) -> Node3D:
+static var _cache := {}
+
+# 预热全部模型与涂装（开局调用，避免变形瞬间同步加载掉帧）
+static func warm_up() -> void:
+	for s in PLAYER_SHIPS:
+		_load_cached("res://assets/ships/%s/%s.obj" % [s, s])
+		for c in ["Blue", "Green", "Red", "Orange", "Purple"]:
+			var tex := "res://assets/ships/%s/Textures/%s_%s.png" % [s, s, c]
+			if ResourceLoader.exists(tex):
+				_load_cached(tex)
+
+static func _load_cached(path: String) -> Resource:
+	if not _cache.has(path):
+		_cache[path] = load(path)
+	return _cache[path]
+
+static func _ship_model(ship: String, color: String, length: float, nose_down: bool, bright := false) -> Node3D:
 	var outer := Node3D.new()
 	var inner := Node3D.new()
 	outer.add_child(inner)
-	var mesh: Mesh = load("res://assets/ships/%s/%s.obj" % [ship, ship])
+	var mesh: Mesh = _load_cached("res://assets/ships/%s/%s.obj" % [ship, ship])
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.position = -mesh.get_aabb().get_center()
 	inner.add_child(mi)
 	# 涂装材质（轻微金属感 + 微自发光提亮暗部，贴合星空霓虹画风）
 	var m := StandardMaterial3D.new()
-	m.albedo_texture = load("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
+	m.albedo_texture = _load_cached("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
 	m.metallic = 0.35
 	m.roughness = 0.5
 	m.emission_enabled = true
-	m.emission = Color(0.4, 0.45, 0.55)
-	m.emission_energy_multiplier = 0.45
+	m.emission = Color(0.4, 0.45, 0.55) if not bright else Color(0.55, 0.7, 0.85)
+	m.emission_energy_multiplier = 0.45 if not bright else 1.1
 	mi.material_override = m
 	# 归一化：最长边缩放到目标长度，模型中心对齐节点原点
 	var aabb := mesh.get_aabb()

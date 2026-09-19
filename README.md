@@ -47,6 +47,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 - 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic)
 - 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs
 - 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
+- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well
 
 ## 👾 Enemy Fleet
 

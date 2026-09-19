@@ -20,9 +20,10 @@ func _process(delta):
 	rotation.z += 2.0 * delta
 	scale = Vector3.ONE * (1.0 + 0.12 * sin(t))
 
-	# 随星空背景向下漂移（进入磁吸范围后磁吸速度占主导）
+	# 随星空背景向下漂移（磁力核心能力可成倍扩大磁吸范围）
+	var magnet_mul: float = player.get_meta("magnet_mul", 1.0) if player else 1.0
 	position.y -= fall_speed * delta
-	if player and global_position.distance_to(player.global_position) < magnet_range:
+	if player and global_position.distance_to(player.global_position) < magnet_range * magnet_mul:
 		global_position = global_position.move_toward(player.global_position, magnet_speed * delta)
 
 	# 漂出屏幕底部自动回收

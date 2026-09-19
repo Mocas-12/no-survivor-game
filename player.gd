@@ -25,6 +25,11 @@ func _ready():
 	_update_base_scale()
 	scale = Vector3.ONE * base_scale
 	_set_model(0)
+	# 自机指示光环呼吸：暗星空中始终能一眼定位主角
+	var halo_mat: Material = $Halo.material_override
+	var tw := create_tween().set_loops()
+	tw.tween_property(halo_mat, "albedo_color:a", 0.14, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(halo_mat, "albedo_color:a", 0.38, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _update_base_scale():
 	base_scale = 0.60 + 0.021 * form   # 形态越高机体越大：0.60 → 1.0

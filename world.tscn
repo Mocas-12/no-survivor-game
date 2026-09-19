@@ -288,6 +288,19 @@ max_value = 100.0
 value = 100.0
 show_percentage = false
 
+[node name="AbilityLabel" type="Label" parent="UI"]
+visible = false
+offset_left = 276.0
+offset_top = 104.0
+offset_right = 876.0
+offset_bottom = 142.0
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 24
+text = "✦ 形态能力 ✦"
+horizontal_alignment = 1
+
 [node name="WarningLabel" type="Label" parent="UI"]
 visible = false
 offset_left = 0.0

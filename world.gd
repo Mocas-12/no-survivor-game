@@ -14,6 +14,21 @@ const MB := preload("res://model_builder.gd")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
 
+# 形态特殊能力：每次变形按形态序号循环获得一种（20 形态 = 每种能力两轮）
+const ABILITY_ORDER := ["nova", "overcharge", "frost", "flame", "magnet", "leech", "aegis", "thrust", "barrage", "gravity"]
+const ABILITIES := {
+	"nova": {"name": "引力新星", "color": Color(1, 0.55, 0.3)},      # 变形瞬间：冲击波重创周围敌机
+	"overcharge": {"name": "超载射击", "color": Color(1, 0.85, 0.3)}, # 6 秒射速翻倍
+	"frost": {"name": "寒霜力场", "color": Color(0.55, 0.85, 1)},     # 持续：冻结周围敌机
+	"flame": {"name": "烈焰力场", "color": Color(1, 0.45, 0.2)},      # 持续：灼烧周围敌机
+	"magnet": {"name": "磁力核心", "color": Color(0.45, 0.9, 1)},     # 持续：拾取磁吸范围翻倍
+	"leech": {"name": "纳米修复", "color": Color(0.4, 0.95, 0.5)},    # 持续：击杀概率回复生命
+	"aegis": {"name": "相位护盾", "color": Color(0.75, 0.55, 1)},     # 持续：受到的所有伤害 -1
+	"thrust": {"name": "超频引擎", "color": Color(0.8, 0.95, 1)},     # 6 秒移速大幅提升
+	"barrage": {"name": "弹幕风暴", "color": Color(1, 0.8, 0.25)},    # 6 秒 +1 弹道且射速提升
+	"gravity": {"name": "引力井", "color": Color(0.45, 0.55, 1)},     # 持续：靠近主角的敌方子弹减速
+}
+
 # 音效表（tools/gen_sounds.py 程序化合成）
 const SFX := {
 	"shoot": preload("res://assets/sounds/shoot.wav"),
@@ -44,6 +59,16 @@ var boss_active = false
 var last_hurt_ms = -10000
 var regen_accum = 0.0   # 脱战回血的小数累积
 
+# 3.5 形态能力
+var ability := ""                # 当前形态能力 id（空 = 初始形态无能力）
+var ability_aura: Node3D = null  # 持续型能力的光环
+var ability_tick := 0.0          # 光环效果计时
+var buff_kind := ""              # 限时增益类型
+var buff_left := 0.0
+var _buff_cooldown0 := 0.0
+var _buff_speed0 := 0
+var _buff_count0 := 0
+
 # 4. 引用节点
 @onready var player = $Player
 @onready var camera = $Camera
@@ -60,6 +85,7 @@ var regen_accum = 0.0   # 脱战回血的小数累积
 @onready var game_over_panel = $UI/GameOverPanel
 @onready var final_score_label = $UI/GameOverPanel/FinalScoreLabel
 @onready var levelup_panel = $UI/LevelUpPanel
+@onready var ability_label = $UI/AbilityLabel
 @onready var upgrade_buttons = [
 	$UI/LevelUpPanel/Box/Buttons/Btn0,
 	$UI/LevelUpPanel/Box/Buttons/Btn1,
@@ -79,6 +105,8 @@ var upgrade_pool = []
 var bgm_player: AudioStreamPlayer
 
 func _ready():
+	# 预热全部飞船模型与涂装：变形换装零加载卡顿
+	MB.warm_up()
 	upgrade_pool = [
 		{"title": "射速强化", "desc": "射击间隔 -20%", "apply": _upgrade_fire_rate, "can": func(): return player.fire_cooldown > 0.06},
 		{"title": "威力强化", "desc": "子弹伤害 +1", "apply": _upgrade_damage, "can": func(): return true},
@@ -128,6 +156,26 @@ func _process(delta):
 			regen_accum -= 1.0
 			health = mini(health + 1, max_health)
 			update_ui()
+	# 限时增益倒计时
+	if buff_left > 0.0:
+		buff_left -= delta
+		if buff_left <= 0.0:
+			_end_buff()
+	# 持续型能力光环：冻结 / 灼烧周围敌机
+	if ability == "frost" or ability == "flame":
+		ability_tick -= delta
+		if ability_tick <= 0.0:
+			ability_tick = 0.4
+			var radius := 250.0 if ability == "frost" else 210.0
+			for m in get_tree().get_nodes_in_group("mobs"):
+				if m.dead:
+					continue
+				if m.global_position.distance_to(player.global_position) > radius:
+					continue
+				if ability == "frost" and m.has_method("slow_down"):
+					m.slow_down(0.45)
+				elif ability == "flame" and m.has_method("take_damage"):
+					m.take_damage(1)
 
 # --- 音效 ---
 
@@ -169,6 +217,10 @@ func pick_enemy_type() -> String:
 func _on_enemy_died(pos: Vector3, value, fx_color):
 	score += value
 	kill_count += 1
+
+	# 纳米修复：击杀有概率回复 1 点生命
+	if ability == "leech" and health > 0 and health < max_health and randf() < 0.1:
+		health = mini(health + 1, max_health)
 
 	# 击杀演出：3D 爆炸粒子 + 冲击波环 + 音效 + 震屏
 	spawn_explosion(pos, fx_color, value >= 30)
@@ -336,13 +388,14 @@ func apply_core(form):
 	flash_ui(CYAN, 0.35)
 	camera.add_shake(8.0)
 	confetti_burst(player.position, 24, CYAN)
+	_end_buff()   # 旧形态的限时增益随变形结束
 	_apply_form_bonus(form)
 	update_ui()
 
-	# 渐进变形（不暂停）：机体收缩 → 能量茧包裹 → 茧内脉冲重塑 → 破茧揭示新形态
+	# 渐进变形（不暂停）：机体收缩 → 能量茧包裹 → 茧内脉冲重塑 → 破茧揭示新形态 + 形态能力
 	var accent: Color = MB.ACCENTS[form % MB.ACCENTS.size()]
 	var tw = create_tween()
-	tw.tween_property(player, "scale", Vector3.ONE * 0.22, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.tween_property(player, "scale", Vector3.ONE * 0.22, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.tween_callback(func(): _morph_cocoon(form, accent))
 	# 连环冲击波
 	for i in 3:
@@ -372,30 +425,124 @@ func _morph_cocoon(form, accent: Color):
 
 	var tw := cocoon.create_tween()
 	# 包裹：茧体胀起并显现
-	tw.tween_property(m, "albedo_color:a", 0.7, 0.2)
-	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.35, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(m, "albedo_color:a", 0.68, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	# 茧色渐变 → 新形态的主题色（形态特征预兆）
-	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.7), 0.28)
-	tw.parallel().tween_property(m, "emission", accent, 0.28)
-	# 三次重塑脉冲：新形态在茧内逐次成形
+	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.68), 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(m, "emission", accent, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# 三次重塑脉冲：新形态在茧内平滑地逐次成形
 	for i in 3:
-		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.14 + 0.13 * i), 0.09).set_trans(Tween.TRANS_SINE)
-		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.35, 0.09).set_trans(Tween.TRANS_SINE)
-	# 破茧：能量迸发，新机体翻滚着弹性放大登场
+		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.24 + 0.1 * i), 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# 破茧：能量迸发，新机体翻滚着登场，同时激活本形态特殊能力
 	tw.tween_callback(func():
 		spawn_explosion(cocoon.position, accent, false)
 		spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
 		confetti_burst(cocoon.position, 18, accent)
 		cocoon.queue_free()
-		_spawn_reveal())
+		_spawn_reveal()
+		_activate_ability(form))
 
 func _spawn_reveal():
 	_spawn_evolution_beam()
 	var tw2 = create_tween()
 	tw2.set_parallel(true)
-	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.2)
+	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.32, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.28).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+# --- 形态特殊能力 ---
+
+func _activate_ability(form: int):
+	_end_buff()
+	ability = ABILITY_ORDER[form % ABILITY_ORDER.size()]
+	var info: Dictionary = ABILITIES[ability]
+	var col: Color = info["color"]
+	# 持续型能力：主角身上挂常驻能力光环
+	if ability_aura:
+		ability_aura.queue_free()
+		ability_aura = null
+	match ability:
+		"frost", "flame", "magnet", "gravity", "aegis":
+			ability_aura = MeshInstance3D.new()
+			var torus := TorusMesh.new()
+			torus.inner_radius = 31.0
+			torus.outer_radius = 35.0
+			ability_aura.mesh = torus
+			var am := StandardMaterial3D.new()
+			am.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			am.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			am.albedo_color = Color(col.r, col.g, col.b, 0.42)
+			am.emission_enabled = true
+			am.emission = col
+			am.emission_energy_multiplier = 1.7
+			ability_aura.material_override = am
+			ability_aura.rotation_degrees = Vector3(90, 0, 0)
+			player.add_child(ability_aura)
+	player.set_meta("magnet_mul", 2.2 if ability == "magnet" else 1.0)
+	# 公告横幅
+	ability_label.text = "✦ 形态能力 · %s ✦" % info["name"]
+	ability_label.modulate = Color(col.r, col.g, col.b, 0.0)
+	ability_label.show()
+	var tw := ability_label.create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(ability_label, "modulate:a", 1.0, 0.25)
+	tw.tween_interval(1.7)
+	tw.tween_property(ability_label, "modulate:a", 0.0, 0.4)
+	tw.tween_callback(ability_label.hide)
+	# 能力入场特效
+	spawn_ring(player.position, col, 0.3, 3.0, 0.55)
+	confetti_burst(player.position, 16, col)
+	match ability:
+		"nova":
+			# 引力新星：变形瞬间冲击波重创周围敌机
+			spawn_ring(player.position, col, 0.5, 5.2, 0.7)
+			camera.add_shake(10.0)
+			for m in get_tree().get_nodes_in_group("mobs"):
+				if m.dead:
+					continue
+				if m.global_position.distance_to(player.global_position) < 430.0:
+					if m.has_method("take_damage"):
+						m.take_damage(12)
+					if m.has_method("knockback"):
+						var away = (m.global_position - player.global_position).normalized()
+						m.knockback(Vector3(away.x, away.y, 0) * 70.0)
+		"overcharge":
+			_start_buff("overcharge", 6.0)
+		"thrust":
+			_start_buff("thrust", 6.0)
+		"barrage":
+			_start_buff("barrage", 6.0)
+
+func _start_buff(kind: String, dur: float):
+	_end_buff()
+	buff_kind = kind
+	buff_left = dur
+	match kind:
+		"overcharge":
+			_buff_cooldown0 = player.fire_cooldown
+			player.fire_cooldown = maxf(0.045, player.fire_cooldown * 0.5)
+		"thrust":
+			_buff_speed0 = player.speed
+			player.speed = int(player.speed * 1.6)
+		"barrage":
+			_buff_cooldown0 = player.fire_cooldown
+			_buff_count0 = player.bullet_count
+			player.bullet_count = mini(player.bullet_count + 1, 9)
+			player.fire_cooldown = maxf(0.045, player.fire_cooldown * 0.75)
+
+func _end_buff():
+	if buff_kind == "":
+		return
+	match buff_kind:
+		"overcharge", "barrage":
+			player.fire_cooldown = _buff_cooldown0
+		"thrust":
+			player.speed = _buff_speed0
+	if buff_kind == "barrage":
+		player.bullet_count = _buff_count0
+	buff_kind = ""
+	buff_left = 0.0
 
 func _spawn_evolution_beam():
 	# 冲天光柱
@@ -623,6 +770,9 @@ func take_damage(amount):
 		return
 	last_hurt_ms = now
 
+	# 相位护盾：所有伤害 -1（最低 1）
+	if ability == "aegis":
+		amount = maxi(1, amount - 1)
 	health -= amount
 	play_sfx("hit", -2.0, 0.15)
 	update_ui()

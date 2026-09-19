@@ -24,7 +24,14 @@ func _physics_process(delta):
 			var diff = wrapf(tgt - cur, -PI, PI)
 			cur += clampf(diff, -homing * delta, homing * delta)
 			dir = Vector3(cos(cur), sin(cur), 0.0)
-	position += dir * speed * delta
+	var spd: float = speed
+	# 引力井：靠近主角的敌方子弹被减速
+	var w = get_tree().current_scene
+	if w and w.get("ability") == "gravity":
+		var pl = get_tree().get_first_node_in_group("player")
+		if pl and global_position.distance_to(pl.global_position) < 270.0:
+			spd *= 0.6
+	position += dir * spd * delta
 	# 飞出游戏区域自动销毁
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:
 		queue_free()
