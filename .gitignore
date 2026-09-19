@@ -4,3 +4,5 @@
 
 # Godot 导出产物
 build/
+# Godot 导出时生成的图标元数据，部署目录不需要（拷贝 build/web 后会被带回，忽略即可）
+docs/*.import
