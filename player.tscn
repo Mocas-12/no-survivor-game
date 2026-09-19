@@ -34,11 +34,11 @@ script = ExtResource("1_4flbx")
 shape = SubResource("SphereShape3D_p")
 
 [node name="EngineTrail" type="CPUParticles3D" parent="."]
-position = Vector3(0, 42, 0)
+position = Vector3(0, -110, 0)
 amount = 26
 lifetime = 0.4
 spread = 8.0
-direction = Vector3(0, 1, 0)
+direction = Vector3(0, -1, 0)
 gravity = Vector3(0, 0, 0)
 initial_velocity_min = 60.0
 initial_velocity_max = 110.0
@@ -48,13 +48,13 @@ color = Color(0.4, 0.85, 1, 0.55)
 mesh = SubResource("BoxMesh_trail")
 
 [node name="MuzzleFlash" type="CPUParticles3D" parent="."]
-position = Vector3(0, -48, 0)
+position = Vector3(0, 48, 0)
 emitting = false
 amount = 6
 lifetime = 0.12
 one_shot = true
 explosiveness = 1.0
-direction = Vector3(0, -1, 0)
+direction = Vector3(0, 1, 0)
 spread = 14.0
 gravity = Vector3(0, 0, 0)
 initial_velocity_min = 160.0

@@ -1,6 +1,7 @@
 extends Object
 ## 程序化 3D 模型工厂：所有战机 / Boss / 物件由基础图元拼装（无外部模型文件）
-## 坐标约定：模型机头朝 -Y（屏幕上方），厚度在 Z 轴
+## 坐标约定：屏幕上方为世界 +Y。主角机头朝 +Y（向上迎敌），
+## 敌机机头朝 -Y（俯冲向下），Boss 机头朝 +Y（面向玩家），厚度在 Z 轴
 
 # ---------- 材质 ----------
 
@@ -75,11 +76,11 @@ static func build_player_form(n: int) -> Node3D:
 	var wing := mini(tier, 5)
 	var sweep: float = [12.0, 30.0, -22.0, 18.0, -8.0][wing]
 
-	# 机身：锥形圆柱（尾部粗）+ 机鼻锥（头部尖）
+	# 机身：前粗后细的锥形圆柱，机鼻锥接在机身前端（机头朝 +Y 即屏幕上方）
 	cyl(root, body, hw * 1.1, hw * 0.5, hull_len, Vector3(0, -(8 + hull_len * 0.5), 0))
-	cyl(root, body, hw * 0.5, 0.05, 16.0, Vector3(0, -(8 + hull_len + 8), 0))
-	# 座舱（发光）
-	sphere(root, glow_mat(Color(0.55, 0.9, 1.0), 1.6), hw * 0.5, Vector3(0, -(hull_len * 0.45), hw * 0.25), Vector3(1.0, 1.6, 0.7))
+	cyl(root, body, 0.05, hw * 1.1, 16.0, Vector3(0, 0, 0))
+	# 座舱（发光，位于机翼前方的机身中前段）
+	sphere(root, glow_mat(Color(0.55, 0.9, 1.0), 1.6), hw * 0.5, Vector3(0, -(hull_len * 0.25), hw * 0.25), Vector3(1.0, 1.6, 0.7))
 
 	# 机翼：左右镜像，翼型随梯队变化
 	for side in [-1.0, 1.0]:
@@ -114,12 +115,12 @@ static func build_player_form(n: int) -> Node3D:
 	# 尾翼
 	for side in [-1.0, 1.0]:
 		box(root, dark, Vector3(4, 16, 4), Vector3(side * (hw + 4), -(8 + hull_len) + 10, 0), Vector3(0, side * 25, side * 15))
-	# 引擎喷口 + 尾焰发光
+	# 引擎喷口 + 尾焰发光（尾焰在喷口后方喷出）
 	var rear_y := -(8 + hull_len) + 4
 	for i in engines:
 		var ex := (i - (engines - 1) / 2.0) * 9.0
 		cyl(root, dark, 3.4, 3.4, 12.0, Vector3(ex, rear_y, 0))
-		cyl(root, glow_mat(accent, 2.4), 2.6, 2.6, 1.6, Vector3(ex, rear_y + 7, 0))
+		cyl(root, glow_mat(accent, 2.4), 2.6, 2.6, 1.6, Vector3(ex, rear_y - 7, 0))
 	# 装甲带 / 机鼻双侧炮
 	if armor:
 		box(root, dark, Vector3(hw * 2.2, 14, hw * 1.6 + 4), Vector3(0, -70, 0))

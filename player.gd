@@ -87,7 +87,7 @@ func shoot():
 			b.homing = 4.5
 			b.homing_time = 4.0
 			b.speed *= 0.55
-		b.global_position = global_position + Vector3(0, -44.0 * base_scale, 0.5)
+		b.global_position = global_position + Vector3(0, 44.0 * base_scale, 0.5)
 		b.dir = Vector3(cos(ang), sin(ang), 0.0)
 	$MuzzleFlash.restart()
 
