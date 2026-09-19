@@ -10,6 +10,8 @@ var wave_t = 0.0
 var dir = Vector3.ZERO   # 飞行方向（发射时设置）
 var homing = 0.0         # 转向速率（弧度/秒），0 = 无追踪
 var homing_time = 0.0    # 追踪持续时间
+var _retarget := 0.0     # 目标重扫描计时（避免每帧全组扫描）
+var _target: Node3D = null
 
 const ELEMENT_COLORS := {
 	"normal": Color(1, 1, 1),
@@ -74,7 +76,7 @@ func _shrink_curve() -> Curve:
 
 # 火焰：火舌拖尾（火苗向上飘蹿 + 黄→橙→红渐隐），烧灼感更明显
 func _attach_flame_trail():
-	var f := _add_emitter(12, 0.5)
+	var f := _add_emitter(8, 0.5)
 	f.spread = 14.0
 	f.direction = Vector3(0, -1, 0)
 	f.gravity = Vector3(0, 160, 0)
@@ -89,7 +91,7 @@ func _attach_flame_trail():
 
 # 疾风：绿色树叶侧向卷落
 func _attach_leaf_trail():
-	var w := _add_emitter(7, 0.9)
+	var w := _add_emitter(5, 0.9)
 	w.spread = 70.0
 	w.direction = Vector3(1, 0, 0)
 	w.gravity = Vector3(0, -90, 0)
@@ -105,7 +107,7 @@ func _attach_leaf_trail():
 
 # 疾风：白绿风痕向后高速拉出，表现风的流向
 func _attach_gust_trail():
-	var s := _add_emitter(6, 0.3)
+	var s := _add_emitter(4, 0.3)
 	s.spread = 5.0
 	s.direction = Vector3(0, -1, 0)
 	s.gravity = Vector3.ZERO
@@ -119,7 +121,7 @@ func _attach_gust_trail():
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
 func _attach_crackle_trail():
-	var k := _add_emitter(12, 0.16)
+	var k := _add_emitter(8, 0.16)
 	k.spread = 180.0
 	k.direction = Vector3(0, 1, 0)
 	k.gravity = Vector3.ZERO
@@ -135,10 +137,10 @@ func _attach_crackle_trail():
 func _attach_water_trail():
 	$Splash.mesh = _droplet_mesh(Color(0.75, 0.95, 1.0), 1.1)
 	$Splash.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
-	$Splash.amount = 16
+	$Splash.amount = 10
 	$Splash.lifetime = 0.6
 	$Splash.emitting = true
-	var wk := _add_emitter(8, 0.55)
+	var wk := _add_emitter(5, 0.55)
 	wk.spread = 9.0
 	wk.direction = Vector3(0, -1, 0)
 	wk.gravity = Vector3(0, -240, 0)
@@ -199,10 +201,15 @@ func set_element(e):
 func _process(delta):
 	if dir == Vector3.ZERO:
 		dir = Vector3.UP
-	# 追踪：自动转向最近的存活目标（敌机 / Boss）
+	# 追踪：周期性重锁最近目标，逐帧只做转向计算
 	if homing > 0.0 and homing_time > 0.0:
 		homing_time -= delta
-		_steer(delta)
+		_retarget -= delta
+		if _retarget <= 0.0 or _target == null or _target.dead:
+			_retarget = 0.15
+			_target = _find_target()
+		if _target:
+			_steer_toward(_target, delta)
 	var move = dir * speed * delta
 	if wave_amp > 0.0:
 		# 波浪弹道：垂直于航向叠加正弦摆动
@@ -214,10 +221,10 @@ func _process(delta):
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:
 		queue_free()
 
-# 转向最近的存活目标
-func _steer(delta):
-	var target = null
-	var best = INF
+# 扫描最近的存活目标（每 0.15 秒一次）
+func _find_target() -> Node3D:
+	var target: Node3D = null
+	var best := INF
 	for m in get_tree().get_nodes_in_group("mobs"):
 		if m.dead:
 			continue
@@ -227,14 +234,16 @@ func _steer(delta):
 		if dd < best:
 			best = dd
 			target = m
-	if target:
-		var to = target.global_position - global_position
-		var want = Vector3(to.x, to.y, 0.0).normalized()
-		var cur = atan2(dir.y, dir.x)
-		var tgt = atan2(want.y, want.x)
-		var diff = wrapf(tgt - cur, -PI, PI)
-		cur += clampf(diff, -homing * delta, homing * delta)
-		dir = Vector3(cos(cur), sin(cur), 0.0)
+	return target
+
+func _steer_toward(target: Node3D, delta: float):
+	var to = target.global_position - global_position
+	var want = Vector3(to.x, to.y, 0.0).normalized()
+	var cur = atan2(dir.y, dir.x)
+	var tgt = atan2(want.y, want.x)
+	var diff = wrapf(tgt - cur, -PI, PI)
+	cur += clampf(diff, -homing * delta, homing * delta)
+	dir = Vector3(cos(cur), sin(cur), 0.0)
 
 # 当有物体进入子弹的检测范围时
 func _on_body_entered(body):
@@ -257,7 +266,7 @@ func _on_body_entered(body):
 # 波浪弹命中：绽开一圈水花后自毁
 func _splash_burst(world):
 	var p := CPUParticles3D.new()
-	p.amount = 18
+	p.amount = 12
 	p.lifetime = 0.5
 	p.one_shot = true
 	p.explosiveness = 1.0

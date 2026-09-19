@@ -107,6 +107,11 @@ var bgm_player: AudioStreamPlayer
 func _ready():
 	# 预热全部飞船模型与涂装：变形换装零加载卡顿
 	MB.warm_up()
+	# 音效播放器对象池
+	for i in 14:
+		var p := AudioStreamPlayer.new()
+		add_child(p)
+		_sfx_pool.append(p)
 	upgrade_pool = [
 		{"title": "射速强化", "desc": "射击间隔 -20%", "apply": _upgrade_fire_rate, "can": func(): return player.fire_cooldown > 0.06},
 		{"title": "威力强化", "desc": "子弹伤害 +1", "apply": _upgrade_damage, "can": func(): return true},
@@ -179,14 +184,17 @@ func _process(delta):
 
 # --- 音效 ---
 
+var _sfx_pool: Array[AudioStreamPlayer] = []
+var _sfx_i := 0
+
 func play_sfx(name: String, volume_db := 0.0, pitch_jitter := 0.05):
-	var p = AudioStreamPlayer.new()
+	# 对象池轮转：自动射击下避免每发子弹新建/销毁播放器的分配抖动
+	var p: AudioStreamPlayer = _sfx_pool[_sfx_i]
+	_sfx_i = (_sfx_i + 1) % _sfx_pool.size()
 	p.stream = SFX[name]
 	p.volume_db = volume_db
 	p.pitch_scale = randf_range(1.0 - pitch_jitter, 1.0 + pitch_jitter)
-	add_child(p)
 	p.play()
-	p.finished.connect(p.queue_free)
 
 # --- 刷怪 ---
 

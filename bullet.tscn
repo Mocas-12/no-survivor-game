@@ -26,7 +26,7 @@ material_override = SubResource("StdMat_b")
 [node name="Trail" type="CPUParticles3D" parent="."]
 position = Vector3(0, -5, 0)
 emitting = false
-amount = 12
+amount = 8
 lifetime = 0.3
 spread = 7.0
 direction = Vector3(0, -1, 0)

@@ -11,7 +11,6 @@
 [ext_resource type="Texture2D" path="res://assets/stars_near.png" id="7_near"]
 [ext_resource type="Texture2D" path="res://assets/joystick_base.png" id="11_jb"]
 [ext_resource type="Texture2D" path="res://assets/joystick_thumb.png" id="12_jt"]
-[ext_resource type="Texture2D" path="res://assets/fire_button.png" id="13_fb"]
 
 [sub_resource type="Environment" id="Env_main"]
 background_mode = 1
@@ -64,9 +63,6 @@ uv1_scale = Vector3(5, 2.8, 1)
 
 [sub_resource type="QuadMesh" id="Quad_near"]
 size = Vector2(2600, 1500)
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_fire"]
-radius = 92.0
 
 [sub_resource type="StyleBoxFlat" id="sb_bar_bg"]
 bg_color = Color(0.07, 0.09, 0.18, 0.85)
@@ -212,12 +208,6 @@ texture = ExtResource("11_jb")
 visible = false
 position = Vector2(200, 480)
 texture = ExtResource("12_jt")
-
-[node name="FireButton" type="TouchScreenButton" parent="TouchUI"]
-position = Vector2(980, 470)
-texture_normal = ExtResource("13_fb")
-shape = SubResource("CircleShape2D_fire")
-action = "shoot"
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -482,8 +472,8 @@ offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 20
-text = "电脑：鼠标移动，按住左键射击
-手机：左半屏摇杆移动，右侧按钮开火
+text = "电脑：移动鼠标驾驶战机（火力全自动）
+手机：左半屏摇杆移动
 建议横屏游玩"
 horizontal_alignment = 1
 

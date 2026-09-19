@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-# 手机触屏控制：左半屏触摸弹出虚拟摇杆（拖动移动），右侧常驻开火按钮
+# 手机触屏控制：左半屏触摸弹出虚拟摇杆拖动移动（射击已全自动，无需开火按钮）
 # 仅在检测到触屏的设备上显示
 
 signal moved(dir: Vector2)
@@ -12,7 +12,6 @@ var origin := Vector2.ZERO
 
 @onready var base = $JoystickBase
 @onready var thumb = $JoystickThumb
-@onready var fire_btn: TouchScreenButton = $FireButton
 
 func _ready():
 	# 常驻处理：即使游戏暂停（升级/结算）也能收到手指抬起事件，避免摇杆方向卡死

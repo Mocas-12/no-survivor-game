@@ -72,9 +72,9 @@ func _physics_process(delta):
 		_glow_mat.emission_energy_multiplier = 0.75 + 0.7 * breath
 	$Glow.light_energy = 1.0 + 0.7 * breath
 
-	# 攻击：按住连射（扇形 / 追踪导弹 / 波浪共用冷却）
+	# 全自动射击：只需专注走位躲弹幕
 	fire_timer -= delta
-	if Input.is_action_pressed("shoot") and fire_timer <= 0:
+	if fire_timer <= 0:
 		shoot()
 		fire_timer = fire_cooldown
 
