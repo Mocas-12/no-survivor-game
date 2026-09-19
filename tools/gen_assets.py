@@ -99,29 +99,6 @@ def paint_discs(size, cx, cy, R, color, exponent=1.8, steps=140):
     return img.filter(ImageFilter.GaussianBlur(2))
 
 
-# ---------- 玩家（青色圆润飞船，朝 +X） ----------
-
-def gen_player():
-    size = (ss(128), ss(128))
-    pts = [(ss(118), ss(64)), (ss(32), ss(30)), (ss(32), ss(98))]
-    m = rounded_poly_mask(size, pts, ss(6))
-    img = Image.new("RGBA", size, (0, 0, 0, 0))
-    add_glow(img, m, (80, 220, 255), ss(10), 0.65)
-    render(img, m, vgrad(size, (172, 246, 255), (36, 158, 224)), rim=(14, 44, 84, 255), rim_w=3)
-    # 白色高光核心
-    m2 = rounded_poly_mask(size, [(ss(104), ss(64)), (ss(48), ss(50)), (ss(48), ss(78))], ss(5))
-    img.paste(Image.new("RGBA", size, (255, 255, 255, 120)), (0, 0), m2)
-    d = ImageDraw.Draw(img)
-    # 友善的眼睛（和敌人同款风格，但眉眼平和）
-    for ex in (ss(72), ss(96)):
-        d.ellipse([ex - ss(8), ss(48), ex + ss(8), ss(72)], fill=(255, 255, 255, 255))
-    for ex in (ss(75), ss(93)):
-        d.ellipse([ex - ss(4), ss(54), ex + ss(4), ss(66)], fill=(25, 40, 70, 255))
-    # 微笑
-    d.arc([ss(70), ss(70), ss(98), ss(88)], start=20, end=160, fill=(14, 44, 84, 255), width=ss(3))
-    finish(img, "player.png", (128, 128))
-
-
 # ---------- 敌人：普通（红色圆胖怪） ----------
 
 def gen_enemy_normal():
@@ -228,9 +205,6 @@ def gen_particles():
     img = paint_discs((ss(32), ss(32)), ss(16), ss(16), ss(13), (255, 255, 255), exponent=0.9, steps=60)
     finish(img, "particle_spark.png", (64, 64))
 
-    img = paint_discs((ss(128), ss(128)), ss(64), ss(64), ss(62), (255, 250, 235), exponent=1.4)
-    finish(img, "flash.png", (256, 256))
-
     # 冲击波圆环：外实内空 + 外圈柔光
     size = (ss(128), ss(128))
     img = Image.new("RGBA", size, (0, 0, 0, 0))
@@ -245,45 +219,6 @@ def gen_particles():
     out.alpha_composite(glow)
     out.alpha_composite(ring)
     finish(out, "ring.png", (256, 256))
-
-
-# ---------- 背景（深空网格 + 星点 + 海雾） ----------
-
-def gen_starfield():
-    W, H = 1152, 648
-    img = vgrad((W, H), (10, 13, 30), (24, 31, 62)).convert("RGBA")
-    d = ImageDraw.Draw(img)
-    for x in range(0, W, 96):
-        d.line([(x, 0), (x, H)], fill=(130, 160, 255, 9))
-    for y in range(0, H, 96):
-        d.line([(0, y), (W, y)], fill=(130, 160, 255, 9))
-    random.seed(7)
-    halo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    dh = ImageDraw.Draw(halo)
-    for _ in range(170):
-        x, y = random.randint(0, W - 1), random.randint(0, H - 1)
-        r = random.choice([1, 1, 1, 2, 2, 3])
-        c = random.choice([(255, 255, 255), (150, 220, 255), (200, 175, 255)])
-        d.ellipse([x - r, y - r, x + r, y + r], fill=c + (random.randint(45, 220),))
-    for _ in range(12):
-        x, y = random.randint(0, W - 1), random.randint(0, H - 1)
-        r = random.randint(3, 5)
-        dh.ellipse([x - r * 4, y - r * 4, x + r * 4, y + r * 4], fill=(160, 210, 255, 60))
-        d.ellipse([x - r, y - r, x + r, y + r], fill=(255, 255, 255, 235))
-    img.alpha_composite(halo.filter(ImageFilter.GaussianBlur(6)))
-    # 顶部"海面"青雾（敌人登陆方向）
-    strip = Image.new("RGBA", (1, 160), (0, 0, 0, 0))
-    ds = ImageDraw.Draw(strip)
-    for i in range(160):
-        ds.point((0, i), fill=(120, 220, 255, int(34 * (1 - i / 160))))
-    img.alpha_composite(strip.resize((W, 160)))
-    # 暗角
-    vg = Image.radial_gradient("L").resize((W, H)).point(lambda v: int(v * 0.5))
-    dark = Image.new("RGBA", (W, H), (0, 0, 8, 0))
-    dark.putalpha(vg)
-    img.alpha_composite(dark)
-    img.convert("RGB").save(os.path.join(OUT, "starfield.png"))
-    print("saved starfield.png")
 
 
 # ---------- 飞机通用工具 ----------
