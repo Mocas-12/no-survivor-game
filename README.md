@@ -54,7 +54,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 | Grunt | red strike fighter | 3 | 150 | 10 | 1 | 1 | — |
 | Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 | — |
 | Swift | green micro-fighter | 1 | 300 | 8 | 1 | 1 | serpentine weaving |
-| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 2 | fires at the player |
+| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 1 | fires at the player |
 | Guard | silver armored wedge | 8 | 80 | 25 | 2 | 2 | — |
 | Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 3 | — |
 
@@ -84,7 +84,7 @@ Defeating a boss chains explosions across the screen and drops a **power core** 
 | Assault | 5-8 | swept wings | wing pods |
 | Heavy | 9-12 | wide wings | gun barrels |
 | Flagship | 13-16 | X-wings | armor plating |
-| Sovereign | 17-20 | prongs & double decks | everything + max size |
+| Sovereign | 17-20 | twin prongs | everything + max size |
 
 Each core also grants a permanent stat bump (extra volley guns, damage, fire rate, hull). The transformation plays **without pausing the fight**: the old hull contracts into white light, a beam erupts skyward and the new frame elastic-pops in while you keep flying.
 
@@ -127,7 +127,7 @@ Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice k
 - 🀄 **Embedded rounded CJK font** (ZCOOL KuaiLe) so the Chinese UI renders identically in the browser
 - 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, runs on GitHub Pages as-is
 - 📱 **Touch-first mobile support**: virtual joystick + fire button appear automatically on touch devices
-- ✨ All effects use `CPUParticles2D` + additive-blend sprites: no GPU particles, no shaders, friendly to weak devices
+- 🧠 **Fully procedural 3D**: every ship, boss and pickup is assembled at runtime from primitive meshes by `model_builder.gd` — perspective camera, directional + ambient lighting, WorldEnvironment glow, and `CPUParticles3D` / emissive-material effects that stay friendly to weak devices
 
 ## 📁 Project Structure
 
@@ -142,17 +142,18 @@ no-survivor-game/
 │   └── gen_sounds.py      # regenerates every WAV in assets/sounds/
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
 ├── screenshots/           # README screenshots
-├── world.gd / .tscn       # game state, waves/bosses, SFX/BGM manager, FX helpers
-├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 4 forms
+├── world.gd / .tscn       # game state, waves/bosses, SFX/BGM manager, FX helpers, starfield scroll
+├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 20 forms
 ├── enemy.gd / .tscn       # 6 enemy types, slow/knockback status, shooter AI
 ├── boss.gd / .tscn        # 5 boss patterns, HP bar signal, chain explosion
+├── model_builder.gd       # procedural 3D model factory (player forms, enemies, bosses, pickups)
 ├── enemy_bullet.gd / .tscn# boss bullet-hell rounds (straight + homing)
 ├── bullet.gd / .tscn      # elemental player bullets (splash/slow/chain/knockback)
 ├── core.gd / .tscn        # boss-drop pickup that transforms the ship
 ├── gem / hit_spk          # XP gems, hit sparks
 ├── touch_ui.gd            # mobile virtual joystick + fire button
-├── camera.gd              # decaying screen shake
-├── bg_scroll.gd           # parallax scrolling starfield
+├── camera.gd              # decaying screen shake + aspect-adaptive FOV
+├── panel_fx.gd            # panel entrance animations (start / game over / level up)
 └── export_presets.cfg     # Web preset (threads off)
 ```
 
