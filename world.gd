@@ -10,6 +10,7 @@ extends Node3D
 
 const SPARK_TEX := preload("res://assets/particle_spark.png")
 const BGM := preload("res://assets/sounds/bgm.wav")
+const MB := preload("res://model_builder.gd")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
 
@@ -41,6 +42,7 @@ var next_boss_at = 25
 var boss_tier = 0
 var boss_active = false
 var last_hurt_ms = -10000
+var regen_accum = 0.0   # 脱战回血的小数累积
 
 # 4. 引用节点
 @onready var player = $Player
@@ -118,6 +120,14 @@ func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
 	for i in star_mats.size():
 		star_mats[i].uv1_offset.y -= star_speeds[i] * delta / star_tex_h[i]
+	# 脱战回血：4 秒未受击后，每 1.2 秒缓慢回复 1 点
+	var now_ms = Time.get_ticks_msec()
+	if health > 0 and health < max_health and now_ms - last_hurt_ms > 4000:
+		regen_accum += delta / 1.2
+		if regen_accum >= 1.0:
+			regen_accum -= 1.0
+			health = mini(health + 1, max_health)
+			update_ui()
 
 # --- 音效 ---
 
@@ -269,25 +279,55 @@ func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing :
 	add_child(b)
 
 func spawn_lightning(from: Vector3, to: Vector3):
-	# 雷电链电弧：中间抖动的发光柱
-	var mid = (from + to) * 0.5 + Vector3(randf_range(-12, 12), randf_range(-12, 12), 0.0)
-	var length = from.distance_to(to)
-	var mi = MeshInstance3D.new()
-	var bm = BoxMesh.new()
-	bm.size = Vector3(3, 3, length)
-	mi.mesh = bm
-	var m = StandardMaterial3D.new()
+	# 逼真闪电：抖折主放电通道 + 两条随机分支，二次闪烁后消散
+	_lightning_channel(from, to, 3.4)
+	for i in 2:
+		var anchor = from.lerp(to, randf_range(0.3, 0.7))
+		var branch_dir = Vector3(randf_range(-1, 1), randf_range(-0.4, 1), randf_range(-1, 1)).normalized()
+		_lightning_channel(anchor, anchor + branch_dir * from.distance_to(to) * randf_range(0.2, 0.38), 1.7)
+
+func _lightning_channel(from: Vector3, to: Vector3, width: float):
+	var dist = from.distance_to(to)
+	if dist < 1.0:
+		return
+	var root := Node3D.new()
+	add_child(root)
+	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(0.85, 0.75, 1, 1)
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.9, 0.86, 1.0, 0.95)
 	m.emission_enabled = true
-	m.emission = Color(0.8, 0.65, 1)
-	m.emission_energy_multiplier = 2.0
-	mi.material_override = m
-	mi.look_at_from_position(mid, to)
-	add_child(mi)
-	var tw = mi.create_tween()
-	tw.tween_property(mi, "transparency", 1.0, 0.12)
-	tw.tween_callback(mi.queue_free)
+	m.emission = Color(0.72, 0.58, 1.0)
+	m.emission_energy_multiplier = 3.4
+	# 中点位移：沿通道逐段向随机侧向抖折，形成锯齿放电
+	var steps = maxi(int(dist / 24.0), 3)
+	var prev = from
+	for i in steps:
+		var endp = from.lerp(to, float(i + 1) / steps)
+		if i < steps - 1:
+			var jitter = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
+			endp += jitter.cross(to - from).normalized() * randf_range(-16.0, 16.0)
+		var seg_len = prev.distance_to(endp)
+		if seg_len > 0.5:
+			var mi := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = Vector3(width, width, 1.0)
+			mi.mesh = bm
+			mi.material_override = m
+			root.add_child(mi)
+			var dirv = (endp - prev).normalized()
+			var up := Vector3.UP
+			if absf(dirv.dot(up)) > 0.98:
+				up = Vector3(0, 0, 1)
+			mi.look_at_from_position((prev + endp) * 0.5, endp, up)
+			mi.scale = Vector3(1, 1, seg_len)
+		prev = endp
+	# 闪烁：亮 → 短暂变暗 → 回亮 → 淡出
+	var tw := root.create_tween()
+	tw.tween_property(m, "albedo_color:a", 0.3, 0.05)
+	tw.tween_property(m, "albedo_color:a", 0.9, 0.03)
+	tw.tween_property(m, "albedo_color:a", 0.0, 0.1)
+	tw.tween_callback(root.queue_free)
 
 # --- 核心装备：连贯 3D 变形演出 ---
 
@@ -299,23 +339,63 @@ func apply_core(form):
 	_apply_form_bonus(form)
 	update_ui()
 
-	# 渐进变形（不暂停）：旧机体收缩 + 3D 翻滚白化 → 光柱冲天 → 新机体弹性放大登场
+	# 渐进变形（不暂停）：机体收缩 → 能量茧包裹 → 茧内脉冲重塑 → 破茧揭示新形态
+	var accent: Color = MB.ACCENTS[form % MB.ACCENTS.size()]
 	var tw = create_tween()
-	tw.tween_property(player, "scale", Vector3.ONE * 0.25, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tw.tween_callback(func():
-		player.set_form(form)
-		_spawn_evolution_beam()
-		var tw2 = create_tween()
-		tw2.set_parallel(true)
-		tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.2)
-	)
+	tw.tween_property(player, "scale", Vector3.ONE * 0.22, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.tween_callback(func(): _morph_cocoon(form, accent))
 	# 连环冲击波
 	for i in 3:
 		get_tree().create_timer(0.1 + i * 0.15, true).timeout.connect(func():
 			if is_instance_valid(player):
 				spawn_ring(player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.0 + i * 0.5, 0.45))
+
+func _morph_cocoon(form, accent: Color):
+	# 能量茧：包裹收缩的机体，颜色从青色渐变为新形态主题色，三次脉冲后破茧
+	var cocoon := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 30.0
+	sm.height = 60.0
+	cocoon.mesh = sm
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(CYAN.r, CYAN.g, CYAN.b, 0.0)
+	m.emission_enabled = true
+	m.emission = CYAN
+	m.emission_energy_multiplier = 2.2
+	cocoon.material_override = m
+	cocoon.position = player.position
+	add_child(cocoon)
+
+	player.set_form(form)
+
+	var tw := cocoon.create_tween()
+	# 包裹：茧体胀起并显现
+	tw.tween_property(m, "albedo_color:a", 0.7, 0.2)
+	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.35, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# 茧色渐变 → 新形态的主题色（形态特征预兆）
+	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.7), 0.28)
+	tw.parallel().tween_property(m, "emission", accent, 0.28)
+	# 三次重塑脉冲：新形态在茧内逐次成形
+	for i in 3:
+		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.14 + 0.13 * i), 0.09).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.35, 0.09).set_trans(Tween.TRANS_SINE)
+	# 破茧：能量迸发，新机体翻滚着弹性放大登场
+	tw.tween_callback(func():
+		spawn_explosion(cocoon.position, accent, false)
+		spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
+		confetti_burst(cocoon.position, 18, accent)
+		cocoon.queue_free()
+		_spawn_reveal())
+
+func _spawn_reveal():
+	_spawn_evolution_beam()
+	var tw2 = create_tween()
+	tw2.set_parallel(true)
+	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.35, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.2)
 
 func _spawn_evolution_beam():
 	# 冲天光柱

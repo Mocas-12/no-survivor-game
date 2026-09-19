@@ -38,13 +38,13 @@ scale_amount_max = 1.0
 
 [node name="Splash" type="CPUParticles3D" parent="."]
 emitting = false
-amount = 12
-lifetime = 0.45
-spread = 180.0
-direction = Vector3(1, 0, 0)
-gravity = Vector3(0, -420, 0)
-initial_velocity_min = 60.0
-initial_velocity_max = 140.0
+amount = 16
+lifetime = 0.6
+spread = 55.0
+direction = Vector3(0, -1, 0)
+gravity = Vector3(0, -300, 0)
+initial_velocity_min = 100.0
+initial_velocity_max = 220.0
 scale_amount_min = 0.5
 scale_amount_max = 1.0
 

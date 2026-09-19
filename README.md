@@ -46,6 +46,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 - 👑 **Boss battles**: every wave triggers a sirened 1v1 duel — normal spawns stop until it falls
 - 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic)
 - 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs
+- 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
 
 ## 👾 Enemy Fleet
 
@@ -127,7 +128,7 @@ Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice k
 - 🀄 **Embedded rounded CJK font** (ZCOOL KuaiLe) so the Chinese UI renders identically in the browser
 - 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, runs on GitHub Pages as-is
 - 📱 **Touch-first mobile support**: virtual joystick + fire button appear automatically on touch devices
-- 🧠 **Fully procedural 3D**: every ship, boss and pickup is assembled at runtime from primitive meshes by `model_builder.gd` — perspective camera, directional + ambient lighting, WorldEnvironment glow, and `CPUParticles3D` / emissive-material effects that stay friendly to weak devices
+- 🧠 **Handcrafted low-poly 3D fleet**: 20 player forms, 6 enemies and 5 bosses use CC0 models from Quaternius' Ultimate Spaceships pack, normalized and liveried at runtime by `model_builder.gd` — perspective camera, directional + ambient lighting, WorldEnvironment glow, and `CPUParticles3D` / emissive-material effects stay friendly to weak devices
 
 ## 📁 Project Structure
 
@@ -135,8 +136,9 @@ Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice k
 no-survivor-game/
 ├── assets/
 │   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
+│   ├── ships/             # low-poly ship models & liveries (Quaternius, CC0)
 │   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
-│   └── *.png              # ships, bosses, bullets, gems, particles, stars, touch UI
+│   └── *.png              # FX textures, gems, particles, stars, touch UI
 ├── tools/
 │   ├── gen_assets.py      # regenerates every PNG in assets/ (Python + Pillow)
 │   └── gen_sounds.py      # regenerates every WAV in assets/sounds/
@@ -146,7 +148,7 @@ no-survivor-game/
 ├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 20 forms
 ├── enemy.gd / .tscn       # 6 enemy types, slow/knockback status, shooter AI
 ├── boss.gd / .tscn        # 5 boss patterns, HP bar signal, chain explosion
-├── model_builder.gd       # procedural 3D model factory (player forms, enemies, bosses, pickups)
+├── model_builder.gd       # ship model loader (Quaternius CC0 fleet, 20 forms / enemies / bosses)
 ├── enemy_bullet.gd / .tscn# boss bullet-hell rounds (straight + homing)
 ├── bullet.gd / .tscn      # elemental player bullets (splash/slow/chain/knockback)
 ├── core.gd / .tscn        # boss-drop pickup that transforms the ship
@@ -196,5 +198,6 @@ None are downloaded — every sprite, texture, sound effect and the BGM are gene
 ## 📄 License & Credits
 
 - **Code & generated art/audio**: © Mocas-12, all rights reserved
+- **Ship models**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0 (public domain)
 - **Font**: [ZCOOL KuaiLe](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
 - **Engine**: [Godot Engine](https://godotengine.org/) 4.7 — MIT License

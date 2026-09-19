@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://d2f72n7bl8d4j"
+path="res://.godot/imported/Dispatcher.obj-e24d98d5297b25715269d924e740f0c3.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Dispatcher.obj-e24d98d5297b25715269d924e740f0c3.mesh"]
+
+source_file="res://assets/ships/Dispatcher/Dispatcher.obj"
+dest_files=["res://.godot/imported/Dispatcher.obj-e24d98d5297b25715269d924e740f0c3.mesh", "res://.godot/imported/Dispatcher.obj-e24d98d5297b25715269d924e740f0c3.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

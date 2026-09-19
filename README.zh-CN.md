@@ -46,6 +46,7 @@
 - 👑 **Boss 战**：警报响起后 Boss 携专属血条独自登场（期间停止刷小怪）
 - 🛩️ **战机进化**：Boss 掉落核心装备，接住即触发全套变形演出
 - 📈 **动态难度**：刷怪间隔随积分从 0.9 秒一路压缩到 0.3 秒
+- 💚 **脱战修复**：4 秒未受击后，机体缓慢自动回血
 
 ## 👾 敌机图鉴
 
@@ -127,7 +128,7 @@
 - 🀄 **内嵌圆体中文字体**（站酷快乐体）：浏览器里没有系统字体，不内嵌中文全是方块
 - 🕸️ **Web 导出关闭线程支持**：不需要 SharedArrayBuffer / COOP-COEP 响应头，GitHub Pages 直接可跑
 - 📱 **触屏优先适配**：检测到触屏设备自动显示虚拟摇杆与开火按钮
-- 🧠 **全程序化 3D**：所有战机 / Boss / 物件由 `model_builder.gd` 用基础图元在运行时拼装——透视镜头、平行光 + 环境光、WorldEnvironment 泛光，特效为 `CPUParticles3D` + 自发光材质，弱设备依旧流畅
+- 🧠 **精修低模 3D 舰队**：20 主角形态、6 敌机、5 Boss 全部采用 Quaternius《Ultimate Spaceships》CC0 模型，由 `model_builder.gd` 运行时归一化并套涂装——透视镜头、平行光 + 环境光、WorldEnvironment 泛光，特效为 `CPUParticles3D` + 自发光材质，弱设备依旧流畅
 
 ## 📁 项目结构
 
@@ -135,8 +136,9 @@
 no-survivor-game/
 ├── assets/
 │   ├── fonts/             # 站酷快乐体（SIL OFL 协议）
+│   ├── ships/             # 低模飞船与涂装（Quaternius，CC0 协议）
 │   ├── sounds/            # 合成音效 + 循环 BGM（tools/gen_sounds.py）
-│   └── *.png              # 战机、Boss、子弹、水晶、粒子、星空层、触屏 UI
+│   └── *.png              # 特效贴图、水晶、粒子、星空层、触屏 UI
 ├── tools/
 │   ├── gen_assets.py      # 重新生成 assets/ 里所有 PNG（Python + Pillow）
 │   └── gen_sounds.py      # 重新生成 assets/sounds/ 里所有 WAV
@@ -146,7 +148,7 @@ no-survivor-game/
 ├── player.gd / .tscn      # 鼠标/触屏驾驶、元素与弹道系统、20 形态
 ├── enemy.gd / .tscn       # 6 种敌机、减速/击退状态、炮手机 AI
 ├── boss.gd / .tscn        # 5 种 Boss 弹幕、血条信号、连环殉爆
-├── model_builder.gd       # 程序化 3D 模型工厂（主角形态 / 敌机 / Boss / 物件）
+├── model_builder.gd       # 飞船模型加载（Quaternius CC0 舰队：20 形态 / 敌机 / Boss）
 ├── enemy_bullet.gd / .tscn# Boss 弹幕（直线 + 追踪）
 ├── bullet.gd / .tscn      # 元素子弹（溅射/减速/链电/击退）
 ├── core.gd / .tscn        # Boss 掉落的核心装备（拾取变形）
@@ -196,5 +198,6 @@ python tools/gen_sounds.py
 ## 📄 协议与致谢
 
 - **代码与生成美术 / 音频**：© Mocas-12，保留所有权利
+- **飞船模型**：[Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0（公有领域）
 - **字体**：[站酷快乐体](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
 - **引擎**：[Godot Engine](https://godotengine.org/) 4.7 — MIT License

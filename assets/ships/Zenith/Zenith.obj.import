@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://v1y14ewqq1bj"
+path="res://.godot/imported/Zenith.obj-97138ea4e64dbaf07b25632773726635.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Zenith.obj-97138ea4e64dbaf07b25632773726635.mesh"]
+
+source_file="res://assets/ships/Zenith/Zenith.obj"
+dest_files=["res://.godot/imported/Zenith.obj-97138ea4e64dbaf07b25632773726635.mesh", "res://.godot/imported/Zenith.obj-97138ea4e64dbaf07b25632773726635.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
