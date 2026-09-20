@@ -112,10 +112,10 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 | 👟 Sprint | move speed +12% (up to Lv.5) |
 | 🛡️ Armor | max HP +2 and heal 4 (stackable) |
 | 🔴 Fire warhead | bullets splash to nearby enemies, damage +1 |
-| 💧 Water warhead | soaks foes, triggers elemental reactions with fire/ice/storm |
+| 💧 Water warhead | knocks foes back and soaks them, triggers reactions |
 | 🔵 Ice warhead | hits slow enemies by 45% for 1.6s |
 | 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
-| 🟢 Wind warhead | bullet speed +40%, hits knock back |
+| 🟢 Wind warhead | bullet speed +40%, gathers nearby foes into one spot |
 | 🌠 Wide barrage | wider fan, +1 bullet |
 | 〰️ Wave path | bullets snake sideways for wider coverage |
 | 🧲 Magnet | gem pickup range +35% (up to Lv.3) |

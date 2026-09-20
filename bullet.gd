@@ -492,8 +492,15 @@ func _apply_element(hit_body, world):
 					_tornado(world, hit_body)
 					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
 				hit_body.wet_timer = (1.6 + 0.5 * (lv - 1)) * mark_boost   # 浸润标记
+				# 水流击退：把命中目标推离主角
 				if hit_body.has_method("knockback"):
-					hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (30.0 + 15.0 * lv))
+					var pl = get_tree().get_first_node_in_group("player")
+					var away := Vector3(dir.x, dir.y, 0.0)
+					if pl:
+						var to = hit_body.global_position - pl.global_position
+						if to.length() > 1.0:
+							away = to.normalized()
+					hit_body.knockback(away * (60.0 + 20.0 * lv))
 		"ice":
 			if is_mob and hit_body.wet_timer > 0.0:
 				# 冰 + 水 = 冻结
@@ -541,8 +548,13 @@ func _apply_element(hit_body, world):
 					_tornado(world, hit_body)
 					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
 				hit_body.gust_timer = 2.0 * mark_boost   # 气旋标记
-			if hit_body.has_method("knockback"):
-				hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (70.0 + 40.0 * (lv - 1)))
+			# 疾风聚拢：把命中点周围的敌机吸向一点（风元素的独特功能）
+			var pull := 55.0 + 15.0 * lv
+			for m in _nearby_others(hit_body, 150.0 + 20.0 * lv, 6):
+				if m.has_method("knockback"):
+					var to_center = global_position - m.global_position
+					if to_center.length() > 1.0:
+						m.knockback(to_center.normalized() * pull)
 
 # 反应提示：命中点浮起反应名
 func _reaction(world, key: String, color: Color):
