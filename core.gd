@@ -21,15 +21,17 @@ func _physics_process(delta):
 	rotation.z += 1.5 * delta
 	scale = Vector3.ONE * (1.0 + 0.15 * sin(t))
 
-	# 缓缓下落 + 磁吸（磁力核心能力可成倍扩大磁吸范围）
+	# 缓缓下落 + 磁吸（磁力核心能力 × 磁力强化卡的倍率共同放大磁吸范围）
 	var magnet_mul: float = player.get_meta("magnet_mul", 1.0) if player else 1.0
+	var world = get_tree().current_scene
+	var stat_mul: float = world.magnet_range_mul if world != null and world.get("magnet_range_mul") != null else 1.0
 	position.y -= fall_speed * delta
-	if player and global_position.distance_to(player.global_position) < magnet_range * magnet_mul:
+	if player and global_position.distance_to(player.global_position) < magnet_range * magnet_mul * stat_mul:
 		global_position = global_position.move_toward(player.global_position, magnet_speed * delta)
 
-	# 掉出屏幕底部就没收了
-	if position.y < -360.0:
-		queue_free()
+	# 落到屏幕下缘就悬停等待，绝不没收（形态是最重要的成长线，漏接太伤）
+	if position.y < -286.0:
+		position.y = -286.0
 
 func _on_body_entered(body):
 	if body.is_in_group("player"):

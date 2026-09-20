@@ -41,13 +41,17 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 
 - 🖱️ **Desktop**: mouse piloting with full-auto fire — focus on dodging
 - 📱 **Mobile**: touch anywhere on the left half to summon a movement joystick
-- 🌊 **Beach-defense waves**: 6 enemy types land from the top edge
+- ⏸️ **Pause anywhere**: Esc or the on-screen button — resume, restart, mute, or turn on reduced-flash mode
+- 🏆 **Best score persists**: saved to localStorage on the web (a file on desktop); beat it and the game cheers
+- 🔤 **Bilingual UI**: every label, card and banner auto-switches between 中文 and English by system language
+- 🌊 **Beach-defense waves**: 6 enemy types land from the top edge, plus formation assaults — V-formations, shield walls and twin-flank pincers
 - 💎 **XP crystals**: kills drop glowing gems that drift with the starfield and magnet toward you
-- 👑 **Boss battles**: every wave triggers a sirened 1v1 duel — normal spawns stop until it falls
-- 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic)
-- 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs
+- 👑 **Boss battles**: every wave triggers a sirened 1v1 duel — normal spawns slow to a trickle until it falls
+- 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic) — a missed core hovers at the bottom edge instead of vanishing
+- 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs, and enemies toughen with every boss wave
 - 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
 - ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well
+- 💀 **A cinematic death**: exploding in slow motion before the results screen — unless you carry a Phoenix Core, which revives you with a screen-clearing shockwave
 
 ## 👾 Enemy Fleet
 
@@ -60,11 +64,11 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 | Guard | silver armored wedge | 8 | 80 | 25 | 2 | 2 | — |
 | Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 3 | — |
 
-New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150).
+New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150). Every boss wave defeated hardens the whole fleet (+12% HP per wave), and every ~15s a formation assault sweeps in: V-shaped swift squadrons, slow shield walls, or pincers converging from both flanks.
 
 ## 👑 Boss Fleet
 
-When the kill counter crosses the threshold an alarm sounds, normal spawns halt, and a boss warship enters with its own HP bar. Five bosses rotate, and every later encounter has more HP and harder-hitting bullets:
+When the kill counter crosses the threshold an alarm sounds, spawns slow to a trickle, and a boss warship enters with its own HP bar. Five bosses rotate, and every later encounter has more HP and harder-hitting bullets:
 
 | Boss | Look | Signature Skill |
 | --- | --- | --- |
@@ -74,7 +78,7 @@ When the kill counter crosses the threshold an alarm sounds, normal spawns halt,
 | 🟡 **Hunter** | gold twin-claw stalker | homing rounds + 6-way shots |
 | 🔵 **Phantom** | blue crystal ghost | teleports, then bursts 8-spike volleys |
 
-Defeating a boss chains explosions across the screen and drops a **power core** — catch it before it drifts off-screen to transform your fighter. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
+Defeating a boss chains explosions across the screen and drops a **power core** — catch it to transform your fighter; even if you let it drift to the bottom it hovers there until you come get it. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
 
 ## 🛩️ Ship Forms
 
@@ -92,15 +96,15 @@ Each core also grants a permanent stat bump (extra volley guns, damage, fire rat
 
 ## 🧬 Upgrades: Elements & Patterns
 
-Each level-up pauses the game and deals **3 random cards out of a 12-card pool** — stackable basics, elemental warheads, and fire patterns:
+Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Stackable basics show their level (Sprint Lv.2…); once you pick an element or a special pattern, competing cards stop appearing — your build is never overwritten by a random roll:
 
 | Card | Effect |
 | --- | --- |
-| 🔥 Fire Rate | shooting interval −20% |
-| 💪 Power | bullet damage +1 |
+| 🔥 Fire Rate | shooting interval −20% (stackable) |
+| 💪 Power | bullet damage +1 (stackable) |
 | 🎇 Multishot | +1 bullet per volley (up to 7) |
-| 👟 Sprint | move speed +12% |
-| 🛡️ Armor | max HP +2 and heal 4 |
+| 👟 Sprint | move speed +12% (up to Lv.5) |
+| 🛡️ Armor | max HP +2 and heal 4 (stackable) |
 | 🔴 Fire warhead | bullets splash to nearby enemies, damage +1 |
 | 🔵 Ice warhead | hits slow enemies by 45% for 1.6s |
 | 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
@@ -108,8 +112,11 @@ Each level-up pauses the game and deals **3 random cards out of a 12-card pool**
 | 🚀 Homing missiles | fire-and-forget missiles that chase the nearest enemy |
 | 🌠 Wide barrage | wider fan, +1 bullet |
 | 〰️ Wave path | bullets snake sideways for wider coverage |
+| 🧲 Magnet | gem pickup range +35% (up to Lv.3) |
+| 🎓 Elite Pilot | XP gain +15% (up to Lv.3) |
+| 🐦‍🔥 Phoenix Core | revive once on death with a screen-clearing shockwave |
 
-Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice kites chasers, Wind repositions threats.
+Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice kites chasers, Wind repositions threats. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 
 ## ✨ Game Feel
 
@@ -123,12 +130,14 @@ Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice k
 
 ## 🧠 Tech Highlights
 
-- 🎮 **Godot 4.7 / GDScript**, GL Compatibility renderer for maximum browser reach
-- 🎨 **All art is procedurally generated** by `tools/gen_assets.py` (Python + Pillow) — planes, bosses, FX textures, parallax starfield and touch UI in one cohesive rounded-neon style
+- 🎮 **Godot 4 / GDScript**, GL Compatibility renderer for maximum browser reach
+- 🎨 **Generated backgrounds & touch UI** by `tools/gen_assets.py` (Python + Pillow); ships, bosses and effects are fully 3D
 - 🔈 **All audio is procedurally synthesized** by `tools/gen_sounds.py` (pure math → WAV) — SFX and the looping BGM, zero audio assets shipped
+- 🌐 **Zero-allocation bullets**: player bullets live in an object pool with element materials/meshes shared statically, so max-fire-rate spraying doesn't churn memory on weak devices
 - 🀄 **Embedded rounded CJK font** (ZCOOL KuaiLe) so the Chinese UI renders identically in the browser
 - 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, runs on GitHub Pages as-is
-- 📱 **Touch-first mobile support**: virtual joystick + fire button appear automatically on touch devices
+- 📱 **Touch-first mobile support**: a virtual joystick appears automatically on touch devices; pause and settings are thumb-reachable
+- 💾 **Tiny save layer**: best score and settings persist to `localStorage` on the web or `user://save.json` on desktop
 - 🧠 **Handcrafted low-poly 3D fleet**: 20 player forms, 6 enemies and 5 bosses use CC0 models from Quaternius' Ultimate Spaceships pack, normalized and liveried at runtime by `model_builder.gd` — perspective camera, directional + ambient lighting, WorldEnvironment glow, and `CPUParticles3D` / emissive-material effects stay friendly to weak devices
 
 ## 📁 Project Structure
@@ -139,20 +148,25 @@ no-survivor-game/
 │   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
 │   ├── ships/             # low-poly ship models & liveries (Quaternius, CC0)
 │   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
-│   └── *.png              # FX textures, gems, particles, stars, touch UI
+│   └── *.png              # parallax starfield layers + touch joystick (gen_assets.py)
 ├── tools/
-│   ├── gen_assets.py      # regenerates every PNG in assets/ (Python + Pillow)
+│   ├── gen_assets.py      # regenerates the starfield & joystick PNGs (Python + Pillow)
 │   └── gen_sounds.py      # regenerates every WAV in assets/sounds/
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
 ├── screenshots/           # README screenshots
-├── world.gd / .tscn       # game state, waves/bosses, SFX/BGM manager, FX helpers, starfield scroll
-├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 20 forms
-├── enemy.gd / .tscn       # 6 enemy types, slow/knockback status, shooter AI
+├── world.gd / .tscn       # game state, waves/bosses/formations, upgrades UI, pause, audio, save
+├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 20 forms, death/revive
+├── enemy.gd / .tscn       # 6 enemy types, formation speeds, boss-wave scaling, shooter AI
 ├── boss.gd / .tscn        # 5 boss patterns, HP bar signal, chain explosion
+├── upgrades.gd            # 15-card upgrade pool (ids, conditions, effects)
+├── i18n.gd                # zh/en string table, auto-picked by system locale
+├── save.gd                # best score & settings (web localStorage / desktop file)
+├── fx.gd                  # one-shot VFX library: shockwave rings, explosions, confetti, lightning
+├── pause_menu.gd          # pause panel (resume / restart / sound / reduced flash)
 ├── model_builder.gd       # ship model loader (Quaternius CC0 fleet, 20 forms / enemies / bosses)
 ├── enemy_bullet.gd / .tscn# boss bullet-hell rounds (straight + homing)
-├── bullet.gd / .tscn      # elemental player bullets (splash/slow/chain/knockback)
-├── core.gd / .tscn        # boss-drop pickup that transforms the ship
+├── bullet.gd / .tscn      # elemental player bullets, object-pooled with shared materials
+├── core.gd / .tscn        # boss-drop pickup that transforms the ship (never lost)
 ├── gem / hit_spk          # XP gems, hit sparks
 ├── touch_ui.gd            # mobile virtual movement joystick
 ├── camera.gd              # decaying screen shake + aspect-adaptive FOV
@@ -194,7 +208,7 @@ The 39 MB WebAssembly engine is downloaded once; the browser caches it and later
 Yes — touch the left half of the screen to summon the movement joystick; the fighter fires automatically. Desktop with a mouse is still the most precise way to play.
 
 **Where are the image / audio files from?**
-None are downloaded — every sprite, texture, sound effect and the BGM are generated by the two scripts in `tools/`. Tweak a palette or a synth parameter, rerun, and the whole game gets a new skin.
+Nothing is downloaded — the sounds and BGM are synthesized by `tools/gen_sounds.py`, the starfield and joystick textures by `tools/gen_assets.py`, and the ships are CC0 3D models from Quaternius recolored at runtime.
 
 ## 📄 License & Credits
 

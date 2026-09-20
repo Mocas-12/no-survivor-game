@@ -33,6 +33,7 @@ var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
 var sway_t = 0.0
 var fire_cd = 0.0
+var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
 var model: Node3D = null
 
 @onready var player = get_tree().get_first_node_in_group("player")
@@ -55,13 +56,18 @@ func setup(type: String):
 	if type == "shooter":
 		fire_cd = randf_range(1.0, 2.2)
 
+# Boss 波数越高，敌机血量越厚（后期曲线成长）
+func apply_tier(tier: int):
+	if tier > 1:
+		health = ceili(health * (1.0 + 0.12 * (tier - 1)))
+
 func _physics_process(delta):
 	if dead:
 		return
 	slow_timer = maxf(0.0, slow_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
 	var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
-	velocity = Vector3(0.0, -cur_speed, 0.0)
+	velocity = Vector3(vx, -cur_speed, 0.0)
 	if kind == "swift":
 		# 蛇形走位：固定航向下叠加水平正弦摆动
 		sway_t += delta * 6.0

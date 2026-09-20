@@ -3,6 +3,7 @@ extends CharacterBody3D
 # 主角战机（3D）：20 种程序化形态，鼠标/摇杆在 x/y 平面驾驶，机头朝上
 
 const BulletScene := preload("res://bullet.tscn")
+const BulletScript := preload("res://bullet.gd")
 const MB := preload("res://model_builder.gd")
 
 @export var follow_speed = 1300    # 鼠标跟随速度（越大跟得越紧）
@@ -84,26 +85,46 @@ func shoot():
 	var start = -(bullet_count - 1) / 2.0 * spacing
 
 	for i in bullet_count:
-		var b = BulletScene.instantiate()
-		b.damage = damage
-		b.set_element(element)
-		b.speed *= speed_mul
-		if pattern == "wave":
-			b.wave_amp = 220.0
-		get_tree().current_scene.add_child(b)
+		# 优先从对象池取回子弹（bullet.gd 维护），空池才实例化新弹
+		var b = BulletScript.take()
+		if b == null:
+			b = BulletScene.instantiate()
+			get_tree().current_scene.add_child(b)
 
 		var ang: float = PI / 2 + start + i * spacing
+		var s_mul := speed_mul
+		var hom := 0.0
+		var h_time := 0.0
 		if pattern == "homing":
 			# 追踪导弹：先张开射出，随后自动转向最近的敌机 / Boss
 			ang = PI / 2 + start + i * spacing * 1.6
-			b.homing = 4.5
-			b.homing_time = 4.0
-			b.speed *= 0.55
-		b.global_position = global_position + Vector3(0, 44.0 * base_scale, 0.5)
-		b.dir = Vector3(cos(ang), sin(ang), 0.0)
+			hom = 4.5
+			h_time = 4.0
+			s_mul = speed_mul * 0.55
+		b.launch(damage, element, s_mul, 220.0 if pattern == "wave" else 0.0, hom, h_time,
+			global_position + Vector3(0, 44.0 * base_scale, 0.5), Vector3(cos(ang), sin(ang), 0.0))
 	$MuzzleFlash.restart()
 
 	# 射击音效
 	var world = get_tree().current_scene
 	if world.has_method("play_sfx"):
 		world.play_sfx("shoot", -14.0, 0.04)
+
+# 阵亡演出第一步：机体熄火隐去（由 world 驱动爆炸与慢动作）
+func play_death():
+	set_physics_process(false)
+	$Collision.set_deferred("disabled", true)
+	$Glow.visible = false
+	$EngineTrail.emitting = false
+	$MuzzleFlash.emitting = false
+	if model:
+		model.visible = false
+
+# 凤凰模块复活：熄火部件全部复位
+func revive():
+	set_physics_process(true)
+	$Collision.set_deferred("disabled", false)
+	$Glow.visible = true
+	$EngineTrail.emitting = true
+	if model:
+		model.visible = true

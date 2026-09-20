@@ -8,9 +8,9 @@ signal hp_changed(hp, max_hp)
 signal died(pos: Vector3)
 
 const MB := preload("res://model_builder.gd")
+const I18n := preload("res://i18n.gd")
 
 const TEX := {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
-const NAMES := {1: "毁灭者 DESTRUCTOR", 2: "拦截者 INTERCEPTOR", 3: "要塞 FORTRESS", 4: "猎手 HUNTER", 5: "幻影 PHANTOM"}
 const HP_BONUS := {1: 0, 2: 20, 3: 10, 4: 30, 5: 20}
 
 var boss_id = 1
@@ -50,7 +50,7 @@ func setup(id, tier_):
 	tw.tween_callback(func(): entered = true)
 
 func boss_name() -> String:
-	return NAMES[boss_id]
+	return I18n.T("boss_%d" % boss_id)
 
 func _physics_process(delta):
 	if dead or not entered:

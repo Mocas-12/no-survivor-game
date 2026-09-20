@@ -1,7 +1,90 @@
 extends Area3D
 
 # 玩家子弹（3D）：5 种元素染色 + 命中特效 + 波浪/追踪弹道
+# 性能：材质/网格按元素静态共享；子弹死亡后回池复用（见 take / _recycle），
+#       高射速下不再每发新建材质与粒子发射器
 
+const ELEMENT_COLORS := {
+	"normal": Color(1, 1, 1),
+	"fire": Color(1, 0.62, 0.35),
+	"ice": Color(0.6, 0.9, 1),
+	"lightning": Color(0.78, 0.62, 1),
+	"wind": Color(0.62, 1, 0.62),
+}
+
+# --- 静态共享缓存与对象池 ---
+static var _body_mats := {}
+static var _meshes := {}
+static var _pool: Array = []
+
+# 从池里取一颗可复用的子弹（仍在场景树中）；空池返回 null，由调用方实例化新弹
+static func take() -> Node:
+	while _pool.size() > 0:
+		var b = _pool.pop_back()
+		if is_instance_valid(b) and b.is_inside_tree():
+			return b
+	return null
+
+static func _body_mat(element: String) -> StandardMaterial3D:
+	if not _body_mats.has(element):
+		var c: Color = ELEMENT_COLORS[element]
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = c
+		m.emission_enabled = true
+		m.emission = c
+		m.emission_energy_multiplier = 2.6
+		_body_mats[element] = m
+	return _body_mats[element]
+
+static func _drop(c: Color, r: float) -> SphereMesh:
+	var key := "d|%s|%.1f" % [c.to_html(), r]
+	if not _meshes.has(key):
+		var sm := SphereMesh.new()
+		sm.radius = r
+		sm.height = r * 2.0
+		var mm := StandardMaterial3D.new()
+		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mm.albedo_color = c
+		mm.emission_enabled = true
+		mm.emission = c
+		mm.emission_energy_multiplier = 1.8
+		sm.material = mm
+		_meshes[key] = sm
+	return _meshes[key]
+
+static func _leaf() -> BoxMesh:
+	if not _meshes.has("leaf"):
+		var bm := BoxMesh.new()
+		bm.size = Vector3(5.0, 0.6, 3.0)
+		var mm := StandardMaterial3D.new()
+		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mm.albedo_color = Color(0.55, 0.9, 0.35)
+		mm.emission_enabled = true
+		mm.emission = Color(0.35, 0.75, 0.25)
+		mm.emission_energy_multiplier = 1.1
+		bm.material = mm
+		_meshes["leaf"] = bm
+	return _meshes["leaf"]
+
+static func _streak() -> BoxMesh:
+	if not _meshes.has("streak"):
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.9, 0.9, 16.0)
+		var mm := StandardMaterial3D.new()
+		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mm.albedo_color = Color(0.8, 1.0, 0.75)
+		mm.emission_enabled = true
+		mm.emission = Color(0.6, 0.9, 0.55)
+		mm.emission_energy_multiplier = 1.2
+		bm.material = mm
+		_meshes["streak"] = bm
+	return _meshes["streak"]
+
+# --- 运行时状态 ---
 var speed = 800.0
 var damage = 1
 var element = "normal"   # normal / fire / ice / lightning / wind
@@ -12,33 +95,50 @@ var homing = 0.0         # 转向速率（弧度/秒），0 = 无追踪
 var homing_time = 0.0    # 追踪持续时间
 var _retarget := 0.0     # 目标重扫描计时（避免每帧全组扫描）
 var _target: Node3D = null
-
-const ELEMENT_COLORS := {
-	"normal": Color(1, 1, 1),
-	"fire": Color(1, 0.62, 0.35),
-	"ice": Color(0.6, 0.9, 1),
-	"lightning": Color(0.78, 0.62, 1),
-	"wind": Color(0.62, 1, 0.62),
-}
+var _active := false             # 池中休眠的子弹不参与逻辑
+var _fx_element := ""            # 当前特效所属元素（判断是否需要重建拖尾）
+var _has_water_fx := false       # 当前是否带波浪水花尾
+var _created: Array = []         # 动态创建的粒子发射器（重建时销毁）
+var _fx_all: Array = []          # 全部发射器（回收时统一停发）
 
 func _ready():
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	# 元素在 add_child 前已由 set_element 设定，这里直接按元素取色
-	# （否则此处的白色新材质会覆盖 set_element 染过的场景材质，元素弹体永远发白）
-	var c: Color = ELEMENT_COLORS[element]
-	m.albedo_color = c
-	m.emission_enabled = true
-	m.emission = c
-	m.emission_energy_multiplier = 2.6
-	$Mesh.material_override = m
-	_setup_fx()
 	body_entered.connect(_on_body_entered)
 
-# 弹丸特效：基础元素拖尾 + 各元素专属粒子（火焰/疾风/雷电），波浪弹道附加水花尾流
-func _setup_fx():
+# 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
+func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_pos: Vector3, p_dir: Vector3):
+	damage = p_damage
+	element = p_element
+	speed = 800.0 * p_speed_mul
+	wave_amp = p_wave
+	homing = p_homing
+	homing_time = p_homing_time
+	wave_t = 0.0
+	_retarget = 0.0
+	_target = null
+	dir = p_dir
+	global_position = p_pos
+	visible = true
+	_active = true
+	set_deferred("monitoring", true)
+	$Mesh.material_override = _body_mat(element)
+	# 元素 / 弹道没变就只恢复发射，变了才重建拖尾（复用路径零分配）
+	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx:
+		_rebuild_fx()
+	else:
+		for e in _fx_all:
+			if is_instance_valid(e):
+				e.emitting = true
+
+func _rebuild_fx():
+	for c in _created:
+		if is_instance_valid(c):
+			c.queue_free()
+	_created.clear()
+	_fx_all = [$Trail]
+	_fx_element = element
+	_has_water_fx = wave_amp > 0.0
 	var c: Color = ELEMENT_COLORS[element]
-	$Trail.mesh = _droplet_mesh(c, 1.4)
+	$Trail.mesh = _drop(c, 1.4)
 	$Trail.emitting = true
 	match element:
 		"fire":
@@ -50,6 +150,8 @@ func _setup_fx():
 			_attach_crackle_trail()
 	if wave_amp > 0.0:
 		_attach_water_trail()
+	else:
+		$Splash.emitting = false
 
 func _add_emitter(amount: int, lifetime: float) -> CPUParticles3D:
 	var p := CPUParticles3D.new()
@@ -57,6 +159,8 @@ func _add_emitter(amount: int, lifetime: float) -> CPUParticles3D:
 	p.lifetime = lifetime
 	p.emitting = false
 	add_child(p)
+	_created.append(p)
+	_fx_all.append(p)
 	return p
 
 func _gradient(colors: Array) -> Gradient:
@@ -86,7 +190,7 @@ func _attach_flame_trail():
 	f.scale_amount_max = 2.8
 	f.scale_amount_curve = _shrink_curve()
 	f.color_ramp = _gradient([Color(1, 0.95, 0.55, 0.95), Color(1, 0.55, 0.15, 0.8), Color(0.85, 0.12, 0.05, 0.0)])
-	f.mesh = _droplet_mesh(Color(1, 0.62, 0.2), 1.9)
+	f.mesh = _drop(Color(1, 0.62, 0.2), 1.9)
 	f.emitting = true
 
 # 疾风：绿色树叶侧向卷落
@@ -102,7 +206,7 @@ func _attach_leaf_trail():
 	w.scale_amount_min = 0.7
 	w.scale_amount_max = 1.2
 	w.color_ramp = _gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.35, 0.72, 0.25, 0.75), Color(0.25, 0.6, 0.2, 0.0)])
-	w.mesh = _leaf_mesh()
+	w.mesh = _leaf()
 	w.emitting = true
 
 # 疾风：白绿风痕向后高速拉出，表现风的流向
@@ -116,7 +220,7 @@ func _attach_gust_trail():
 	s.scale_amount_min = 0.8
 	s.scale_amount_max = 1.3
 	s.color_ramp = _gradient([Color(0.8, 1.0, 0.75, 0.8), Color(0.7, 0.95, 0.65, 0.0)])
-	s.mesh = _streak_mesh()
+	s.mesh = _streak()
 	s.emitting = true
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
@@ -130,16 +234,17 @@ func _attach_crackle_trail():
 	k.scale_amount_min = 0.5
 	k.scale_amount_max = 1.0
 	k.color_ramp = _gradient([Color(1, 1, 1, 1), Color(0.82, 0.62, 1.0, 0.0)])
-	k.mesh = _droplet_mesh(Color(0.88, 0.78, 1.0), 1.2)
+	k.mesh = _drop(Color(0.88, 0.78, 1.0), 1.2)
 	k.emitting = true
 
 # 波浪：定向喷溅水花 + 向后拖出的白色水痕尾流
 func _attach_water_trail():
-	$Splash.mesh = _droplet_mesh(Color(0.75, 0.95, 1.0), 1.1)
+	$Splash.mesh = _drop(Color(0.75, 0.95, 1.0), 1.1)
 	$Splash.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
 	$Splash.amount = 10
 	$Splash.lifetime = 0.6
 	$Splash.emitting = true
+	_fx_all.append($Splash)
 	var wk := _add_emitter(5, 0.55)
 	wk.spread = 9.0
 	wk.direction = Vector3(0, -1, 0)
@@ -149,56 +254,12 @@ func _attach_water_trail():
 	wk.scale_amount_min = 0.7
 	wk.scale_amount_max = 1.3
 	wk.color_ramp = _gradient([Color(0.92, 0.98, 1.0, 0.85), Color(0.6, 0.88, 1.0, 0.0)])
-	wk.mesh = _droplet_mesh(Color(0.9, 0.97, 1.0), 1.3)
+	wk.mesh = _drop(Color(0.9, 0.97, 1.0), 1.3)
 	wk.emitting = true
 
-func _leaf_mesh() -> BoxMesh:
-	var bm := BoxMesh.new()
-	bm.size = Vector3(5.0, 0.6, 3.0)
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mm.albedo_color = Color(0.55, 0.9, 0.35)
-	mm.emission_enabled = true
-	mm.emission = Color(0.35, 0.75, 0.25)
-	mm.emission_energy_multiplier = 1.1
-	bm.material = mm
-	return bm
-
-func _streak_mesh() -> BoxMesh:
-	var bm := BoxMesh.new()
-	bm.size = Vector3(0.9, 0.9, 16.0)
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mm.albedo_color = Color(0.8, 1.0, 0.75)
-	mm.emission_enabled = true
-	mm.emission = Color(0.6, 0.9, 0.55)
-	mm.emission_energy_multiplier = 1.2
-	bm.material = mm
-	return bm
-
-func _droplet_mesh(c: Color, radius: float) -> SphereMesh:
-	var sm := SphereMesh.new()
-	sm.radius = radius
-	sm.height = radius * 2.0
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mm.albedo_color = c
-	mm.emission_enabled = true
-	mm.emission = c
-	mm.emission_energy_multiplier = 1.8
-	sm.material = mm
-	return sm
-
-func set_element(e):
-	element = e
-	var c: Color = ELEMENT_COLORS[e]
-	$Mesh.material_override.emission = c
-	$Mesh.material_override.albedo_color = c
-
 func _process(delta):
+	if not _active:
+		return
 	if dir == Vector3.ZERO:
 		dir = Vector3.UP
 	# 追踪：周期性重锁最近目标，逐帧只做转向计算
@@ -217,9 +278,9 @@ func _process(delta):
 		move += Vector3(-dir.y, dir.x, 0.0) * sin(wave_t) * wave_amp * delta
 	position += move
 	rotation.z = Vector2(dir.x, dir.y).angle() - PI / 2
-	# 飞出游戏区域自动销毁
+	# 飞出游戏区域自动回池
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:
-		queue_free()
+		_recycle()
 
 # 扫描最近的存活目标（每 0.15 秒一次）
 func _find_target() -> Node3D:
@@ -245,8 +306,26 @@ func _steer_toward(target: Node3D, delta: float):
 	cur += clampf(diff, -homing * delta, homing * delta)
 	dir = Vector3(cos(cur), sin(cur), 0.0)
 
+# 回池：隐身 + 停碰撞 + 停发射器，等待下次 launch
+func _recycle():
+	if not _active:
+		return
+	_active = false
+	visible = false
+	homing_time = 0.0
+	set_deferred("monitoring", false)
+	for e in _fx_all:
+		if is_instance_valid(e):
+			e.emitting = false
+	if _pool.size() < 160:
+		_pool.append(self)
+	else:
+		queue_free()
+
 # 当有物体进入子弹的检测范围时
 func _on_body_entered(body):
+	if not _active:
+		return
 	if body.has_method("take_damage"):
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
@@ -261,7 +340,7 @@ func _on_body_entered(body):
 			_leaf_burst(world)
 		body.take_damage(damage)
 		_apply_element(body, world)
-		queue_free()
+		_recycle()
 
 # 波浪弹命中：绽开一圈水花后自毁
 func _splash_burst(world):
@@ -277,7 +356,7 @@ func _splash_burst(world):
 	p.scale_amount_min = 0.6
 	p.scale_amount_max = 1.4
 	p.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.7), Color(0.4, 0.7, 1.0, 0.0)])
-	p.mesh = _droplet_mesh(Color(0.75, 0.95, 1.0), 1.3)
+	p.mesh = _drop(Color(0.75, 0.95, 1.0), 1.3)
 	p.position = global_position
 	world.add_child(p)
 	p.emitting = true
@@ -298,7 +377,7 @@ func _fire_burst(world):
 	p.scale_amount_max = 3.2
 	p.scale_amount_curve = _shrink_curve()
 	p.color_ramp = _gradient([Color(1, 0.93, 0.5, 0.95), Color(1, 0.45, 0.1, 0.75), Color(0.7, 0.08, 0.02, 0.0)])
-	p.mesh = _droplet_mesh(Color(1, 0.6, 0.2), 1.9)
+	p.mesh = _drop(Color(1, 0.6, 0.2), 1.9)
 	p.position = global_position
 	world.add_child(p)
 	p.emitting = true
@@ -320,7 +399,7 @@ func _leaf_burst(world):
 	p.scale_amount_min = 0.8
 	p.scale_amount_max = 1.4
 	p.color_ramp = _gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.3, 0.68, 0.22, 0.0)])
-	p.mesh = _leaf_mesh()
+	p.mesh = _leaf()
 	p.position = global_position
 	world.add_child(p)
 	p.emitting = true
