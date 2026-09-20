@@ -50,7 +50,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 - 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic) — a missed core hovers at the bottom edge instead of vanishing
 - 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs, and enemies toughen with every boss wave
 - 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
-- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well
+- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well; while active, the ship carries a persistent ability aura (radius rings / shield bubble / orbiting motes), the HUD indicator stays on, and timed buffs show a countdown bar
 - 💀 **A cinematic death**: exploding in slow motion before the results screen — unless you carry a Phoenix Core, which revives you with a screen-clearing shockwave
 
 ## 👾 Enemy Fleet

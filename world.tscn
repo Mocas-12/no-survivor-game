@@ -292,6 +292,29 @@ theme_override_font_sizes/font_size = 24
 text = "✦ 形态能力 ✦"
 horizontal_alignment = 1
 
+[node name="AbilityChip" type="Label" parent="UI"]
+visible = false
+offset_left = 18.0
+offset_top = 76.0
+offset_right = 320.0
+offset_bottom = 100.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 17
+text = "✦ 形态能力"
+
+[node name="BuffBar" type="ProgressBar" parent="UI"]
+visible = false
+offset_left = 18.0
+offset_top = 102.0
+offset_right = 198.0
+offset_bottom = 110.0
+theme_override_styles/background = SubResource("sb_bar_bg")
+theme_override_styles/fill = SubResource("sb_xp_fill")
+max_value = 6.0
+value = 6.0
+show_percentage = false
+
 [node name="WarningLabel" type="Label" parent="UI"]
 visible = false
 offset_left = 0.0

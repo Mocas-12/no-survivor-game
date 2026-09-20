@@ -74,6 +74,8 @@ func _run() -> void:
 	world.apply_core(2)
 	await get_tree().create_timer(2.5).timeout
 	check(world.player.form == 2, "形态切换为 2")
+	check(is_instance_valid(world._aura), "能力光环已生成")
+	check(world.ability_chip.visible, "HUD 能力指示器显示")
 
 	print("== Boss 战 ==")
 	world._start_boss()

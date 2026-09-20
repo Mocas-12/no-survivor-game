@@ -75,6 +75,7 @@ var _buff_speed0 := 0
 var _buff_count0 := 0
 var _prebuilt_model: Node3D = null  # 变形预建的新机体（提前分摊构建开销）
 var _cocoon: MeshInstance3D = null  # 变形能量茧（每帧跟随主角，防止飞出光圈）
+var _aura: Node3D = null            # 能力常驻光环（跟随主角的世界空间节点）
 
 # 3.6 卡牌与被动（升级系统 / 存档设置）
 var card_taken := {}             # 卡 id → 已选次数（可叠加卡显示 Lv.N）
@@ -104,6 +105,8 @@ var formation_cd := 12.0         # 编队波次倒计时
 @onready var record_label = $UI/GameOverPanel/RecordLabel
 @onready var levelup_panel = $UI/LevelUpPanel
 @onready var ability_label = $UI/AbilityLabel
+@onready var ability_chip = $UI/AbilityChip
+@onready var buff_bar = $UI/BuffBar
 @onready var pause_button = $UI/PauseButton
 @onready var pause_panel = $UI/PausePanel
 @onready var upgrade_buttons = [
@@ -195,12 +198,20 @@ func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
 	for i in star_mats.size():
 		star_mats[i].uv1_offset.y -= star_speeds[i] * delta / star_tex_h[i]
-	# 变形能量茧跟随主角：机体移动时光圈贴着走，不会留在原地
+	# 变形能量茧 / 能力光环跟随主角：机体移动时光圈贴着走，不会留在原地
 	if _cocoon != null:
 		if is_instance_valid(_cocoon):
 			_cocoon.position = player.global_position
 		else:
 			_cocoon = null
+	if _aura != null:
+		if is_instance_valid(_aura):
+			_aura.position = player.global_position
+		else:
+			_aura = null
+	# 限时增益倒计时条
+	if buff_kind != "" and buff_bar.visible:
+		buff_bar.value = buff_left
 	if dying:
 		return
 	# 脱战回血：4 秒未受击后，每 1.2 秒缓慢回复 1 点
@@ -569,6 +580,13 @@ func _activate_ability(form: int):
 	# 能力入场特效
 	spawn_ring(player.position, col, 0.3, 3.0, 0.55)
 	confetti_burst(player.position, 16, col)
+	# 常驻能力指示器（左上角，能力色常显，不再只靠 2 秒横幅）
+	ability_chip.text = "✦ " + ability_name
+	ability_chip.modulate = Color(col.r, col.g, col.b)
+	ability_chip.show()
+	# 常驻能力光环：光尘 + 半径圈 / 护盾泡（引力新星是瞬间爆发，无常驻视觉）
+	if ability != "nova":
+		_build_aura(ability)
 	match ability:
 		"nova":
 			# 引力新星：变形瞬间冲击波重创周围敌机
@@ -594,6 +612,9 @@ func _start_buff(kind: String, dur: float):
 	_end_buff()
 	buff_kind = kind
 	buff_left = dur
+	buff_bar.max_value = dur
+	buff_bar.value = dur
+	buff_bar.show()
 	match kind:
 		"overcharge":
 			_buff_cooldown0 = player.fire_cooldown
@@ -619,6 +640,98 @@ func _end_buff():
 		player.bullet_count = _buff_count0
 	buff_kind = ""
 	buff_left = 0.0
+	buff_bar.hide()
+	_clear_aura()   # 限时增益的常驻光环随增益结束消散
+
+# --- 能力常驻视觉：环绕光尘 + 半径指示圈 / 护盾泡（跟随主角的世界空间节点） ---
+
+func _clear_aura():
+	if _aura != null:
+		if is_instance_valid(_aura):
+			_aura.queue_free()
+		_aura = null
+
+func _build_aura(id: String):
+	_clear_aura()
+	var col: Color = ABILITIES[id]["color"]
+	_aura = Node3D.new()
+	_aura.position = player.global_position
+	add_child(_aura)
+	# 环绕光尘：能力色微光粒子绕机体升腾
+	var p := CPUParticles3D.new()
+	p.amount = 14
+	p.lifetime = 0.9
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 42.0
+	p.direction = Vector3(0, 1, 0)
+	p.spread = 20.0
+	p.gravity = Vector3.ZERO
+	p.initial_velocity_min = 20.0
+	p.initial_velocity_max = 55.0
+	p.scale_amount_min = 0.5
+	p.scale_amount_max = 1.3
+	var m := SphereMesh.new()
+	m.radius = 2.2
+	m.height = 4.4
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mm.albedo_color = col
+	mm.emission_enabled = true
+	mm.emission = col
+	mm.emission_energy_multiplier = 2.2
+	m.material = mm
+	p.mesh = m
+	_aura.add_child(p)
+	# 半径指示圈：让"力场范围"看得见（数值与实际效果半径一致）
+	var radius := 0.0
+	match id:
+		"frost": radius = 250.0
+		"flame": radius = 210.0
+		"gravity": radius = 270.0
+		"magnet": radius = 180.0 * float(player.get_meta("magnet_mul", 1.0)) * magnet_range_mul
+	if radius > 0.0:
+		_aura_radius_ring(col, radius)
+	# 相位护盾：包裹机体的半透明能量泡，呼吸明暗
+	if id == "aegis":
+		var bubble := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 62.0
+		sm.height = 124.0
+		bubble.mesh = sm
+		var bm := StandardMaterial3D.new()
+		bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		bm.albedo_color = Color(col.r, col.g, col.b, 0.16)
+		bm.emission_enabled = true
+		bm.emission = col
+		bm.emission_energy_multiplier = 1.4
+		bubble.material_override = bm
+		_aura.add_child(bubble)
+		var bt := bubble.create_tween().set_loops()
+		bt.tween_property(bm, "albedo_color:a", 0.3, 0.7)
+		bt.tween_property(bm, "albedo_color:a", 0.14, 0.7)
+
+func _aura_radius_ring(col: Color, radius: float):
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 9.0
+	torus.outer_radius = 11.0
+	ring.mesh = torus
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(col.r, col.g, col.b, 0.55)
+	m.emission_enabled = true
+	m.emission = col
+	m.emission_energy_multiplier = 1.6
+	ring.material_override = m
+	ring.rotation_degrees = Vector3(90, 0, 0)
+	ring.scale = Vector3.ONE * (radius / 10.0)
+	_aura.add_child(ring)
+	var rt := ring.create_tween().set_loops()
+	rt.tween_property(m, "albedo_color:a", 0.22, 0.9)
+	rt.tween_property(m, "albedo_color:a", 0.55, 0.9)
 
 func _spawn_evolution_beam():
 	# 冲天光柱
@@ -773,6 +886,9 @@ func _do_revive():
 func _start_death():
 	dying = true
 	pause_button.hide()
+	_clear_aura()
+	ability_chip.hide()
+	buff_bar.hide()
 	$TouchUI.reset()
 	player.play_death()
 	play_sfx("explode", -2.0)
