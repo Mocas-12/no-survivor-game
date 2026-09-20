@@ -90,6 +90,9 @@ var speed = 800.0
 var damage = 1
 var element = "normal"   # normal / fire / ice / lightning / wind
 var element_lv = 1       # 元素等级（效果随升级卡增强）
+var crit := 0.0           # 暴击概率（暴击强化卡），命中翻倍
+var reaction_boost := 1.0 # 元素反应伤害倍率（连锁反应卡）
+var mark_boost := 1.0     # 元素标记时长倍率（元素延续卡）
 var wave_amp = 0.0       # 波浪弹道摆动幅度（0 = 直线）
 var wave_t = 0.0
 var dir = Vector3.ZERO   # 飞行方向（发射时设置）
@@ -335,6 +338,11 @@ func _on_body_entered(body):
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
 			world.spawn_hit_spark(global_position)
+		# 暴击：双倍伤害 + 金色进溅
+		var dmg: int = damage
+		if crit > 0.0 and randf() < crit:
+			dmg = damage * 2
+			_crit_flash(world)
 		if wave_amp > 0.0:
 			_splash_burst(world)
 			if world.has_method("spawn_ring"):
@@ -343,7 +351,7 @@ func _on_body_entered(body):
 			_fire_burst(world)
 		elif element == "wind":
 			_leaf_burst(world)
-		body.take_damage(damage)
+		body.take_damage(dmg)
 		_apply_element(body, world)
 		_recycle()
 
@@ -410,10 +418,10 @@ func _leaf_burst(world):
 	p.emitting = true
 	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
-# --- 元素命中特效与元素反应（随元素等级增强） ---
-# 元素反应（先手标记 + 后手触发，均消耗标记）：
-#   火 + 水 = 蒸汽：白雾爆发，小范围灼伤      雷 + 火 = 超载：橙红大爆炸，范围重创
-#   冰 + 水 = 冻结：目标近乎静止 1.2 秒       雷 + 水 = 感电：链式电击 +2 目标
+# --- 元素命中特效与元素反应（随元素等级 / 连锁反应 / 元素延续增强） ---
+# 反应矩阵（先手留下标记，后手触发并消耗标记）：
+#   火+水=蒸汽        雷+火=超载        冰+水=冻结        雷+水=感电
+#   风+火=火龙卷      风+水=龙卷        火+冰缓=融化      雷+风=雷暴
 func _apply_element(hit_body, world):
 	var lv := maxi(element_lv, 1)
 	var is_mob: bool = "wet_timer" in hit_body   # Boss 无元素标记，不吃反应但吃基础元素效果
@@ -422,11 +430,23 @@ func _apply_element(hit_body, world):
 			_fire_burst(world)
 			if is_mob:
 				if hit_body.wet_timer > 0.0:
+					# 火 + 水 = 蒸汽
 					hit_body.wet_timer = 0.0
+					_reaction(world, "react_steam", Color(0.95, 1.0, 1.0))
 					_steam_burst(world)
-					for m in _nearby_others(hit_body, 110.0 + 20.0 * lv, 5):
-						m.take_damage(maxi(2, damage))
-				hit_body.burn_timer = 2.0   # 灼烧标记：供超载反应
+					_aoe(hit_body, world, (110.0 + 20.0 * lv) * (0.75 + 0.25 * reaction_boost), maxi(2, roundi(damage * reaction_boost)))
+				elif hit_body.slow_timer > 0.0:
+					# 火 + 冰缓 = 融化：单体重创
+					_reaction(world, "react_melt", Color(1, 0.6, 0.3))
+					_melt_flash(world)
+					hit_body.take_damage(roundi(damage * 2.0 * reaction_boost))
+				elif hit_body.gust_timer > 0.0:
+					# 风 + 火 = 火龙卷
+					hit_body.gust_timer = 0.0
+					_reaction(world, "react_firestorm", Color(1, 0.45, 0.15))
+					_firestorm(world)
+					_aoe(hit_body, world, 150.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 1.2 * reaction_boost))
+				hit_body.burn_timer = 2.0 * mark_boost   # 灼烧标记：供超载/蒸汽反应
 			# 溅射：Lv.N 半径 90+30(N-1)，溅射伤害 50%+1/级
 			var radius := 90.0 + 30.0 * (lv - 1)
 			var splash_dmg := maxi(1, roundi(damage * 0.5)) + (lv - 1)
@@ -438,10 +458,16 @@ func _apply_element(hit_body, world):
 				if hit_body.burn_timer > 0.0:
 					# 水 + 火 = 蒸汽
 					hit_body.burn_timer = 0.0
+					_reaction(world, "react_steam", Color(0.95, 1.0, 1.0))
 					_steam_burst(world)
-					for m in _nearby_others(hit_body, 110.0 + 20.0 * lv, 5):
-						m.take_damage(maxi(2, damage))
-				hit_body.wet_timer = 1.6 + 0.5 * (lv - 1)   # 浸润标记
+					_aoe(hit_body, world, (110.0 + 20.0 * lv) * (0.75 + 0.25 * reaction_boost), maxi(2, roundi(damage * reaction_boost)))
+				elif hit_body.gust_timer > 0.0:
+					# 风 + 水 = 龙卷：牵引周围敌机
+					hit_body.gust_timer = 0.0
+					_reaction(world, "react_tornado", Color(0.5, 0.85, 1.0))
+					_tornado(world, hit_body)
+					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
+				hit_body.wet_timer = (1.6 + 0.5 * (lv - 1)) * mark_boost   # 浸润标记
 				if hit_body.has_method("knockback"):
 					hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (30.0 + 15.0 * lv))
 		"ice":
@@ -449,6 +475,7 @@ func _apply_element(hit_body, world):
 				# 冰 + 水 = 冻结
 				hit_body.wet_timer = 0.0
 				hit_body.slow_down(1.2, 0.92)
+				_reaction(world, "react_freeze", Color(0.75, 0.93, 1.0))
 				_freeze_flash(world)
 			elif hit_body.has_method("slow_down"):
 				hit_body.slow_down(1.6 + 0.4 * (lv - 1), minf(0.45 + 0.1 * (lv - 1), 0.85))
@@ -460,9 +487,15 @@ func _apply_element(hit_body, world):
 			if is_mob and hit_body.burn_timer > 0.0:
 				# 雷 + 火 = 超载
 				hit_body.burn_timer = 0.0
+				_reaction(world, "react_overload", Color(1, 0.55, 0.2))
 				_overload(world)
-				for m in _nearby_others(hit_body, 130.0, 6):
-					m.take_damage(damage)
+				_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * reaction_boost))
+			elif is_mob and hit_body.gust_timer > 0.0:
+				# 雷 + 风 = 雷暴：三道落雷轰击周围
+				hit_body.gust_timer = 0.0
+				_reaction(world, "react_storm", Color(0.85, 0.7, 1.0))
+				_storm(world)
+				_aoe(hit_body, world, 160.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
 			var chain_dmg := maxi(1, roundi(damage * (0.5 + 0.25 * (lv - 1))))
 			var chain_radius := 200.0 if conduct else 140.0
 			for m in _nearby_others(hit_body, chain_radius, chains):
@@ -470,8 +503,32 @@ func _apply_element(hit_body, world):
 					world.spawn_lightning(global_position, m.global_position)
 				m.take_damage(chain_dmg)
 		"wind":
+			if is_mob:
+				if hit_body.burn_timer > 0.0:
+					# 风 + 火 = 火龙卷
+					hit_body.burn_timer = 0.0
+					_reaction(world, "react_firestorm", Color(1, 0.45, 0.15))
+					_firestorm(world)
+					_aoe(hit_body, world, 150.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 1.2 * reaction_boost))
+				elif hit_body.wet_timer > 0.0:
+					# 风 + 水 = 龙卷
+					hit_body.wet_timer = 0.0
+					_reaction(world, "react_tornado", Color(0.5, 0.85, 1.0))
+					_tornado(world, hit_body)
+					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
+				hit_body.gust_timer = 2.0 * mark_boost   # 气旋标记
 			if hit_body.has_method("knockback"):
 				hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (70.0 + 40.0 * (lv - 1)))
+
+# 反应提示：命中点浮起反应名
+func _reaction(world, key: String, color: Color):
+	if world.has_method("spawn_reaction_text"):
+		world.spawn_reaction_text(global_position, key, color)
+
+# 反应范围伤害
+func _aoe(hit_body, world, radius: float, dmg: int):
+	for m in _nearby_others(hit_body, radius, 6):
+		m.take_damage(maxi(1, dmg))
 
 # 蒸汽反应：白色水雾腾起
 func _steam_burst(world):
@@ -541,6 +598,119 @@ func _freeze_flash(world):
 	world.add_child(p)
 	p.emitting = true
 	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
+
+# 火龙卷：橙红火柱螺旋上腾 + 双层冲击波
+func _firestorm(world):
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(1, 0.45, 0.15), 0.3, 2.8, 0.55)
+		world.spawn_ring(global_position, Color(1, 0.7, 0.3), 0.2, 2.0, 0.4)
+	if world.has_method("flash_ui"):
+		world.flash_ui(Color(1, 0.5, 0.2), 0.12)
+	if world.has_method("play_sfx"):
+		world.play_sfx("explode", -5.0, 0.1)
+	var p := CPUParticles3D.new()
+	p.amount = 30
+	p.lifetime = 0.6
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 25.0
+	p.direction = Vector3(0, 1, 0)
+	p.gravity = Vector3(0, 220, 0)
+	p.initial_velocity_min = 120.0
+	p.initial_velocity_max = 300.0
+	p.scale_amount_min = 1.6
+	p.scale_amount_max = 3.2
+	p.scale_amount_curve = _shrink_curve()
+	p.color_ramp = _gradient([Color(1, 0.95, 0.6, 0.95), Color(1, 0.4, 0.08, 0.75), Color(0.55, 0.08, 0.02, 0.0)])
+	p.mesh = _drop(Color(1, 0.5, 0.15), 2.2)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+
+# 龙卷：青白漩涡把周围敌机往中心牵引
+func _tornado(world, hit_body):
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(0.5, 0.85, 1.0), 0.4, 0.2, 0.5)
+	if world.has_method("flash_ui"):
+		world.flash_ui(Color(0.5, 0.85, 1.0), 0.08)
+	var p := CPUParticles3D.new()
+	p.amount = 24
+	p.lifetime = 0.7
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3(0, -80, 0)
+	p.initial_velocity_min = 100.0
+	p.initial_velocity_max = 240.0
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 2.6
+	p.scale_amount_curve = _shrink_curve()
+	p.color_ramp = _gradient([Color(0.85, 0.96, 1.0, 0.95), Color(0.45, 0.8, 1.0, 0.6), Color(0.3, 0.6, 1.0, 0.0)])
+	p.mesh = _drop(Color(0.6, 0.85, 1.0), 1.9)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+	# 牵引：周围敌机被吸向反应中心
+	for m in _nearby_others(hit_body, 200.0, 5):
+		if m.has_method("knockback"):
+			var pull = (global_position - m.global_position).normalized()
+			m.knockback(pull * 60.0)
+
+# 融化：目标处白橙闪光
+func _melt_flash(world):
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(1, 0.75, 0.4), 0.15, 1.2, 0.3)
+	var p := CPUParticles3D.new()
+	p.amount = 10
+	p.lifetime = 0.4
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3(0, 100, 0)
+	p.initial_velocity_min = 80.0
+	p.initial_velocity_max = 200.0
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 2.4
+	p.scale_amount_curve = _shrink_curve()
+	p.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(1, 0.6, 0.3, 0.6), Color(0.8, 0.3, 0.1, 0.0)])
+	p.mesh = _drop(Color(1, 0.75, 0.4), 1.8)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(0.7).timeout.connect(p.queue_free)
+
+# 雷暴：三道落雷劈在目标周围
+func _storm(world):
+	if world.has_method("flash_ui"):
+		world.flash_ui(Color(0.85, 0.7, 1.0), 0.1)
+	if world.has_method("play_sfx"):
+		world.play_sfx("hit", -2.0, 0.15)
+	for i in 3:
+		var off = Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0)
+		if world.has_method("spawn_lightning"):
+			world.spawn_lightning(global_position + off + Vector3(0, 60, 0), global_position + off)
+
+# 暴击：金色进溅
+func _crit_flash(world):
+	var p := CPUParticles3D.new()
+	p.amount = 12
+	p.lifetime = 0.35
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3.ZERO
+	p.initial_velocity_min = 140.0
+	p.initial_velocity_max = 300.0
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.6
+	p.color_ramp = _gradient([Color(1, 0.9, 0.4, 1.0), Color(1, 0.65, 0.15, 0.0)])
+	p.mesh = _drop(Color(1, 0.85, 0.35), 1.6)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(0.6).timeout.connect(p.queue_free)
 
 # 查找命中点附近的其他敌机（按距离排序取前 count 个）
 func _nearby_others(hit_body, radius: float, count: int):

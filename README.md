@@ -78,7 +78,7 @@ When the kill counter crosses the threshold an alarm sounds, spawns slow to a tr
 | 🟡 **Hunter** | gold twin-claw stalker | homing rounds + 6-way shots |
 | 🔵 **Phantom** | blue crystal ghost | teleports, then bursts 8-spike volleys |
 
-Every boss fires its own signature rounds — the bullet is the identity: Destructor's **crimson heavy shells**, Interceptor's **violet darts**, Fortress's **emerald lance bolts**, Hunter's **gold stingers** (with a faint trail), Phantom's **cyan crystal shards**. When a boss enrages, a pulsing red ring wraps its hull.
+Every boss fires its own signature rounds — the bullet is the identity: Destructor's **crimson heavy shells**, Interceptor's **violet darts**, Fortress's **emerald lance bolts**, Hunter's **gold stingers** (with a faint trail), Phantom's **cyan crystal shards**. When a boss enrages, each shows its own signature effect: Destructor's red turret orbs orbiting, Interceptor's violet exhaust streaks, Fortress's four charging nodes, Hunter's golden crackle, Phantom's rising blue wisps, and OMEGA's five-colored fleet orbs.
 
 From the second cycle (wave 6) onward each boss also carries a random **affix** (shown next to its name) — **Swift** (+25% bullet speed), **Fortified** (+50% HP), **Summoner** (calls minions), **Vengeful** (detonates a bullet ring on death).
 
@@ -102,7 +102,7 @@ Each core also grants a permanent stat bump (extra volley guns, damage, fire rat
 
 ## 🧬 Upgrades: Elements & Patterns
 
-Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Every card stacks — basics, elemental warheads and the wave pattern all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
+Each level-up pauses the game and deals **3 random cards out of a 19-card pool**. Every card stacks — basics, elemental warheads and the wave pattern all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
 
 | Card | Effect |
 | --- | --- |
@@ -121,8 +121,12 @@ Each level-up pauses the game and deals **3 random cards out of a 15-card pool**
 | 🧲 Magnet | gem pickup range +35% (up to Lv.3) |
 | 🎓 Elite Pilot | XP gain +15% (up to Lv.3) |
 | 🐦‍🔥 Phoenix Core | revive once on death with a screen-clearing shockwave |
+| ✨ Critical | 10% chance for double damage (up to Lv.3) |
+| 🚀 Velocity | projectile speed +20% (up to Lv.3) |
+| ⚡ Chain Reaction | reaction damage +50%, wider area (up to Lv.2) |
+| ⏳ Element Extend | element marks last +1s (up to Lv.2) |
 
-**Elemental reactions** (the first hit leaves a mark, the second triggers and consumes it):
+**Elemental reactions** (the first hit leaves a mark, the second triggers and consumes it — the reaction name floats up at the impact point):
 
 | Reaction | Combo | Effect |
 | --- | --- | --- |
@@ -130,6 +134,10 @@ Each level-up pauses the game and deals **3 random cards out of a 15-card pool**
 | Overload | Storm + Fire | orange blast, heavy area damage |
 | Freeze | Ice + Water | target nearly frozen for 1.2s |
 | Conduct | Storm + Water | chains to 2 extra targets |
+| Firestorm | Wind + Fire | spiraling fire pillar, double shockwave |
+| Tornado | Wind + Water | cyan vortex pulls foes in |
+| Melt | Fire + chilled | 200% single-target burst |
+| Tempest | Storm + Wind | three lightning strikes around the target |
 
 **Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to launch a homing volley. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 

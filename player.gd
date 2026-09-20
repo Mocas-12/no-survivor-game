@@ -18,6 +18,10 @@ var pattern = "spread"             # 弹道模式：spread 扇形 / homing 追�
 var pattern_levels := {"homing": 0, "wave": 0}  # 特殊弹道等级（切换时各自保留）
 var spacing_scale = 1.0            # 扇形张开系数（扩散弹幕会增大）
 var touch_move = Vector2.ZERO      # 手机虚拟摇杆输入
+var crit_chance := 0.0             # 暴击概率（暴击强化卡）
+var proj_speed_mul := 1.0          # 弹速倍率（弹速强化卡）
+var reaction_boost := 1.0          # 元素反应伤害倍率（连锁反应卡）
+var mark_boost := 1.0              # 元素标记时长倍率（元素延续卡）
 var base_scale = 0.60              # 机体基准尺寸：随形态等级成长（0.60 → 1.0）
 var fire_timer = 0.0
 var use_touch = false              # 触屏设备：摇杆专属移动
@@ -94,7 +98,7 @@ func shoot():
 			get_tree().current_scene.add_child(b)
 
 		var ang: float = PI / 2 + start + i * spacing
-		var s_mul: float = speed_mul
+		var s_mul: float = speed_mul * proj_speed_mul
 		var hom := 0.0
 		var h_time := 0.0
 		var el_lv := 0
@@ -112,6 +116,9 @@ func shoot():
 			w_amp = 220.0 + 80.0 * (maxi(1, int(pattern_levels.get("wave", 1))) - 1)
 		b.launch(damage, element, s_mul, w_amp, hom, h_time, el_lv,
 			global_position + Vector3(0, 44.0 * base_scale, 0.5), Vector3(cos(ang), sin(ang), 0.0))
+		b.crit = crit_chance
+		b.reaction_boost = reaction_boost
+		b.mark_boost = mark_boost
 	$MuzzleFlash.restart()
 
 	# 射击音效

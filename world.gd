@@ -19,6 +19,7 @@ const Upgrades := preload("res://upgrades.gd")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
 const SNOW_TEX := preload("res://assets/aura_snow.png")
+const UI_FONT := preload("res://assets/fonts/ZCOOLKuaiLe-Regular.ttf")
 
 # 形态特殊能力：每次变形按形态序号循环获得一种（20 形态 = 每种能力两轮）
 const ABILITY_ORDER := ["nova", "overcharge", "frost", "flame", "magnet", "leech", "aegis", "thrust", "barrage", "gravity"]
@@ -1097,15 +1098,37 @@ func _use_homing():
 			b = BulletScene.instantiate()
 			add_child(b)
 		var ang: float = PI / 2 + start + i * spacing
-		b.launch(player.damage, player.element, 0.55, 0.0, 4.5, 4.0, el_lv,
+		b.launch(player.damage, player.element, 0.55 * player.proj_speed_mul, 0.0, 4.5, 4.0, el_lv,
 			player.global_position + Vector3(0, 44.0 * player.base_scale, 0.5),
 			Vector3(cos(ang), sin(ang), 0.0))
+		b.crit = player.crit_chance
+		b.reaction_boost = player.reaction_boost
+		b.mark_boost = player.mark_boost
 	play_sfx("shoot", -6.0, 0.08)
 	player.get_node("MuzzleFlash").restart()
 
 func _update_homing_btn():
 	homing_btn.text = I18n.T("btn_homing") % homing_charges
 	homing_btn.visible = homing_charges > 0 and not dying
+
+# 反应提示：命中点浮起反应名（元素反应可见性）
+func spawn_reaction_text(pos: Vector3, key: String, color: Color):
+	var lbl := Label3D.new()
+	lbl.text = I18n.T(key)
+	lbl.font = UI_FONT
+	lbl.font_size = 64
+	lbl.pixel_size = 1.1
+	lbl.modulate = color
+	lbl.outline_size = 20
+	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.no_depth_test = true
+	lbl.position = pos
+	add_child(lbl)
+	var tw := lbl.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(lbl, "position:y", pos.y + 80.0, 0.7)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(lbl.queue_free)
 
 # 短 toast 横幅（获得道具等即时反馈）
 func _toast(text: String, col: Color):

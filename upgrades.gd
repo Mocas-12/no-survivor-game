@@ -31,6 +31,18 @@ static func _element(w, id: String) -> void:
 static func _pattern(w, id: String) -> void:
 	w.pick_pattern(id)
 
+static func _crit(w) -> void:
+	w.player.crit_chance = minf(w.player.crit_chance + 0.10, 0.30)
+
+static func _velocity(w) -> void:
+	w.player.proj_speed_mul *= 1.2
+
+static func _chain_reaction(w) -> void:
+	w.player.reaction_boost += 0.5
+
+static func _element_last(w) -> void:
+	w.player.mark_boost += 1.0
+
 static func build(w) -> Array:
 	var player = w.player
 	return [
@@ -70,6 +82,15 @@ static func build(w) -> Array:
 			"apply": func(): _pattern(w, "wave"),
 			"lv_fn": func(): return int(player.pattern_levels.get("wave", 0)),
 			"hint_fn": func(): return "" if player.pattern == "wave" else "switch_pt"},
+		# 组合卡：围绕暴击与元素反应构筑流派
+		{"id": "crit", "can": func(): return int(w.card_taken.get("crit", 0)) < 3,
+			"apply": func(): _crit(w)},
+		{"id": "velocity", "can": func(): return int(w.card_taken.get("velocity", 0)) < 3,
+			"apply": func(): _velocity(w)},
+		{"id": "chain_reaction", "can": func(): return int(w.card_taken.get("chain_reaction", 0)) < 2,
+			"apply": func(): _chain_reaction(w)},
+		{"id": "element_last", "can": func(): return int(w.card_taken.get("element_last", 0)) < 2,
+			"apply": func(): _element_last(w)},
 		{"id": "wide", "can": func(): return player.spacing_scale < 1.6 and player.pattern != "homing",
 			"apply": func(): _wide(w)},
 		# 被动系新卡

@@ -91,6 +91,9 @@ func _physics_process(delta):
 		return
 	t += delta
 	contact_cd -= delta
+	# 狂暴特效旋转件（光珠绕机旋转）
+	if _fx_spin != null and is_instance_valid(_fx_spin):
+		_fx_spin.rotation.z += 1.8 * delta
 
 	# 各 Boss 专属巡航走位（走位即身份）：
 	# 毁灭者镇中缓巡 / 拦截者高速咬位 / 要塞驻停炮台 / 猎手游猎玩家上空 / 幻影漂移待瞬移
@@ -313,27 +316,134 @@ func _enrage():
 		world.flash_ui(Color(1, 0.3, 0.2), 0.25)
 	if world.has_method("play_sfx"):
 		world.play_sfx("warning", -4.0, 0.2)
-	# 狂暴标识：机体外圈常驻红色脉冲环，一眼看出 Boss 已狂暴
-	var ring := MeshInstance3D.new()
-	ring.name = "EnrageRing"
-	var torus := TorusMesh.new()
-	torus.inner_radius = 9.0
-	torus.outer_radius = 11.0
-	ring.mesh = torus
+	_enrage_fx()
+
+# 狂暴特效专属化：每只 Boss 有自己的狂暴视觉（不再用通用红圈）
+var _fx_spin: Node3D = null
+
+func _enrage_fx():
+	match boss_id:
+		1:
+			# 毁灭者：两颗赤红副炮光珠绕机旋转
+			_orbs([Color(1, 0.25, 0.2), Color(1, 0.35, 0.2)], 120.0, 9.0)
+		2:
+			# 拦截者：紫色流光尾焰喷射（高速咬位感）
+			_streaks(Color(0.8, 0.4, 1.0))
+		3:
+			# 要塞：四角翠绿充能节点呼吸
+			var nodes: Array = []
+			for offset in [Vector3(-90, 55, 0), Vector3(90, 55, 0), Vector3(-90, -55, 0), Vector3(90, -55, 0)]:
+				var orb := MeshInstance3D.new()
+				var sm := SphereMesh.new()
+				sm.radius = 8.0
+				sm.height = 16.0
+				orb.mesh = sm
+				var m := StandardMaterial3D.new()
+				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				m.albedo_color = Color(0.3, 1.0, 0.55)
+				m.emission_enabled = true
+				m.emission = Color(0.3, 1.0, 0.55)
+				m.emission_energy_multiplier = 1.6
+				orb.material_override = m
+				orb.position = offset
+				add_child(orb)
+				nodes.append(m)
+			for m in nodes:
+				var nt: Tween = m.create_tween().set_loops()
+				nt.tween_property(m, "emission_energy_multiplier", 3.2, 0.5)
+				nt.tween_property(m, "emission_energy_multiplier", 1.2, 0.5)
+		4:
+			# 猎手：金色电弧绕机体噼啪
+			_streaks(Color(1, 0.8, 0.3), true)
+		5:
+			# 幻影：幽蓝魂火袅袅升起
+			_wisps(Color(0.55, 0.75, 1.0))
+		6:
+			# OMEGA：五色舰队光珠绕机旋转（它吞噬了整支舰队）
+			_orbs([Color(1, 0.25, 0.2), Color(0.8, 0.4, 1.0), Color(0.3, 1.0, 0.55), Color(1, 0.8, 0.3), Color(0.55, 0.75, 1.0)], 150.0, 10.0)
+
+# 旋转光珠
+func _orbs(colors: Array, radius: float, size: float):
+	var spin := Node3D.new()
+	add_child(spin)
+	_fx_spin = spin
+	for c in colors:
+		var orb := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = size
+		sm.height = size * 2.0
+		orb.mesh = sm
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = c
+		m.emission_enabled = true
+		m.emission = c
+		m.emission_energy_multiplier = 2.4
+		orb.material_override = m
+		var ang := randf() * TAU
+		orb.position = Vector3(cos(ang) * radius, sin(ang) * radius, 0.0)
+		spin.add_child(orb)
+
+# 机体流光 / 电弧粒子（猎手 jitter=true 时四散噼啪）
+func _streaks(color: Color, jitter := false):
+	var p := CPUParticles3D.new()
+	p.amount = 18
+	p.lifetime = 0.45
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 95.0
+	p.spread = 180.0
+	p.gravity = Vector3.ZERO
+	if jitter:
+		p.initial_velocity_min = 60.0
+		p.initial_velocity_max = 160.0
+	else:
+		p.direction = Vector3(0, -1, 0)
+		p.initial_velocity_min = 180.0
+		p.initial_velocity_max = 320.0
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.3
+	p.color_ramp = _gradient_fade(color)
+	p.mesh = _streak_mesh_srv(color)
+	add_child(p)
+	p.emitting = true
+
+# 幽火袅袅
+func _wisps(color: Color):
+	var p := CPUParticles3D.new()
+	p.amount = 12
+	p.lifetime = 1.1
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 80.0
+	p.direction = Vector3(0, 1, 0)
+	p.spread = 25.0
+	p.gravity = Vector3(0, 60, 0)
+	p.initial_velocity_min = 40.0
+	p.initial_velocity_max = 90.0
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.6
+	p.color_ramp = _gradient_fade(color)
+	p.mesh = _streak_mesh_srv(color)
+	add_child(p)
+	p.emitting = true
+
+func _gradient_fade(color: Color) -> Gradient:
+	var g := Gradient.new()
+	g.colors = PackedColorArray([Color(color.r, color.g, color.b, 0.9), Color(color.r, color.g, color.b, 0.0)])
+	return g
+
+func _streak_mesh_srv(color: Color) -> SphereMesh:
+	var s := SphereMesh.new()
+	s.radius = 2.6
+	s.height = 5.2
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(1, 0.25, 0.2, 0.6)
+	m.vertex_color_use_as_albedo = true
 	m.emission_enabled = true
-	m.emission = Color(1, 0.25, 0.2)
-	m.emission_energy_multiplier = 1.8
-	ring.material_override = m
-	ring.rotation_degrees = Vector3(90, 0, 0)
-	ring.scale = Vector3.ONE * 8.0
-	add_child(ring)
-	var rt := ring.create_tween().set_loops()
-	rt.tween_property(m, "albedo_color:a", 0.25, 0.6)
-	rt.tween_property(m, "albedo_color:a", 0.6, 0.6)
+	m.emission = color
+	m.emission_energy_multiplier = 2.0
+	s.material = m
+	return s
 
 # OMEGA 第三阶段：获得幻影的瞬移，弹幕密度全面提升
 func _phase3():
