@@ -5,7 +5,12 @@ extends Object
 
 const KEY := "no_survivor_save_v1"
 
+# 冒烟测试置 true：测试的结算/开关不再覆盖玩家真实存档（最高分、静音设置等）
+static var disabled := false
+
 static func load_data() -> Dictionary:
+	if disabled:
+		return {}
 	var raw := ""
 	if OS.has_feature("web"):
 		var js = JavaScriptBridge.eval("(function(){try{return localStorage.getItem('%s')||'';}catch(e){return '';}})()" % KEY, true)
@@ -20,6 +25,8 @@ static func load_data() -> Dictionary:
 	return parsed if parsed is Dictionary else {}
 
 static func save_data(data: Dictionary) -> void:
+	if disabled:
+		return
 	var raw := JSON.stringify(data)
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("try{localStorage.setItem('%s','%s');}catch(e){}" % [KEY, raw], true)

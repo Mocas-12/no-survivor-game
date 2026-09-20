@@ -143,9 +143,10 @@ func _ready():
 	Engine.time_scale = 1.0
 	# 预热全部飞船模型与涂装：变形换装零加载卡顿
 	MB.warm_up()
-	# 音效播放器对象池
+	# 音效播放器对象池（暂停菜单/开始面板期间音效不中断）
 	for i in 14:
 		var p := AudioStreamPlayer.new()
+		p.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(p)
 		_sfx_pool.append(p)
 	upgrade_pool = Upgrades.build(self)
@@ -200,10 +201,11 @@ func _ready():
 	$TouchUI.moved.connect(func(d): player.touch_move = d)
 
 	# 背景音乐：导入时已设置无缝循环（bgm.wav.import loop_mode=1），播完自动重播作为保险。
-	# 初始即播放（桌面端立即可闻）；网页端受浏览器手势限制，点击开始后自动接上
+	# 初始即播放且不受暂停影响（桌面端立即可闻）；网页端受浏览器手势限制，点击开始后自动接上
 	bgm_player = AudioStreamPlayer.new()
 	bgm_player.stream = BGM
 	bgm_player.volume_db = -13.0
+	bgm_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(bgm_player)
 	bgm_player.finished.connect(func(): bgm_player.play())
 	bgm_player.play()
