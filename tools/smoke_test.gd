@@ -47,6 +47,17 @@ func _run() -> void:
 		guard += 1
 	check(world.pending_level_ups == 0 and not world.levelup_panel.visible, "全部升级选择完成")
 
+	print("== 元素/弹道切换 ==")
+	world.pick_element("fire")
+	world.pick_element("fire")
+	check(int(world.player.element_levels.get("fire", 0)) == 2, "同元素重复选取升级 Lv.2")
+	world.pick_element("ice")
+	check(world.player.element == "ice" and int(world.player.element_levels.get("fire", 0)) == 2, "切换元素后原等级保留")
+	world.pick_pattern("homing")
+	world.pick_pattern("wave")
+	check(world.player.pattern == "wave" and int(world.player.pattern_levels.get("homing", 0)) == 1, "切换弹道后等级保留")
+	world.pick_pattern("spread")
+
 	print("== 暂停菜单 ==")
 	world._open_pause()
 	check(get_tree().paused and world.pause_panel.visible, "暂停面板生效")

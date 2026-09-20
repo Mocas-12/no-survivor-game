@@ -672,8 +672,14 @@ func show_level_up():
 	for i in upgrade_buttons.size():
 		var up = choices[i]
 		var base: String = I18n.T("card_" + String(up["id"]))
-		var lv := int(card_taken.get(up["id"], 0))
+		# 等级：元素/弹道卡读各自的等级表，其余读选取计数
+		var lv: int = up["lv_fn"].call() if up.has("lv_fn") else int(card_taken.get(up["id"], 0))
 		var title := base if lv == 0 else "%s Lv.%d" % [base, lv + 1]
+		# 切换提示：选非当前元素/弹道时标注"切换"（等级不会清空）
+		if up.has("hint_fn"):
+			var hint: String = up["hint_fn"].call()
+			if hint != "":
+				title += " · " + I18n.T(hint)
 		upgrade_buttons[i].text = title + "\n" + I18n.T("card_" + String(up["id"]) + "_d")
 		upgrade_buttons[i].set_meta("upgrade", up)
 
@@ -694,6 +700,16 @@ func _on_upgrade_button_pressed(index):
 	confetti_burst(player.position, 16, GOLD)
 	_shake(5.0)
 	pulse_player()
+
+# 元素弹头：切换 / 升级（各元素等级独立保留，随时切回来继续）
+func pick_element(id: String):
+	player.element = id
+	player.element_levels[id] = int(player.element_levels.get(id, 0)) + 1
+
+# 特殊弹道：切换 / 升级（追踪/波浪等级独立保留）
+func pick_pattern(id: String):
+	player.pattern = id
+	player.pattern_levels[id] = int(player.pattern_levels.get(id, 0)) + 1
 
 # --- 受伤 / 复活 / 阵亡结算 ---
 

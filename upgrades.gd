@@ -17,12 +17,19 @@ static func _armor(w) -> void:
 	w.health = mini(w.health + 4, w.max_health)
 
 static func _fire(w) -> void:
-	w.player.element = "fire"
-	w.player.damage += 1
+	w.pick_element("fire")
+	if int(w.player.element_levels.get("fire", 0)) == 1:
+		w.player.damage += 1   # 首次选择火焰弹头保留原有的 +1 伤害
 
 static func _wide(w) -> void:
 	w.player.spacing_scale = 1.6
 	w.player.bullet_count = mini(w.player.bullet_count + 1, 8)
+
+static func _element(w, id: String) -> void:
+	w.pick_element(id)
+
+static func _pattern(w, id: String) -> void:
+	w.pick_pattern(id)
 
 static func build(w) -> Array:
 	var player = w.player
@@ -37,20 +44,32 @@ static func build(w) -> Array:
 			"apply": func(): player.speed = int(player.speed * 1.12)},
 		{"id": "armor", "can": func(): return true,
 			"apply": func(): _armor(w)},
-		# 元素承诺制：选定一种元素后不再出现其他元素卡（防止随机池把流派覆盖掉）
-		{"id": "fire", "can": func(): return player.element == "normal",
-			"apply": func(): _fire(w)},
-		{"id": "ice", "can": func(): return player.element == "normal",
-			"apply": func(): player.element = "ice"},
-		{"id": "lightning", "can": func(): return player.element == "normal",
-			"apply": func(): player.element = "lightning"},
-		{"id": "wind", "can": func(): return player.element == "normal",
-			"apply": func(): player.element = "wind"},
-		# 弹道承诺制：追踪 / 波浪互斥，只在基础扇形弹上选择
-		{"id": "homing", "can": func(): return player.pattern == "spread",
-			"apply": func(): player.pattern = "homing"},
-		{"id": "wave", "can": func(): return player.pattern == "spread",
-			"apply": func(): player.pattern = "wave"},
+		# 元素卡：可叠加至 Lv.3（再选同元素升级效果），选其他元素随时切换且各元素等级独立保留
+		{"id": "fire", "can": func(): return int(player.element_levels.get("fire", 0)) < 3,
+			"apply": func(): _fire(w),
+			"lv_fn": func(): return int(player.element_levels.get("fire", 0)),
+			"hint_fn": func(): return "" if player.element == "fire" else "switch_el"},
+		{"id": "ice", "can": func(): return int(player.element_levels.get("ice", 0)) < 3,
+			"apply": func(): _element(w, "ice"),
+			"lv_fn": func(): return int(player.element_levels.get("ice", 0)),
+			"hint_fn": func(): return "" if player.element == "ice" else "switch_el"},
+		{"id": "lightning", "can": func(): return int(player.element_levels.get("lightning", 0)) < 3,
+			"apply": func(): _element(w, "lightning"),
+			"lv_fn": func(): return int(player.element_levels.get("lightning", 0)),
+			"hint_fn": func(): return "" if player.element == "lightning" else "switch_el"},
+		{"id": "wind", "can": func(): return int(player.element_levels.get("wind", 0)) < 3,
+			"apply": func(): _element(w, "wind"),
+			"lv_fn": func(): return int(player.element_levels.get("wind", 0)),
+			"hint_fn": func(): return "" if player.element == "wind" else "switch_el"},
+		# 特殊弹道卡：追踪/波浪互斥但可随时切换，各自等级独立保留（Lv.3 封顶）
+		{"id": "homing", "can": func(): return int(player.pattern_levels.get("homing", 0)) < 3,
+			"apply": func(): _pattern(w, "homing"),
+			"lv_fn": func(): return int(player.pattern_levels.get("homing", 0)),
+			"hint_fn": func(): return "" if player.pattern == "homing" else "switch_pt"},
+		{"id": "wave", "can": func(): return int(player.pattern_levels.get("wave", 0)) < 3,
+			"apply": func(): _pattern(w, "wave"),
+			"lv_fn": func(): return int(player.pattern_levels.get("wave", 0)),
+			"hint_fn": func(): return "" if player.pattern == "wave" else "switch_pt"},
 		{"id": "wide", "can": func(): return player.spacing_scale < 1.6 and player.pattern != "homing",
 			"apply": func(): _wide(w)},
 		# 被动系新卡

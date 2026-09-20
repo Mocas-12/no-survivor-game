@@ -31,6 +31,7 @@ var damage = 1
 var dead = false
 var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
+var slow_strength := 0.45   # 减速强度（寒冰弹头等级越高越强）
 var sway_t = 0.0
 var fire_cd = 0.0
 var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
@@ -66,7 +67,7 @@ func _physics_process(delta):
 		return
 	slow_timer = maxf(0.0, slow_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
-	var cur_speed = speed * (0.45 if slow_timer > 0.0 else 1.0)
+	var cur_speed = speed * (1.0 - slow_strength) if slow_timer > 0.0 else speed
 	velocity = Vector3(vx, -cur_speed, 0.0)
 	if kind == "swift":
 		# 蛇形走位：固定航向下叠加水平正弦摆动
@@ -99,7 +100,8 @@ func _physics_process(delta):
 			queue_free()
 			return
 
-func slow_down(t: float):
+func slow_down(t: float, strength := 0.45):
+	slow_strength = strength
 	slow_timer = maxf(slow_timer, t)
 
 func knockback(v: Vector3):

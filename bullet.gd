@@ -88,6 +88,7 @@ static func _streak() -> BoxMesh:
 var speed = 800.0
 var damage = 1
 var element = "normal"   # normal / fire / ice / lightning / wind
+var element_lv = 1       # 元素等级（效果随升级卡增强）
 var wave_amp = 0.0       # 波浪弹道摆动幅度（0 = 直线）
 var wave_t = 0.0
 var dir = Vector3.ZERO   # 飞行方向（发射时设置）
@@ -105,9 +106,10 @@ func _ready():
 	body_entered.connect(_on_body_entered)
 
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
-func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_pos: Vector3, p_dir: Vector3):
+func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
 	damage = p_damage
 	element = p_element
+	element_lv = maxi(p_element_lv, 1)
 	speed = 800.0 * p_speed_mul
 	wave_amp = p_wave
 	homing = p_homing
@@ -405,23 +407,32 @@ func _leaf_burst(world):
 	p.emitting = true
 	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
-# --- 元素命中特效 ---
+# --- 元素命中特效（随元素等级增强） ---
 func _apply_element(hit_body, world):
+	var lv := maxi(element_lv, 1)
 	match element:
 		"fire":
-			for m in _nearby_others(hit_body, 90.0, 4):
-				m.take_damage(maxi(1, roundi(damage * 0.5)))
+			# 溅射范围与伤害逐级成长：Lv.N 半径 90+30(N-1)，溅射伤害 50%+1/级
+			var radius := 90.0 + 30.0 * (lv - 1)
+			var splash_dmg := maxi(1, roundi(damage * 0.5)) + (lv - 1)
+			for m in _nearby_others(hit_body, radius, 4):
+				m.take_damage(splash_dmg)
 		"ice":
+			# 减速强度与时长逐级成长：Lv.N 强度 45%+10%/级（上限 85%），时长 1.6+0.4(N-1) 秒
 			if hit_body.has_method("slow_down"):
-				hit_body.slow_down(1.6)
+				hit_body.slow_down(1.6 + 0.4 * (lv - 1), minf(0.45 + 0.1 * (lv - 1), 0.85))
 		"lightning":
-			for m in _nearby_others(hit_body, 140.0, 2):
+			# 链数与链伤逐级成长：Lv.N 链 2+(N-1) 个（上限 5），链伤 50%+25%/级
+			var chains := mini(2 + (lv - 1), 5)
+			var chain_dmg := maxi(1, roundi(damage * (0.5 + 0.25 * (lv - 1))))
+			for m in _nearby_others(hit_body, 140.0, chains):
 				if world.has_method("spawn_lightning"):
 					world.spawn_lightning(global_position, m.global_position)
-				m.take_damage(maxi(1, roundi(damage * 0.5)))
+				m.take_damage(chain_dmg)
 		"wind":
+			# 击退力逐级成长
 			if hit_body.has_method("knockback"):
-				hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * 70.0)
+				hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (70.0 + 40.0 * (lv - 1)))
 
 # 查找命中点附近的其他敌机（按距离排序取前 count 个）
 func _nearby_others(hit_body, radius: float, count: int):

@@ -96,7 +96,7 @@ Each core also grants a permanent stat bump (extra volley guns, damage, fire rat
 
 ## 🧬 Upgrades: Elements & Patterns
 
-Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Stackable basics show their level (Sprint Lv.2…); once you pick an element or a special pattern, competing cards stop appearing — your build is never overwritten by a random roll:
+Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Every card stacks — basics, elemental warheads and the homing/wave patterns all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
 
 | Card | Effect |
 | --- | --- |
@@ -116,7 +116,7 @@ Each level-up pauses the game and deals **3 random cards out of a 15-card pool**
 | 🎓 Elite Pilot | XP gain +15% (up to Lv.3) |
 | 🐦‍🔥 Phoenix Core | revive once on death with a screen-clearing shockwave |
 
-Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice kites chasers, Wind repositions threats. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
+Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice kites chasers, Wind repositions threats — and you can pivot between them anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 
 ## ✨ Game Feel
 

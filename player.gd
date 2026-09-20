@@ -13,7 +13,9 @@ var damage = 1                     # 每发子弹的伤害
 var bullet_count = 3               # 同时发射的弹道数量
 var form = 0                       # 当前形态 0-19
 var element = "normal"             # 弹头元素：normal / fire / ice / lightning / wind
+var element_levels := {"fire": 0, "ice": 0, "lightning": 0, "wind": 0}  # 各元素等级（切换时各自保留）
 var pattern = "spread"             # 弹道模式：spread 扇形 / homing 追踪 / wave 波浪
+var pattern_levels := {"homing": 0, "wave": 0}  # 特殊弹道等级（切换时各自保留）
 var spacing_scale = 1.0            # 扇形张开系数（扩散弹幕会增大）
 var touch_move = Vector2.ZERO      # 手机虚拟摇杆输入
 var base_scale = 0.60              # 机体基准尺寸：随形态等级成长（0.60 → 1.0）
@@ -95,13 +97,20 @@ func shoot():
 		var s_mul: float = speed_mul
 		var hom := 0.0
 		var h_time := 0.0
+		var el_lv := 0
+		if element != "normal":
+			el_lv = maxi(1, int(element_levels.get(element, 1)))
+		var w_amp := 0.0
 		if pattern == "homing":
-			# 追踪导弹：先张开射出，随后自动转向最近的敌机 / Boss
+			# 追踪导弹：先张开射出，随后自动转向最近的敌机 / Boss（等级提升转向与续航）
+			var hl := maxi(1, int(pattern_levels.get("homing", 1)))
 			ang = PI / 2 + start + i * spacing * 1.6
-			hom = 4.5
-			h_time = 4.0
+			hom = 3.5 + hl
+			h_time = 3.0 + hl
 			s_mul = speed_mul * 0.55
-		b.launch(damage, element, s_mul, 220.0 if pattern == "wave" else 0.0, hom, h_time,
+		elif pattern == "wave":
+			w_amp = 220.0 + 80.0 * (maxi(1, int(pattern_levels.get("wave", 1))) - 1)
+		b.launch(damage, element, s_mul, w_amp, hom, h_time, el_lv,
 			global_position + Vector3(0, 44.0 * base_scale, 0.5), Vector3(cos(ang), sin(ang), 0.0))
 	$MuzzleFlash.restart()
 
