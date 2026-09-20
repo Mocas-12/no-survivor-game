@@ -32,6 +32,8 @@ var dead = false
 var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
 var slow_strength := 0.45   # 减速强度（寒冰弹头等级越高越强）
+var wet_timer = 0.0    # 浸润标记（水元素，元素反应载体）
+var burn_timer = 0.0   # 灼烧标记（火元素，超载/蒸汽反应载体）
 var sway_t = 0.0
 var phase_t = 0.0           # 行为相位计时（冲刺/顿挫循环用）
 var hover_left := 0.0       # 炮手机悬停剩余时间
@@ -70,6 +72,8 @@ func _physics_process(delta):
 	if dead:
 		return
 	slow_timer = maxf(0.0, slow_timer - delta)
+	wet_timer = maxf(0.0, wet_timer - delta)
+	burn_timer = maxf(0.0, burn_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
 	var cur_speed = speed * (1.0 - slow_strength) if slow_timer > 0.0 else speed
 	var vel := Vector3(vx, -cur_speed, 0.0)

@@ -7,6 +7,7 @@ extends Area3D
 const ELEMENT_COLORS := {
 	"normal": Color(1, 1, 1),
 	"fire": Color(1, 0.62, 0.35),
+	"water": Color(0.45, 0.8, 1.0),
 	"ice": Color(0.6, 0.9, 1),
 	"lightning": Color(0.78, 0.62, 1),
 	"wind": Color(0.62, 1, 0.62),
@@ -145,6 +146,8 @@ func _rebuild_fx():
 	match element:
 		"fire":
 			_attach_flame_trail()
+		"water":
+			_attach_water_trail()
 		"wind":
 			_attach_leaf_trail()
 			_attach_gust_trail()
@@ -407,32 +410,137 @@ func _leaf_burst(world):
 	p.emitting = true
 	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
-# --- 元素命中特效（随元素等级增强） ---
+# --- 元素命中特效与元素反应（随元素等级增强） ---
+# 元素反应（先手标记 + 后手触发，均消耗标记）：
+#   火 + 水 = 蒸汽：白雾爆发，小范围灼伤      雷 + 火 = 超载：橙红大爆炸，范围重创
+#   冰 + 水 = 冻结：目标近乎静止 1.2 秒       雷 + 水 = 感电：链式电击 +2 目标
 func _apply_element(hit_body, world):
 	var lv := maxi(element_lv, 1)
+	var is_mob: bool = "wet_timer" in hit_body   # Boss 无元素标记，不吃反应但吃基础元素效果
 	match element:
 		"fire":
-			# 溅射范围与伤害逐级成长：Lv.N 半径 90+30(N-1)，溅射伤害 50%+1/级
+			_fire_burst(world)
+			if is_mob:
+				if hit_body.wet_timer > 0.0:
+					hit_body.wet_timer = 0.0
+					_steam_burst(world)
+					for m in _nearby_others(hit_body, 110.0 + 20.0 * lv, 5):
+						m.take_damage(maxi(2, damage))
+				hit_body.burn_timer = 2.0   # 灼烧标记：供超载反应
+			# 溅射：Lv.N 半径 90+30(N-1)，溅射伤害 50%+1/级
 			var radius := 90.0 + 30.0 * (lv - 1)
 			var splash_dmg := maxi(1, roundi(damage * 0.5)) + (lv - 1)
 			for m in _nearby_others(hit_body, radius, 4):
 				m.take_damage(splash_dmg)
+		"water":
+			_splash_burst(world)
+			if is_mob:
+				if hit_body.burn_timer > 0.0:
+					# 水 + 火 = 蒸汽
+					hit_body.burn_timer = 0.0
+					_steam_burst(world)
+					for m in _nearby_others(hit_body, 110.0 + 20.0 * lv, 5):
+						m.take_damage(maxi(2, damage))
+				hit_body.wet_timer = 1.6 + 0.5 * (lv - 1)   # 浸润标记
+				if hit_body.has_method("knockback"):
+					hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (30.0 + 15.0 * lv))
 		"ice":
-			# 减速强度与时长逐级成长：Lv.N 强度 45%+10%/级（上限 85%），时长 1.6+0.4(N-1) 秒
-			if hit_body.has_method("slow_down"):
+			if is_mob and hit_body.wet_timer > 0.0:
+				# 冰 + 水 = 冻结
+				hit_body.wet_timer = 0.0
+				hit_body.slow_down(1.2, 0.92)
+				_freeze_flash(world)
+			elif hit_body.has_method("slow_down"):
 				hit_body.slow_down(1.6 + 0.4 * (lv - 1), minf(0.45 + 0.1 * (lv - 1), 0.85))
 		"lightning":
-			# 链数与链伤逐级成长：Lv.N 链 2+(N-1) 个（上限 5），链伤 50%+25%/级
 			var chains := mini(2 + (lv - 1), 5)
+			var conduct: bool = is_mob and hit_body.wet_timer > 0.0
+			if conduct:
+				chains = mini(chains + 2, 7)   # 雷 + 水 = 感电：链式 +2
+			if is_mob and hit_body.burn_timer > 0.0:
+				# 雷 + 火 = 超载
+				hit_body.burn_timer = 0.0
+				_overload(world)
+				for m in _nearby_others(hit_body, 130.0, 6):
+					m.take_damage(damage)
 			var chain_dmg := maxi(1, roundi(damage * (0.5 + 0.25 * (lv - 1))))
-			for m in _nearby_others(hit_body, 140.0, chains):
+			var chain_radius := 200.0 if conduct else 140.0
+			for m in _nearby_others(hit_body, chain_radius, chains):
 				if world.has_method("spawn_lightning"):
 					world.spawn_lightning(global_position, m.global_position)
 				m.take_damage(chain_dmg)
 		"wind":
-			# 击退力逐级成长
 			if hit_body.has_method("knockback"):
 				hit_body.knockback(Vector3(-dir.y, dir.x, 0.0) * (70.0 + 40.0 * (lv - 1)))
+
+# 蒸汽反应：白色水雾腾起
+func _steam_burst(world):
+	var p := CPUParticles3D.new()
+	p.amount = 14
+	p.lifetime = 0.7
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 40.0
+	p.direction = Vector3(0, 1, 0)
+	p.gravity = Vector3(0, 120, 0)
+	p.initial_velocity_min = 60.0
+	p.initial_velocity_max = 180.0
+	p.scale_amount_min = 1.6
+	p.scale_amount_max = 3.0
+	p.scale_amount_curve = _shrink_curve()
+	p.color_ramp = _gradient([Color(1, 1, 1, 0.9), Color(0.82, 0.88, 0.95, 0.5), Color(0.75, 0.82, 0.9, 0.0)])
+	p.mesh = _drop(Color(0.9, 0.94, 1.0), 2.2)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(1.1).timeout.connect(p.queue_free)
+
+# 超载反应：橙红大爆炸 + 冲击波
+func _overload(world):
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(1, 0.55, 0.2), 0.25, 2.4, 0.45)
+	if world.has_method("play_sfx"):
+		world.play_sfx("explode", -6.0, 0.1)
+	var p := CPUParticles3D.new()
+	p.amount = 22
+	p.lifetime = 0.5
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3.ZERO
+	p.initial_velocity_min = 160.0
+	p.initial_velocity_max = 340.0
+	p.scale_amount_min = 1.4
+	p.scale_amount_max = 2.8
+	p.scale_amount_curve = _shrink_curve()
+	p.color_ramp = _gradient([Color(1, 0.9, 0.6, 0.95), Color(1, 0.45, 0.1, 0.7), Color(0.6, 0.1, 0.05, 0.0)])
+	p.mesh = _drop(Color(1, 0.55, 0.2), 2.0)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
+
+# 冻结反应：寒冰闪光环 + 冰晶四散
+func _freeze_flash(world):
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(0.75, 0.93, 1.0), 0.2, 1.6, 0.4)
+	var p := CPUParticles3D.new()
+	p.amount = 8
+	p.lifetime = 0.5
+	p.one_shot = true
+	p.explosiveness = 1.0
+	p.spread = 180.0
+	p.gravity = Vector3(0, -160, 0)
+	p.initial_velocity_min = 60.0
+	p.initial_velocity_max = 160.0
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.2
+	p.color_ramp = _gradient([Color(0.85, 0.96, 1.0, 0.95), Color(0.55, 0.85, 1.0, 0.0)])
+	p.mesh = _drop(Color(0.85, 0.96, 1.0), 1.4)
+	p.position = global_position
+	world.add_child(p)
+	p.emitting = true
+	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
 
 # 查找命中点附近的其他敌机（按距离排序取前 count 个）
 func _nearby_others(hit_body, radius: float, count: int):

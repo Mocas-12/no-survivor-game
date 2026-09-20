@@ -49,6 +49,10 @@ static func build(w) -> Array:
 			"apply": func(): _fire(w),
 			"lv_fn": func(): return int(player.element_levels.get("fire", 0)),
 			"hint_fn": func(): return "" if player.element == "fire" else "switch_el"},
+		{"id": "water", "can": func(): return int(player.element_levels.get("water", 0)) < 3,
+			"apply": func(): _element(w, "water"),
+			"lv_fn": func(): return int(player.element_levels.get("water", 0)),
+			"hint_fn": func(): return "" if player.element == "water" else "switch_el"},
 		{"id": "ice", "can": func(): return int(player.element_levels.get("ice", 0)) < 3,
 			"apply": func(): _element(w, "ice"),
 			"lv_fn": func(): return int(player.element_levels.get("ice", 0)),
@@ -61,11 +65,7 @@ static func build(w) -> Array:
 			"apply": func(): _element(w, "wind"),
 			"lv_fn": func(): return int(player.element_levels.get("wind", 0)),
 			"hint_fn": func(): return "" if player.element == "wind" else "switch_el"},
-		# 特殊弹道卡：追踪/波浪互斥但可随时切换，各自等级独立保留（Lv.3 封顶）
-		{"id": "homing", "can": func(): return int(player.pattern_levels.get("homing", 0)) < 3,
-			"apply": func(): _pattern(w, "homing"),
-			"lv_fn": func(): return int(player.pattern_levels.get("homing", 0)),
-			"hint_fn": func(): return "" if player.pattern == "homing" else "switch_pt"},
+		# 特殊弹道卡：波浪（追踪弹已改为 Boss 掉落道具）
 		{"id": "wave", "can": func(): return int(player.pattern_levels.get("wave", 0)) < 3,
 			"apply": func(): _pattern(w, "wave"),
 			"lv_fn": func(): return int(player.pattern_levels.get("wave", 0)),

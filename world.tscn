@@ -315,6 +315,15 @@ max_value = 6.0
 value = 6.0
 show_percentage = false
 
+[node name="HomingButton" type="Button" parent="UI"]
+visible = false
+offset_left = 952.0
+offset_top = 562.0
+offset_right = 1128.0
+offset_bottom = 612.0
+theme = SubResource("Theme_ui")
+text = "追踪导弹 ×1"
+
 [node name="WarningLabel" type="Label" parent="UI"]
 visible = false
 offset_left = 0.0

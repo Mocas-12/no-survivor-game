@@ -13,7 +13,7 @@ var damage = 1                     # 每发子弹的伤害
 var bullet_count = 3               # 同时发射的弹道数量
 var form = 0                       # 当前形态 0-19
 var element = "normal"             # 弹头元素：normal / fire / ice / lightning / wind
-var element_levels := {"fire": 0, "ice": 0, "lightning": 0, "wind": 0}  # 各元素等级（切换时各自保留）
+var element_levels := {"fire": 0, "water": 0, "ice": 0, "lightning": 0, "wind": 0}  # 各元素等级（切换时各自保留）
 var pattern = "spread"             # 弹道模式：spread 扇形 / homing 追踪 / wave 波浪
 var pattern_levels := {"homing": 0, "wave": 0}  # 特殊弹道等级（切换时各自保留）
 var spacing_scale = 1.0            # 扇形张开系数（扩散弹幕会增大）
@@ -68,12 +68,12 @@ func _physics_process(delta):
 			bank = clampf((m.x - 576.0 - position.x) * 0.0015, -0.3, 0.3)
 		model.rotation.z = lerpf(model.rotation.z, bank, minf(10.0 * delta, 1.0))
 
-	# 呼吸灯：机体自发光与跟随灯同步起伏（0.8Hz），暗星空中始终清晰
+	# 呼吸灯：机体自发光与跟随灯同步起伏（幅度调低，不遮盖机体本体细节）
 	glow_t += delta
 	var breath := 0.5 + 0.5 * sin(glow_t * 5.2)
 	if _glow_mat:
-		_glow_mat.emission_energy_multiplier = 0.75 + 0.7 * breath
-	$Glow.light_energy = 1.0 + 0.7 * breath
+		_glow_mat.emission_energy_multiplier = 0.9 + 0.22 * breath
+	$Glow.light_energy = 1.0 + 0.22 * breath
 
 	# 全自动射击：只需专注走位躲弹幕
 	fire_timer -= delta

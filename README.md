@@ -102,7 +102,7 @@ Each core also grants a permanent stat bump (extra volley guns, damage, fire rat
 
 ## 🧬 Upgrades: Elements & Patterns
 
-Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Every card stacks — basics, elemental warheads and the homing/wave patterns all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
+Each level-up pauses the game and deals **3 random cards out of a 15-card pool**. Every card stacks — basics, elemental warheads and the wave pattern all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
 
 | Card | Effect |
 | --- | --- |
@@ -112,17 +112,26 @@ Each level-up pauses the game and deals **3 random cards out of a 15-card pool**
 | 👟 Sprint | move speed +12% (up to Lv.5) |
 | 🛡️ Armor | max HP +2 and heal 4 (stackable) |
 | 🔴 Fire warhead | bullets splash to nearby enemies, damage +1 |
+| 💧 Water warhead | soaks foes, triggers elemental reactions with fire/ice/storm |
 | 🔵 Ice warhead | hits slow enemies by 45% for 1.6s |
 | 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
 | 🟢 Wind warhead | bullet speed +40%, hits knock back |
-| 🚀 Homing missiles | fire-and-forget missiles that chase the nearest enemy |
 | 🌠 Wide barrage | wider fan, +1 bullet |
 | 〰️ Wave path | bullets snake sideways for wider coverage |
 | 🧲 Magnet | gem pickup range +35% (up to Lv.3) |
 | 🎓 Elite Pilot | XP gain +15% (up to Lv.3) |
 | 🐦‍🔥 Phoenix Core | revive once on death with a screen-clearing shockwave |
 
-Elemental builds: Fire shreds clusters, Lightning snipes spread-out packs, Ice kites chasers, Wind repositions threats — and you can pivot between them anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
+**Elemental reactions** (the first hit leaves a mark, the second triggers and consumes it):
+
+| Reaction | Combo | Effect |
+| --- | --- | --- |
+| Steam | Fire + Water | white vapor burst, burns nearby foes |
+| Overload | Storm + Fire | orange blast, heavy area damage |
+| Freeze | Ice + Water | target nearly frozen for 1.2s |
+| Conduct | Storm + Water | chains to 2 extra targets |
+
+**Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to launch a homing volley. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 
 ## ✨ Game Feel
 

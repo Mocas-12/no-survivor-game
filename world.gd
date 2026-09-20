@@ -9,6 +9,8 @@ extends Node3D
 @export var boss_scene: PackedScene = preload("res://boss.tscn")
 
 const BGM := preload("res://assets/sounds/bgm.wav")
+const BulletScene := preload("res://bullet.tscn")
+const BulletScript := preload("res://bullet.gd")
 const MB := preload("res://model_builder.gd")
 const I18n := preload("res://i18n.gd")
 const SaveGame := preload("res://save.gd")
@@ -92,6 +94,7 @@ var revive_charges := 0          # 凤凰模块复活的次数
 var muted := false               # 声音开关（存档）
 var reduce_fx := false           # 减少闪光/震屏（存档，光敏友好）
 var formation_cd := 12.0         # 编队波次倒计时
+var homing_charges := 0          # 追踪导弹道具（每击破一个 Boss +1，点击释放）
 
 # 4. 引用节点
 @onready var player = $Player
@@ -116,6 +119,7 @@ var formation_cd := 12.0         # 编队波次倒计时
 @onready var buff_bar = $UI/BuffBar
 @onready var pause_button = $UI/PauseButton
 @onready var pause_panel = $UI/PausePanel
+@onready var homing_btn = $UI/HomingButton
 @onready var upgrade_buttons = [
 	$UI/LevelUpPanel/Box/Buttons/Btn0,
 	$UI/LevelUpPanel/Box/Buttons/Btn1,
@@ -179,6 +183,7 @@ func _ready():
 	for i in upgrade_buttons.size():
 		upgrade_buttons[i].pressed.connect(_on_upgrade_button_pressed.bind(i))
 	pause_button.pressed.connect(_open_pause)
+	homing_btn.pressed.connect(_use_homing)
 	pause_panel.esc_pressed.connect(_close_pause)
 	$UI/PausePanel/Box/ResumeButton.pressed.connect(_close_pause)
 	$UI/PausePanel/Box/RestartButton.pressed.connect(_on_restart_button_pressed)
@@ -268,6 +273,11 @@ func _process(delta):
 			_spawn_formation()
 
 func _unhandled_input(event):
+	# 鼠标左键：消耗追踪导弹道具（桌面端；手机用右下角按钮）
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if homing_charges > 0 and not dying:
+			_use_homing()
+		return
 	# Esc 打开暂停（关闭方向由 pause_menu.gd 在暂停状态下处理）
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible:
@@ -512,7 +522,11 @@ func _on_boss_died(pos: Vector3, is_omega := false):
 	var core = core_scene.instantiate()
 	core.position = pos
 	core.form_target = mini(player.form + 1, 19)
-	add_child(core)	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
+	add_child(core)
+	# 追踪导弹道具：每击破一个 Boss 获得 1 枚
+	homing_charges += 1
+	_update_homing_btn()
+	_toast(I18n.T("gain_homing"), GOLD)	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
 	var wave := mini(10 + boss_tier * 2, 22)
 	warning_label.text = I18n.T("warning_reinforce")
 	warning_label.modulate.a = 1.0
@@ -740,15 +754,6 @@ func _build_aura(id: String):
 			_motes(col, 9, 0.9, 34.0, 3.8, 0.0, 0.0, Vector3.ZERO, 0.5, 0.9)
 		"aegis":
 			pass   # 护盾只有能量泡，干净一些
-	# 半径指示圈：让"力场范围"看得见（数值与实际效果半径一致）
-	var radius := 0.0
-	match id:
-		"frost": radius = 250.0
-		"flame": radius = 210.0
-		"gravity": radius = 270.0
-		"magnet": radius = 180.0 * float(player.get_meta("magnet_mul", 1.0)) * magnet_range_mul
-	if radius > 0.0:
-		_aura_radius_ring(col, radius)
 	# 相位护盾：包裹机体的半透明能量泡，呼吸明暗
 	if id == "aegis":
 		var bubble := MeshInstance3D.new()
@@ -831,25 +836,8 @@ func _snowflake_mesh() -> QuadMesh:
 	return _flake_mesh
 
 func _aura_radius_ring(col: Color, radius: float):
-	var ring := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 9.0
-	torus.outer_radius = 11.0
-	ring.mesh = torus
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(col.r, col.g, col.b, 0.55)
-	m.emission_enabled = true
-	m.emission = col
-	m.emission_energy_multiplier = 1.6
-	ring.material_override = m
-	ring.rotation_degrees = Vector3(90, 0, 0)
-	ring.scale = Vector3.ONE * (radius / 10.0)
-	_aura.add_child(ring)
-	var rt := ring.create_tween().set_loops()
-	rt.tween_property(m, "albedo_color:a", 0.22, 0.9)
-	rt.tween_property(m, "albedo_color:a", 0.55, 0.9)
+	# 已按反馈移除机体外圈的大光圈，只保留雪花 / 火焰等粒子特效
+	pass
 
 func _spawn_evolution_beam():
 	# 冲天光柱
@@ -1089,6 +1077,47 @@ func _on_fx_toggled():
 func _update_pause_labels():
 	$UI/PausePanel/Box/SoundButton.text = I18n.T("sound_on") if muted else I18n.T("sound_off")
 	$UI/PausePanel/Box/FxButton.text = I18n.T("fx_on") if reduce_fx else I18n.T("fx_off")
+
+# --- 追踪导弹道具：击破 Boss 获得，点击鼠标 / 右下角按钮释放一轮追踪齐射 ---
+
+func _use_homing():
+	if homing_charges <= 0 or dying:
+		return
+	homing_charges -= 1
+	_update_homing_btn()
+	var n := mini(player.bullet_count, 6)
+	var spacing := 0.26
+	var start := -(n - 1) / 2.0 * spacing
+	var el_lv := 0
+	if player.element != "normal":
+		el_lv = maxi(1, int(player.element_levels.get(player.element, 1)))
+	for i in n:
+		var b = BulletScript.take()
+		if b == null:
+			b = BulletScene.instantiate()
+			add_child(b)
+		var ang: float = PI / 2 + start + i * spacing
+		b.launch(player.damage, player.element, 0.55, 0.0, 4.5, 4.0, el_lv,
+			player.global_position + Vector3(0, 44.0 * player.base_scale, 0.5),
+			Vector3(cos(ang), sin(ang), 0.0))
+	play_sfx("shoot", -6.0, 0.08)
+	player.get_node("MuzzleFlash").restart()
+
+func _update_homing_btn():
+	homing_btn.text = I18n.T("btn_homing") % homing_charges
+	homing_btn.visible = homing_charges > 0 and not dying
+
+# 短 toast 横幅（获得道具等即时反馈）
+func _toast(text: String, col: Color):
+	ability_label.text = text
+	ability_label.modulate = Color(col.r, col.g, col.b, 0.0)
+	ability_label.show()
+	var tw := ability_label.create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_property(ability_label, "modulate:a", 1.0, 0.2)
+	tw.tween_interval(1.2)
+	tw.tween_property(ability_label, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(ability_label.hide)
 
 # --- 特效工具（实现见 fx.gd，这里保留旧签名供敌机 / Boss / 子弹调用） ---
 

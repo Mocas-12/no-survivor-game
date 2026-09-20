@@ -119,6 +119,12 @@ func _run() -> void:
 		await get_tree().create_timer(1.2).timeout
 	check(world.omega_slain, "OMEGA 被击破，胜利结算")
 
+	print("== 追踪导弹道具 ==")
+	check(world.homing_charges >= 1, "击杀 Boss 获得追踪导弹")
+	var hc: int = world.homing_charges
+	world._use_homing()
+	check(world.homing_charges == hc - 1, "点击使用追踪导弹")
+
 	print("== 凤凰复活 ==")
 	world.revive_charges = 1
 	world.health = 1
