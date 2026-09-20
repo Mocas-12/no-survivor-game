@@ -74,6 +74,7 @@ var _buff_cooldown0 := 0.0
 var _buff_speed0 := 0
 var _buff_count0 := 0
 var _prebuilt_model: Node3D = null  # 变形预建的新机体（提前分摊构建开销）
+var _cocoon: MeshInstance3D = null  # 变形能量茧（每帧跟随主角，防止飞出光圈）
 
 # 3.6 卡牌与被动（升级系统 / 存档设置）
 var card_taken := {}             # 卡 id → 已选次数（可叠加卡显示 Lv.N）
@@ -194,6 +195,12 @@ func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
 	for i in star_mats.size():
 		star_mats[i].uv1_offset.y -= star_speeds[i] * delta / star_tex_h[i]
+	# 变形能量茧跟随主角：机体移动时光圈贴着走，不会留在原地
+	if _cocoon != null:
+		if is_instance_valid(_cocoon):
+			_cocoon.position = player.global_position
+		else:
+			_cocoon = null
 	if dying:
 		return
 	# 脱战回血：4 秒未受击后，每 1.2 秒缓慢回复 1 点
@@ -507,23 +514,25 @@ func _morph_cocoon(form, accent: Color):
 	cocoon.material_override = m
 	cocoon.position = player.position
 	add_child(cocoon)
+	_cocoon = cocoon
 
 	player.set_form(form, _prebuilt_model)
 	_prebuilt_model = null
 
 	var tw := cocoon.create_tween()
-	# 包裹：茧体胀起并显现
-	tw.tween_property(m, "albedo_color:a", 0.68, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# 包裹：茧体胀起并显现（节奏压缩：拾取 → 破茧全程约 1 秒，不再长时间小机体）
+	tw.tween_property(m, "albedo_color:a", 0.68, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	# 茧色渐变 → 新形态的主题色（形态特征预兆）
-	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.68), 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.parallel().tween_property(m, "emission", accent, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# 三次重塑脉冲：新形态在茧内平滑地逐次成形
-	for i in 3:
-		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.24 + 0.1 * i), 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.13).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.68), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(m, "emission", accent, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# 两次快速重塑脉冲：新形态在茧内逐次成形
+	for i in 2:
+		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.24 + 0.1 * i), 0.09).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.09).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	# 破茧：能量迸发，新机体翻滚着登场；能力激活分到下一帧，避免同一帧挤爆
 	tw.tween_callback(func():
+		_cocoon = null
 		spawn_explosion(cocoon.position, accent, false)
 		spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
 		cocoon.queue_free()
@@ -534,9 +543,9 @@ func _spawn_reveal():
 	_spawn_evolution_beam()
 	var tw2 = create_tween()
 	tw2.set_parallel(true)
-	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.7).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.32, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.28).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.32, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 # --- 形态特殊能力 ---
 
