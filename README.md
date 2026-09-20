@@ -80,6 +80,10 @@ When the kill counter crosses the threshold an alarm sounds, spawns slow to a tr
 
 Every boss fires its own signature rounds — the bullet is the identity: Destructor's **crimson heavy shells**, Interceptor's **violet darts**, Fortress's **emerald lance bolts**, Hunter's **gold stingers** (with a faint trail), Phantom's **cyan crystal shards**. When a boss enrages, a pulsing red ring wraps its hull.
 
+From the second cycle (wave 6) onward each boss also carries a random **affix** (shown next to its name) — **Swift** (+25% bullet speed), **Fortified** (+50% HP), **Summoner** (calls minions), **Vengeful** (detonates a bullet ring on death).
+
+After two full cycles (10 waves) of the five bosses, the final **OMEGA mothership** descends — it has devoured the entire fleet: it rotates through all five signature bullet styles, enrages at 70% HP, and below 35% it gains Phantom's teleport plus full-screen destructor rings. Bringing it down triggers the **victory banner** (the badge is saved permanently), after which endless mode continues for a higher score.
+
 Defeating a boss chains explosions across the screen and drops a **power core** — catch it to transform your fighter; even if you let it drift to the bottom it hovers there until you come get it. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
 
 ## 🛩️ Ship Forms

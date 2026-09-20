@@ -1,17 +1,22 @@
 extends CharacterBody3D
 
 # BOSS（3D）：五种循环出现，血量随波数二次曲线成长，半血狂暴
-# 1 毁灭者：环形弹幕      2 拦截者：瞄准扇形 + 偶发环
-# 3 要塞：旋转三向螺旋    4 猎手：追踪弹 + 六向直弹    5 幻影：瞬移 + 八向刺弹
+# 1 毁灭者：环形弹幕      2 拦截者：瞄准扇形 + 偶发环（高速咬位走位）
+# 3 要塞：旋转三向螺旋    4 猎手：追踪弹 + 六向直弹（游猎玩家上空）
+# 5 幻影：瞬移 + 八向刺弹  6 OMEGA 灭世母舰（终局）：轮转全舰队弹形，三阶段
+#
+# 循环词缀（tier 6 起）：迅捷=弹速+25% / 坚壁=血量+50% / 增援=定期召小怪 / 遗言=死亡爆弹幕
 
 signal hp_changed(hp, max_hp)
-signal died(pos: Vector3)
+signal died(pos: Vector3, is_omega: bool)
 
 const MB := preload("res://model_builder.gd")
 const I18n := preload("res://i18n.gd")
 
-const TEX := {1: 1, 2: 2, 3: 3, 4: 4, 5: 5}
+const TEX := {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
 const HP_BONUS := {1: 0, 2: 20, 3: 10, 4: 30, 5: 20}
+# 各 Boss 的专属弹形（弹形即身份，见 enemy_bullet.gd）
+const STYLE_OF := {1: "destructor", 2: "interceptor", 3: "fortress", 4: "hunter", 5: "phantom"}
 
 var boss_id = 1
 var tier = 1
@@ -28,17 +33,33 @@ var tp_cd = 2.2
 var dead = false
 var entered = false
 var enraged = false
+var phase3 = false        # OMEGA 第三阶段（≤35%：获得瞬移 + 全屏毁灭环）
+var is_omega = false
+var affix = ""            # 循环词缀 id（空 = 无）
+var minion_cd = 6.0       # 增援词缀的召唤计时
+var _cur_style = ""       # 当前攻击使用的弹形（OMEGA 轮转全舰队弹形用）
 var model: Node3D = null
 
-func setup(id, tier_):
+func setup(id, tier_, affix_ := ""):
 	boss_id = id
 	tier = tier_
+	affix = affix_
+	is_omega = id == 6
 	# 血量随波数二次曲线成长；伤害缓慢提升但封顶
-	max_hp = 140 + 80 * (tier - 1) + 25 * (tier - 1) * (tier - 1) + HP_BONUS[id]
+	if is_omega:
+		max_hp = 9000 + 500 * maxi(tier - 10, 0)
+		bullet_damage = mini(2 + (tier - 1) / 2, 6)
+		contact_damage = mini(3 + (tier - 1) / 2, 8)
+		scale = Vector3.ONE * 1.35
+	else:
+		max_hp = 140 + 80 * (tier - 1) + 25 * (tier - 1) * (tier - 1) + HP_BONUS.get(id, 0)
+		bullet_damage = mini(1 + (tier - 1) / 2, 4)
+		contact_damage = mini(2 + (tier - 1) / 2, 6)
+		scale = Vector3.ONE * 1.12
+	# 坚壁词缀：血量 +50%
+	if affix == "wall":
+		max_hp = int(max_hp * 1.5)
 	hp = max_hp
-	bullet_damage = mini(1 + (tier - 1) / 2, 4)
-	contact_damage = mini(2 + (tier - 1) / 2, 6)
-	scale = Vector3.ONE * 1.12
 	if model:
 		model.queue_free()
 	model = MB.build_boss(id)
@@ -52,12 +73,18 @@ func setup(id, tier_):
 func boss_name() -> String:
 	return I18n.T("boss_%d" % boss_id)
 
-# 以本 Boss 的专属弹形发射（弹形符合 Boss 名字逻辑，见 enemy_bullet.gd）
+# 名字 + 词缀（词缀即本场的变体提示）
+func full_name() -> String:
+	if affix == "":
+		return boss_name()
+	return "%s · %s" % [boss_name(), I18n.T("affix_" + affix)]
+
+# 以本 Boss 的专属弹形发射（OMEGA 轮转全舰队弹形，见 _cur_style）
 func spawn(pos: Vector3, dir: Vector3, spd, dmg, homing := 0.0, ht := 0.0):
 	var world = get_tree().current_scene
 	if world.has_method("spawn_enemy_bullet"):
-		world.spawn_enemy_bullet(pos, dir, spd, dmg, homing, ht,
-			["", "destructor", "interceptor", "fortress", "hunter", "phantom"][boss_id])
+		var style: String = _cur_style if _cur_style != "" else STYLE_OF.get(boss_id, "shooter")
+		world.spawn_enemy_bullet(pos, dir, spd, dmg, homing, ht, style)
 
 func _physics_process(delta):
 	if dead or not entered:
@@ -92,6 +119,11 @@ func _physics_process(delta):
 			target_x = sin(t * 0.6) * (150 + 15 * boss_id)
 			target_y = 174.0 + sin(t * 1.3) * 22.0
 			follow = 0.8
+		6:
+			# OMEGA：巨舰横扫全场，缓慢而具压迫感
+			target_x = sin(t * 0.35) * 200.0
+			target_y = 160.0 + sin(t * 0.8) * 24.0
+			follow = 1.1
 	position.x = lerpf(position.x, target_x, minf(follow * delta, 1.0))
 	position.y = lerpf(position.y, target_y, minf(follow * delta, 1.0))
 
@@ -101,12 +133,21 @@ func _physics_process(delta):
 		_attack()
 		attack_cd = _interval()
 
-	# 幻影：周期性瞬移（狂暴时更频繁）
-	if boss_id == 5:
+	# 幻影 / OMEGA 第三阶段：周期性瞬移（狂暴时更频繁）
+	if boss_id == 5 or phase3:
 		tp_cd -= delta
 		if tp_cd <= 0:
 			tp_cd = 2.0 if enraged else 2.8
 			_teleport()
+
+	# 增援词缀：定期召唤小怪
+	if affix == "reinforce":
+		minion_cd -= delta
+		if minion_cd <= 0:
+			minion_cd = 8.0
+			var world = get_tree().current_scene
+			if world.has_method("spawn_minions"):
+				world.spawn_minions(2)
 
 	# 撞到玩家
 	if pl and contact_cd <= 0:
@@ -125,6 +166,7 @@ func _interval() -> float:
 		3: base = 0.42
 		4: base = 1.8
 		5: base = 1.1
+		6: base = 1.05
 	return base * (0.65 if enraged else 1.0)
 
 func _attack():
@@ -132,9 +174,27 @@ func _attack():
 	if not world.has_method("spawn_enemy_bullet"):
 		return
 	var player = get_tree().get_first_node_in_group("player")
-	var spd = 1.15 if enraged else 1.0
+	var spd = (1.15 if enraged else 1.0) * (1.25 if affix == "swift" else 1.0)
 	attack_count += 1
 	match boss_id:
+		6:
+			# OMEGA：轮转全舰队的五种专属弹形（弹形即它吞噬了谁）
+			if phase3 and attack_count % 3 == 0:
+				_cur_style = "destructor"
+				var base_dir = randf() * TAU
+				for i in 24:
+					var dir = Vector3(cos(base_dir + TAU * i / 24.0), sin(base_dir + TAU * i / 24.0), 0.0)
+					spawn(global_position + dir * 60.0, dir, 225.0, bullet_damage)
+			var vid = ((attack_count - 1) % 5) + 1
+			_cur_style = STYLE_OF[vid]
+			_attack_as(vid, spd, world, player)
+		_:
+			_cur_style = STYLE_OF.get(boss_id, "shooter")
+			_attack_as(boss_id, spd, world, player)
+
+# 五种基础 Boss 的攻击模式（OMEGA 轮流复用）
+func _attack_as(vid: int, spd: float, world, player):
+	match vid:
 		1:
 			if attack_count % 2 == 1:
 				# 环形弹幕（狂暴后 18 连）
@@ -204,7 +264,7 @@ func _attack():
 					var d2 = aim.rotated((i - 1) * 0.25)
 					spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage, 1.2, 1.8)
 
-# 幻影专属：原地留残影 → 闪现到新位置 → 立刻放一圈刺弹
+# 幻影 / OMEGA 第三阶段专属：原地留残影 → 闪现到新位置 → 立刻放一圈刺弹
 func _teleport():
 	var world = get_tree().current_scene
 	if world.has_method("spawn_ring"):
@@ -223,8 +283,7 @@ func take_damage(amount):
 		return
 	hp -= amount
 	hp_changed.emit(hp, max_hp)
-	if not enraged and hp <= max_hp * 0.5:
-		_enrage()
+	_phase_check()
 	if hp <= 0:
 		_die()
 
@@ -233,10 +292,17 @@ func take_damage_silent(amount):
 		return
 	hp = maxf(hp - amount, 0.0)
 	hp_changed.emit(hp, max_hp)
-	if not enraged and hp <= max_hp * 0.5:
-		_enrage()
+	_phase_check()
 	if hp <= 0:
 		_die()
+
+# 阶段判定：普通 Boss 半血狂暴；OMEGA 70% 进入 P2 狂暴、35% 进入 P3
+func _phase_check():
+	var enr_at := 0.7 if is_omega else 0.5
+	if not enraged and hp <= max_hp * enr_at:
+		_enrage()
+	if is_omega and not phase3 and hp <= max_hp * 0.35:
+		_phase3()
 
 func _enrage():
 	enraged = true
@@ -269,17 +335,33 @@ func _enrage():
 	rt.tween_property(m, "albedo_color:a", 0.25, 0.6)
 	rt.tween_property(m, "albedo_color:a", 0.6, 0.6)
 
+# OMEGA 第三阶段：获得幻影的瞬移，弹幕密度全面提升
+func _phase3():
+	phase3 = true
+	var world = get_tree().current_scene
+	if world.has_method("spawn_ring"):
+		world.spawn_ring(global_position, Color(0.85, 0.95, 1), 0.5, 4.0, 0.8)
+	if world.has_method("flash_ui"):
+		world.flash_ui(Color(0.85, 0.95, 1), 0.3)
+	if world.has_method("play_sfx"):
+		world.play_sfx("warning", -2.0, 0.1)
+
 func _die():
 	if dead:
 		return
 	dead = true
+	# 遗言词缀：死亡瞬间向外爆出一圈弹幕
+	if affix == "vengeful":
+		for i in 16:
+			var dir = Vector3(cos(TAU * i / 16.0), sin(TAU * i / 16.0), 0.0)
+			spawn(global_position + dir * 55.0, dir, 235.0, bullet_damage)
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
 	$ExplosionParticles.emitting = true
 	$Sparks.emitting = true
 	if model:
 		model.visible = false
-	died.emit(global_position)
+	died.emit(global_position, is_omega)
 
 	# 连环爆炸 1.2 秒后消失
 	var world = get_tree().current_scene

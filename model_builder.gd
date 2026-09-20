@@ -16,13 +16,14 @@ const ENEMY_SHIPS := {
 	"shield": ["Challenger", "Red", 48.0, Color(0.9, 0.92, 1.0)],
 	"tank": ["Imperial", "Purple", 72.0, Color(0.72, 0.4, 1)],
 }
-# Boss 5 种：毁灭者/拦截者/要塞/猎手/幻影
+# Boss 6 种：毁灭者/拦截者/要塞/猎手/幻影 + 6=OMEGA 灭世母舰（终局）
 const BOSS_SHIPS := {
 	1: ["Executioner", "Red", 210.0, Color(1, 0.35, 0.4)],
 	2: ["Omen", "Purple", 200.0, Color(0.7, 0.45, 1)],
 	3: ["Zenith", "Green", 230.0, Color(0.4, 1, 0.85)],
 	4: ["Imperial", "Orange", 200.0, Color(1, 0.8, 0.35)],
 	5: ["Insurgent", "Blue", 190.0, Color(0.55, 0.75, 1)],
+	6: ["Pancake", "Blue", 270.0, Color(0.85, 0.95, 1)],
 }
 
 # ---------- 主角：20 形态 ----------

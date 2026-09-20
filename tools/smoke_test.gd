@@ -90,6 +90,35 @@ func _run() -> void:
 		await get_tree().create_timer(1.5).timeout
 		check(not world.boss_active and not world.boss_bar.visible, "Boss 阵亡结算与血条隐藏")
 
+	print("== 循环词缀 ==")
+	world.boss_tier = 6
+	world._spawn_boss()
+	await get_tree().create_timer(0.3).timeout
+	var boss2 = get_tree().get_first_node_in_group("boss")
+	check(boss2 != null and boss2.affix != "", "tier6+ Boss 带随机词缀")
+	world.health = 9999   # 防止遗言弹幕等流弹干扰后续断言
+	if boss2:
+		boss2.take_damage_silent(999999)
+	await get_tree().create_timer(1.0).timeout
+
+	print("== OMEGA 终局 ==")
+	for b in get_tree().get_nodes_in_group("enemy_bullets"):
+		b.queue_free()
+	world.boss_tier = 10
+	world.omega_armed = true
+	world._start_boss()
+	await get_tree().create_timer(3.0).timeout
+	var omega = get_tree().get_first_node_in_group("boss")
+	check(omega != null and omega.boss_id == 6, "OMEGA 登场")
+	if omega:
+		omega.take_damage_silent(omega.max_hp * 0.4)   # 压到 60%：P2 狂暴
+		check(omega.enraged, "OMEGA P2 狂暴")
+		omega.take_damage_silent(omega.max_hp * 0.3)   # 压到 30%：P3 相位
+		check(omega.phase3, "OMEGA P3 相位")
+		omega.take_damage_silent(999999)
+		await get_tree().create_timer(1.2).timeout
+	check(world.omega_slain, "OMEGA 被击破，胜利结算")
+
 	print("== 凤凰复活 ==")
 	world.revive_charges = 1
 	world.health = 1

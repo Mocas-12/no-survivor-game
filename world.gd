@@ -62,9 +62,14 @@ var kill_count = 0
 var next_boss_at = 25
 var boss_tier = 0
 var boss_active = false
+var omega_armed = false    # 第 10 波 Boss 被击破后待命：下一波为终局 OMEGA
+var omega_slain = false    # OMEGA 已被击破（本局胜利，之后进入无尽）
 var last_hurt_ms = -10000
 var regen_accum = 0.0   # 脱战回血的小数累积
 var dying = false       # 主角阵亡演出中（结算面板尚未弹出）
+
+# 循环词缀池（tier 6 起 Boss 随机携带一种）
+const AFFIXES := ["swift", "wall", "reinforce", "vengeful"]
 
 # 3.5 形态能力
 var ability := ""                # 当前形态能力 id（空 = 初始形态无能力）
@@ -140,14 +145,20 @@ func _ready():
 		_sfx_pool.append(p)
 	upgrade_pool = Upgrades.build(self)
 
-	# 存档：最高分 + 声音 / 减少闪光设置
+	# 存档：最高分 + 声音 / 减少闪光设置 + OMEGA 徽章
 	var data := SaveGame.load_data()
 	high_score = int(data.get("high", 0))
 	muted = bool(data.get("mute", false))
 	reduce_fx = bool(data.get("reduce_fx", false))
 	AudioServer.set_bus_mute(0, muted)
-	if high_score > 0:
-		start_high_label.text = I18n.T("high") % high_score
+	if high_score > 0 or bool(data.get("omega", false)):
+		start_high_label.show()
+		var lines := ""
+		if high_score > 0:
+			lines = I18n.T("high") % high_score
+		if bool(data.get("omega", false)):
+			lines += ("\n" if lines != "" else "") + "🏆 " + I18n.T("start_omega")
+		start_high_label.text = lines
 	else:
 		start_high_label.hide()
 
@@ -353,6 +364,11 @@ func _spawn_formation_enemy(type: String, pos: Vector3, vx := 0.0):
 	enemy.died.connect(_on_enemy_died)
 	add_child(enemy)
 
+# 增援词缀：Boss 定期召唤小怪
+func spawn_minions(n: int):
+	for i in n:
+		_spawn_formation_enemy(pick_enemy_type(), Vector3(randf_range(-500.0, 500.0), 404.0, 0.0))
+
 # --- 击杀与经验 ---
 
 func _on_enemy_died(pos: Vector3, value, fx_color):
@@ -403,7 +419,12 @@ func _start_boss():
 	update_ui()   # 刷怪降频：Boss 战期间保留 1.7 秒低频续刷，避免屏幕空旷 / 经验断粮
 	play_sfx("warning", -2.0, 0.0)
 
-	warning_label.text = I18n.T("warning_boss") % (boss_tier + 1)
+	if omega_armed:
+		warning_label.text = I18n.T("warning_omega")
+		warning_label.modulate = Color(0.95, 0.85, 0.4)
+	else:
+		warning_label.text = I18n.T("warning_boss") % (boss_tier + 1)
+		warning_label.modulate = Color(1, 1, 1)
 	warning_label.modulate.a = 1.0
 	warning_label.show()
 	var tw = create_tween()
@@ -420,13 +441,21 @@ func _start_boss():
 func _spawn_boss():
 	boss_tier += 1
 	var boss = boss_scene.instantiate()
-	var id = ((boss_tier - 1) % 5) + 1
-	boss.setup(id, boss_tier)
+	if omega_armed:
+		boss.setup(6, boss_tier)
+		omega_armed = false
+	else:
+		var id = ((boss_tier - 1) % 5) + 1
+		# 第二轮循环（tier 6）起，Boss 随机携带一个词缀
+		var affix := ""
+		if boss_tier >= 6:
+			affix = AFFIXES[randi() % AFFIXES.size()]
+		boss.setup(id, boss_tier, affix)
 	boss.died.connect(_on_boss_died)
 	boss.hp_changed.connect(_on_boss_hp)
 	add_child(boss)
 
-	boss_name_label.text = "【 %s 】" % boss.boss_name()
+	boss_name_label.text = "【 %s 】" % boss.full_name()
 	boss_name_label.show()
 	boss_bar.max_value = boss.max_hp
 	boss_bar.value = boss.max_hp
@@ -439,9 +468,8 @@ func _on_boss_hp(hp, max_hp):
 	boss_bar.max_value = max_hp
 	boss_bar.value = hp
 
-func _on_boss_died(pos: Vector3):
+func _on_boss_died(pos: Vector3, is_omega := false):
 	boss_active = false
-	next_boss_at = kill_count + 50 + boss_tier * 10
 	boss_name_label.hide()
 	boss_bar.hide()
 
@@ -452,13 +480,39 @@ func _on_boss_died(pos: Vector3):
 	for i in 3:
 		spawn_ring(pos + Vector3(randf_range(-60, 60), randf_range(-40, 40), 0.0), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
 
+	if is_omega and not omega_slain:
+		# ✦ 胜利：灭世母舰被击破（记录徽章，随后进入无尽模式）
+		omega_slain = true
+		score += 2000
+		next_boss_at = kill_count + 80
+		var data := SaveGame.load_data()
+		data["omega"] = true
+		SaveGame.save_data(data)
+		warning_label.text = I18n.T("victory")
+		warning_label.modulate = Color(1, 0.85, 0.35)
+		warning_label.modulate.a = 1.0
+		warning_label.show()
+		var vtw = create_tween()
+		vtw.tween_interval(2.2)
+		vtw.tween_property(warning_label, "modulate:a", 0.0, 0.8)
+		vtw.tween_callback(warning_label.hide)
+		flash_ui(Color(1, 0.85, 0.35), 0.5)
+		play_sfx("levelup", 0.0)
+		_shake(24.0)
+		for i in 6:
+			spawn_ring(pos + Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0), Color(1, 0.85, 0.35) if i % 2 == 0 else CYAN, 0.3, 3.0 + i * 0.7, 0.8)
+	elif boss_tier >= 10 and not omega_slain:
+		# 五种 Boss 两轮循环完毕：武装终局 OMEGA，短间隔后降临
+		omega_armed = true
+		next_boss_at = kill_count + 25
+	else:
+		next_boss_at = kill_count + 50 + boss_tier * 10
+
 	# 掉落核心装备：接住后战机渐进变形
 	var core = core_scene.instantiate()
 	core.position = pos
 	core.form_target = mini(player.form + 1, 19)
-	add_child(core)
-
-	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
+	add_child(core)	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
 	var wave := mini(10 + boss_tier * 2, 22)
 	warning_label.text = I18n.T("warning_reinforce")
 	warning_label.modulate.a = 1.0
