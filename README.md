@@ -169,33 +169,29 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 
 ```text
 no-survivor-game/
-├── assets/
+├── assets/                # art & audio resources
 │   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
 │   ├── ships/             # low-poly ship models & liveries (Quaternius, CC0)
 │   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
-│   └── *.png              # parallax starfield layers + touch joystick (gen_assets.py)
-├── tools/
-│   ├── gen_assets.py      # regenerates the starfield & joystick PNGs (Python + Pillow)
-│   └── gen_sounds.py      # regenerates every WAV in assets/sounds/
+│   └── *.png              # parallax starfield + touch joystick + snowflake (gen_assets.py)
+├── scenes/                # 9 scenes: world / player / enemies / bosses / bullets / core / gem
+├── scripts/               # all game logic (18 scripts)
+│   ├── world.gd           # game state, waves/bosses/formations, upgrade UI, pause, audio, save
+│   ├── player.gd          # mouse/touch piloting, elements & patterns, 20 forms, death/revive
+│   ├── enemy.gd           # 6 enemy types, signature movement, boss-wave scaling
+│   ├── boss.gd            # 6 bosses (incl. final OMEGA), cycle affixes, signature enrage FX
+│   ├── bullet.gd          # player bullets: object pool + 8 elemental reactions
+│   ├── enemy_bullet.gd    # enemy rounds: per-source bullet styles
+│   ├── upgrades.gd        # 19-card upgrade pool (ids / conditions / effects)
+│   ├── i18n.gd            # zh/en string table, auto-picked by system locale
+│   ├── save.gd            # best score & settings (web localStorage / desktop file)
+│   ├── fx.gd              # one-shot VFX library: shockwave rings, explosions, confetti, lightning
+│   ├── model_builder.gd   # ship model loading + normal smoothing (Quaternius CC0 fleet)
+│   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
+├── tools/                 # dev tools: art/audio generators + headless smoke test + capture
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
 ├── screenshots/           # README screenshots
-├── world.gd / .tscn       # game state, waves/bosses/formations, upgrades UI, pause, audio, save
-├── player.gd / .tscn      # mouse/touch piloting, elements & patterns, 20 forms, death/revive
-├── enemy.gd / .tscn       # 6 enemy types, formation speeds, boss-wave scaling, shooter AI
-├── boss.gd / .tscn        # 5 boss patterns, HP bar signal, chain explosion
-├── upgrades.gd            # 15-card upgrade pool (ids, conditions, effects)
-├── i18n.gd                # zh/en string table, auto-picked by system locale
-├── save.gd                # best score & settings (web localStorage / desktop file)
-├── fx.gd                  # one-shot VFX library: shockwave rings, explosions, confetti, lightning
-├── pause_menu.gd          # pause panel (resume / restart / sound / reduced flash)
-├── model_builder.gd       # ship model loader (Quaternius CC0 fleet, 20 forms / enemies / bosses)
-├── enemy_bullet.gd / .tscn# boss bullet-hell rounds (straight + homing)
-├── bullet.gd / .tscn      # elemental player bullets, object-pooled with shared materials
-├── core.gd / .tscn        # boss-drop pickup that transforms the ship (never lost)
-├── gem / hit_spk          # XP gems, hit sparks
-├── touch_ui.gd            # mobile virtual movement joystick
-├── camera.gd              # decaying screen shake + aspect-adaptive FOV
-├── panel_fx.gd            # panel entrance animations (start / game over / level up)
+├── project.godot          # Godot project config (main scene / renderer / embedded font)
 └── export_presets.cfg     # Web preset (threads off)
 ```
 

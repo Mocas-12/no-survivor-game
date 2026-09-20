@@ -15,13 +15,13 @@ func check(cond: bool, name: String) -> void:
 
 func _ready() -> void:
 	# 隔离真实存档：测试的 game_over / 开关切换不得覆盖玩家最高分与设置
-	preload("res://save.gd").disabled = true
+	preload("res://scripts/save.gd").disabled = true
 	# 后台跑，不阻塞帧循环
 	_run()
 
 func _run() -> void:
 	await get_tree().process_frame
-	var world = load("res://world.tscn").instantiate()
+	var world = load("res://scenes/world.tscn").instantiate()
 	add_child(world)
 	await get_tree().process_frame
 	await get_tree().process_frame

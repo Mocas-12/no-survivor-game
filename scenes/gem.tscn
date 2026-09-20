@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://2c7e9a1b3d5f"]
 
-[ext_resource type="Script" path="res://gem.gd" id="1_gem"]
+[ext_resource type="Script" path="res://scripts/gem.gd" id="1_gem"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_g"]
 radius = 16.0

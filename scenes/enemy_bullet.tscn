@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://6k2m8p4q7r1s"]
 
-[ext_resource type="Script" path="res://enemy_bullet.gd" id="1_eb"]
+[ext_resource type="Script" path="res://scripts/enemy_bullet.gd" id="1_eb"]
 
 [sub_resource type="StandardMaterial3D" id="StdMat_eb"]
 shading_mode = 0

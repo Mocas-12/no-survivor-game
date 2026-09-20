@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://f2a9c6d4e8b0"]
 
-[ext_resource type="Script" path="res://boss.gd" id="1_boss"]
+[ext_resource type="Script" path="res://scripts/boss.gd" id="1_boss"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_b"]
 size = Vector3(210, 120, 40)

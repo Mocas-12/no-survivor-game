@@ -11,7 +11,7 @@ func _capture(path: String):
 	print("captured ", path)
 
 func _build():
-	var world = (load("res://world.tscn") as PackedScene).instantiate()
+	var world = (load("res://scenes/world.tscn") as PackedScene).instantiate()
 	root.add_child(world)
 	# --script 启动没有 current_scene，游戏代码依赖它（子弹挂载/伤害路由等）
 	current_scene = world

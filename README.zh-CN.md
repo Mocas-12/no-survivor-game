@@ -169,33 +169,29 @@
 
 ```text
 no-survivor-game/
-├── assets/
+├── assets/                # 美术与音频资源
 │   ├── fonts/             # 站酷快乐体（SIL OFL 协议）
 │   ├── ships/             # 低模飞船与涂装（Quaternius，CC0 协议）
 │   ├── sounds/            # 合成音效 + 循环 BGM（tools/gen_sounds.py）
-│   └── *.png              # 视差星空层 + 触屏摇杆（tools/gen_assets.py）
-├── tools/
-│   ├── gen_assets.py      # 重新生成星空 / 摇杆贴图（Python + Pillow）
-│   └── gen_sounds.py      # 重新生成 assets/sounds/ 里所有 WAV
+│   └── *.png              # 视差星空层 + 触屏摇杆 + 雪花贴图（tools/gen_assets.py）
+├── scenes/                # 9 个场景：主世界 / 玩家 / 敌机 / Boss / 双方子弹 / 核心 / 水晶
+├── scripts/               # 全部游戏逻辑（18 个脚本）
+│   ├── world.gd           # 游戏状态、波次/Boss/编队调度、升级 UI、暂停、音频、存档
+│   ├── player.gd          # 鼠标/触屏驾驶、元素与弹道系统、20 形态、阵亡/复活
+│   ├── enemy.gd           # 6 种敌机、专属移动、Boss 波数血量缩放
+│   ├── boss.gd            # 6 种 Boss（含终局 OMEGA）、循环词缀、专属狂暴特效
+│   ├── bullet.gd          # 玩家子弹：对象池 + 元素反应（蒸汽/超载/冻结/感电/火龙卷…）
+│   ├── enemy_bullet.gd    # 敌方弹幕：弹形按来源区分（赤红重弹 / 紫飞镖 / 金猎刺…）
+│   ├── upgrades.gd        # 19 张升级卡池（id / 出现条件 / 选中效果）
+│   ├── i18n.gd            # 中英字符串表，按系统语言自动选择
+│   ├── save.gd            # 最高分与设置（网页 localStorage / 桌面文件）
+│   ├── fx.gd              # 一次性特效库：冲击波环、爆炸、彩带、闪电
+│   ├── model_builder.gd   # 飞船模型加载 + 法线平滑（Quaternius CC0 舰队）
+│   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
+├── tools/                 # 开发工具：贴图/音效生成器 + 无头冒烟测试 + 截图与模型预览
 ├── docs/                  # 已部署的网页版（GitHub Pages 指向这里）
 ├── screenshots/           # README 截图
-├── world.gd / .tscn       # 游戏状态、波次/Boss/编队调度、升级 UI、暂停、音频、存档
-├── player.gd / .tscn      # 鼠标/触屏驾驶、元素与弹道系统、20 形态、阵亡/复活
-├── enemy.gd / .tscn       # 6 种敌机、编队航向、Boss 波数血量缩放、炮手机 AI
-├── boss.gd / .tscn        # 5 种 Boss 弹幕、血条信号、连环殉爆
-├── upgrades.gd            # 15 张升级卡池（id / 出现条件 / 选中效果）
-├── i18n.gd                # 中英字符串表，按系统语言自动选择
-├── save.gd                # 最高分与设置（网页 localStorage / 桌面文件）
-├── fx.gd                  # 一次性特效库：冲击波环、爆炸、彩带、闪电
-├── pause_menu.gd          # 暂停菜单（继续 / 重开 / 声音 / 减少闪光）
-├── model_builder.gd       # 飞船模型加载（Quaternius CC0 舰队：20 形态 / 敌机 / Boss）
-├── enemy_bullet.gd / .tscn# Boss 弹幕（直线 + 追踪）
-├── bullet.gd / .tscn      # 元素子弹（对象池 + 共享材质，溅射/减速/链电/击退）
-├── core.gd / .tscn        # Boss 掉落的核心装备（拾取变形，绝不没收）
-├── gem / hit_spk          # 经验水晶、命中火花
-├── touch_ui.gd            # 手机虚拟移动摇杆
-├── camera.gd              # 衰减式屏幕震动 + 视场角自适应
-├── panel_fx.gd            # 开始/结算/升级面板入场动画
+├── project.godot          # Godot 工程配置（主场景 / 渲染器 / 内嵌字体）
 └── export_presets.cfg     # Web 导出预设（线程关闭）
 ```
 

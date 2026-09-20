@@ -4,7 +4,7 @@ extends CharacterBody3D
 
 signal died(pos: Vector3, value: int, fx_color: Color, max_hp: int)
 
-const MB := preload("res://model_builder.gd")
+const MB := preload("res://scripts/model_builder.gd")
 
 const STATS := {
 	"normal": {"speed": 150, "hp": 3, "score": 10, "damage": 1, "scale": 0.8},

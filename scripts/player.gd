@@ -2,9 +2,9 @@ extends CharacterBody3D
 
 # 主角战机（3D）：20 种程序化形态，鼠标/摇杆在 x/y 平面驾驶，机头朝上
 
-const BulletScene := preload("res://bullet.tscn")
-const BulletScript := preload("res://bullet.gd")
-const MB := preload("res://model_builder.gd")
+const BulletScene := preload("res://scenes/bullet.tscn")
+const BulletScript := preload("res://scripts/bullet.gd")
+const MB := preload("res://scripts/model_builder.gd")
 
 @export var follow_speed = 1300    # 鼠标跟随速度（越大跟得越紧）
 @export var speed = 400            # 移动速度（摇杆移动 / 疾跑强化用）

@@ -10,8 +10,8 @@ extends CharacterBody3D
 signal hp_changed(hp, max_hp)
 signal died(pos: Vector3, is_omega: bool)
 
-const MB := preload("res://model_builder.gd")
-const I18n := preload("res://i18n.gd")
+const MB := preload("res://scripts/model_builder.gd")
+const I18n := preload("res://scripts/i18n.gd")
 
 const TEX := {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
 const HP_BONUS := {1: 0, 2: 20, 3: 10, 4: 30, 5: 20}

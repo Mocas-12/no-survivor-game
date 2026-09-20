@@ -3,7 +3,7 @@ extends SceneTree
 # 游戏视角验证：正面查看主角（机头应朝上、机背朝镜头）与敌机/Boss（机头应朝下）
 # 运行: godot --path . --script res://tools/preview_wrap.gd
 
-const MB := preload("res://model_builder.gd")
+const MB := preload("res://scripts/model_builder.gd")
 
 func _init():
 	_build.call_deferred()

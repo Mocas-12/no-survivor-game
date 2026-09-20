@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://4b6d8a0c2e1f"]
 
-[ext_resource type="Script" path="res://hit_spk.gd" id="1_hs"]
+[ext_resource type="Script" path="res://scripts/hit_spk.gd" id="1_hs"]
 
 [sub_resource type="StandardMaterial3D" id="StdMat_hs"]
 shading_mode = 0
