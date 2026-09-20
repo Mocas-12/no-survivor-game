@@ -1185,8 +1185,9 @@ func _on_start_pressed():
 	start_panel.hide()
 	pause_button.show()
 	get_tree().paused = false
-	if not bgm_player.playing:
-		bgm_player.play()          # 网页端音频手势解锁后接上（桌面端已在播放）
+	# 无条件重启 BGM：网页端此刻才拿到音频手势（此前的 play 可能被浏览器挂起），
+	# 桌面端音乐随开战从头播放
+	bgm_player.play()
 	_request_web_fullscreen()
 
 func _request_web_fullscreen():
