@@ -179,6 +179,7 @@ func _ready():
 	$UI/PausePanel/Title.text = I18n.T("pause_title")
 	$UI/PausePanel/Box/ResumeButton.text = I18n.T("btn_resume")
 	$UI/PausePanel/Box/RestartButton.text = I18n.T("btn_restart")
+	$UI/PausePanel/Box/QuitButton.text = I18n.T("btn_quit")
 	_update_pause_labels()
 
 	for i in upgrade_buttons.size():
@@ -190,6 +191,7 @@ func _ready():
 	$UI/PausePanel/Box/RestartButton.pressed.connect(_on_restart_button_pressed)
 	$UI/PausePanel/Box/SoundButton.pressed.connect(_on_sound_toggled)
 	$UI/PausePanel/Box/FxButton.pressed.connect(_on_fx_toggled)
+	$UI/PausePanel/Box/QuitButton.pressed.connect(_on_quit_button_pressed)
 
 	# 手机摇杆输入接入玩家
 	$TouchUI.moved.connect(func(d): player.touch_move = d)

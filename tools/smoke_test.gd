@@ -65,6 +65,7 @@ func _run() -> void:
 	print("== 暂停菜单 ==")
 	world._open_pause()
 	check(get_tree().paused and world.pause_panel.visible, "暂停面板生效")
+	check(world.pause_panel.get_node("Box/QuitButton").visible, "暂停菜单含退出按钮")
 	world._on_sound_toggled()
 	world._on_fx_toggled()
 	world._close_pause()

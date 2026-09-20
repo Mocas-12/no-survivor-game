@@ -639,6 +639,12 @@ layout_mode = 2
 theme = SubResource("Theme_ui")
 text = "减少闪光：开"
 
+[node name="QuitButton" type="Button" parent="UI/PausePanel/Box"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+text = "退出游戏"
+
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
 [connection signal="pressed" from="UI/GameOverPanel/RestartButton" to="." method="_on_restart_button_pressed"]
 [connection signal="pressed" from="UI/GameOverPanel/QuitButton" to="." method="_on_quit_button_pressed"]
