@@ -7,6 +7,7 @@
 这里只生成仍在使用的 6 张贴图：四层星空（远/中/近 + 星云）+ 摇杆底座/摇杆帽。
 （2D 时代的战机 / 敌机 / Boss / 粒子贴图生成器已随 3D 化移除，需要可在 git 历史找回）
 """
+import math
 import os
 import random
 
@@ -136,7 +137,32 @@ def gen_space_layers():
     gen_nebula()
 
 
+# ---------- 能力光环贴图 ----------
+
+def gen_aura_fx():
+    # 寒霜环绕雪花：六臂枝晶，白色柔光
+    size = (ss(32), ss(32))
+    img = Image.new("RGBA", size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cx = cy = ss(16)
+    for arm in range(6):
+        ang = math.radians(60 * arm)
+        dx, dy = math.cos(ang), math.sin(ang)
+        length = ss(13)
+        d.line([cx, cy, cx + dx * length, cy + dy * length], fill=(238, 249, 255, 240), width=ss(1))
+        for frac in (0.45, 0.7):   # 侧枝
+            bx, by = cx + dx * length * frac, cy + dy * length * frac
+            for side in (-1, 1):
+                bang = ang + math.radians(60 * side)
+                d.line([bx, by, bx + math.cos(bang) * ss(4), by + math.sin(bang) * ss(4)],
+                       fill=(225, 244, 255, 225), width=2)
+    d.ellipse([cx - ss(2), cy - ss(2), cx + ss(2), cy + ss(2)], fill=(255, 255, 255, 255))
+    img = img.filter(ImageFilter.GaussianBlur(1))
+    finish(img, "aura_snow.png", (64, 64))
+
+
 if __name__ == "__main__":
     gen_space_layers()
     gen_touch_ui()
+    gen_aura_fx()
     print("全部素材已生成 ->", OUT)

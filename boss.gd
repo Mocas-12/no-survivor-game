@@ -52,16 +52,46 @@ func setup(id, tier_):
 func boss_name() -> String:
 	return I18n.T("boss_%d" % boss_id)
 
+# 以本 Boss 的专属弹形发射（弹形符合 Boss 名字逻辑，见 enemy_bullet.gd）
+func spawn(pos: Vector3, dir: Vector3, spd, dmg, homing := 0.0, ht := 0.0):
+	var world = get_tree().current_scene
+	if world.has_method("spawn_enemy_bullet"):
+		world.spawn_enemy_bullet(pos, dir, spd, dmg, homing, ht,
+			["", "destructor", "interceptor", "fortress", "hunter", "phantom"][boss_id])
+
 func _physics_process(delta):
 	if dead or not entered:
 		return
 	t += delta
 	contact_cd -= delta
 
-	# 巡航：向目标点平滑趋近（幻影瞬移后会缓慢漂回航道）
-	var target_x = sin(t * 0.6) * (150 + 15 * boss_id)
-	var target_y = 174 + sin(t * 1.3) * 22
-	var follow = 0.8 if boss_id == 5 else 3.0
+	# 各 Boss 专属巡航走位（走位即身份）：
+	# 毁灭者镇中缓巡 / 拦截者高速咬位 / 要塞驻停炮台 / 猎手游猎玩家上空 / 幻影漂移待瞬移
+	var pl = get_tree().get_first_node_in_group("player")
+	var target_x := 0.0
+	var target_y := 174.0
+	var follow := 3.0
+	match boss_id:
+		1:
+			target_x = sin(t * 0.5) * 120.0
+			target_y = 174.0 + sin(t * 1.1) * 18.0
+			follow = 1.6
+		2:
+			target_x = clampf(pl.global_position.x if pl else 0.0, -430.0, 430.0)
+			target_y = 150.0 + sin(t * 1.6) * 30.0
+			follow = 2.6
+		3:
+			target_x = sin(t * 0.4) * 60.0
+			target_y = 132.0 + sin(t * 0.9) * 8.0
+			follow = 1.2
+		4:
+			target_x = (pl.global_position.x if pl else 0.0) + sin(t * 0.9) * 90.0
+			target_y = 208.0 + sin(t * 1.4) * 16.0
+			follow = 2.2
+		5:
+			target_x = sin(t * 0.6) * (150 + 15 * boss_id)
+			target_y = 174.0 + sin(t * 1.3) * 22.0
+			follow = 0.8
 	position.x = lerpf(position.x, target_x, minf(follow * delta, 1.0))
 	position.y = lerpf(position.y, target_y, minf(follow * delta, 1.0))
 
@@ -79,9 +109,8 @@ func _physics_process(delta):
 			_teleport()
 
 	# 撞到玩家
-	var player = get_tree().get_first_node_in_group("player")
-	if player and contact_cd <= 0:
-		var d3 = player.global_position - global_position
+	if pl and contact_cd <= 0:
+		var d3 = pl.global_position - global_position
 		if Vector2(d3.x, d3.y).length() < 80.0:
 			contact_cd = 0.8
 			var world = get_tree().current_scene
@@ -112,13 +141,13 @@ func _attack():
 				var n1 = 18 if enraged else 14
 				for i in n1:
 					var dir = Vector3(cos(TAU * i / n1 + t * 0.5), sin(TAU * i / n1 + t * 0.5), 0.0)
-					world.spawn_enemy_bullet(global_position + dir * 60.0, dir, (200.0 + tier * 8.0) * spd, bullet_damage)
+					spawn(global_position + dir * 60.0, dir, (200.0 + tier * 8.0) * spd, bullet_damage)
 			elif player:
 				var aim3 = player.global_position - global_position
 				var aim = Vector2(aim3.x, aim3.y).normalized()
 				for i in 5:
 					var dir = Vector3(aim.rotated((i - 2) * 0.14).x, aim.rotated((i - 2) * 0.14).y, 0.0)
-					world.spawn_enemy_bullet(global_position + dir * 60.0, dir, (260.0 + tier * 8.0) * spd, bullet_damage)
+					spawn(global_position + dir * 60.0, dir, (260.0 + tier * 8.0) * spd, bullet_damage)
 		2:
 			if attack_count % 2 == 1:
 				# 瞄准扇形（狂暴后 7 连）
@@ -128,25 +157,25 @@ func _attack():
 					var aim = Vector2(aim3.x, aim3.y).normalized()
 					for i in n2:
 						var d2 = aim.rotated((i - (n2 - 1) / 2.0) * 0.16)
-						world.spawn_enemy_bullet(global_position + Vector3(d2.x, d2.y, 0.0) * 50.0, Vector3(d2.x, d2.y, 0.0), (280.0 + tier * 8.0) * spd, bullet_damage)
+						spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 50.0, Vector3(d2.x, d2.y, 0.0), (280.0 + tier * 8.0) * spd, bullet_damage)
 			else:
 				for i in 10:
 					var dir = Vector3(cos(TAU * i / 10.0 + t), sin(TAU * i / 10.0 + t), 0.0)
-					world.spawn_enemy_bullet(global_position + dir * 60.0, dir, 170.0 * spd, bullet_damage)
+					spawn(global_position + dir * 60.0, dir, 170.0 * spd, bullet_damage)
 		3:
 			# 旋转螺旋（狂暴后四臂）
 			var arms = 4 if enraged else 3
 			spiral_a += 0.55
 			for i in arms:
 				var dir = Vector3(cos(spiral_a + TAU * i / arms), sin(spiral_a + TAU * i / arms), 0.0)
-				world.spawn_enemy_bullet(global_position + dir * 55.0, dir, (235.0 + tier * 6.0) * spd, bullet_damage)
+				spawn(global_position + dir * 55.0, dir, (235.0 + tier * 6.0) * spd, bullet_damage)
 			if attack_count % 4 == 3 and player:
 				# 偶发瞄准三连
 				var aim3 = player.global_position - global_position
 				var aim = Vector2(aim3.x, aim3.y).normalized()
 				for i in 3:
 					var d2 = aim.rotated((i - 1) * 0.2)
-					world.spawn_enemy_bullet(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage)
+					spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage)
 		4:
 			# 追踪弹（狂暴后 5 连）
 			var nh = 5 if enraged else 3
@@ -155,25 +184,25 @@ func _attack():
 				var aim = Vector2(aim3.x, aim3.y).normalized()
 				for i in nh:
 					var d2 = aim.rotated((i - (nh - 1) / 2.0) * 0.35)
-					world.spawn_enemy_bullet(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 185.0 * spd, bullet_damage, 1.6, 2.2)
+					spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 185.0 * spd, bullet_damage, 1.6, 2.2)
 			# 六向（狂暴八向）直弹
 			var n6 = 8 if enraged else 6
 			for i in n6:
 				var dir = Vector3(cos(TAU * i / n6 + attack_count * 0.3), sin(TAU * i / n6 + attack_count * 0.3), 0.0)
-				world.spawn_enemy_bullet(global_position + dir * 55.0, dir, 220.0 * spd, bullet_damage)
+				spawn(global_position + dir * 55.0, dir, 220.0 * spd, bullet_damage)
 		5:
 			# 八向（狂暴十二向）刺弹 + 狂暴追踪
 			var n5 = 12 if enraged else 8
 			var base = randf() * TAU
 			for i in n5:
 				var dir = Vector3(cos(base + TAU * i / n5), sin(base + TAU * i / n5), 0.0)
-				world.spawn_enemy_bullet(global_position + dir * 55.0, dir, (265.0 + tier * 6.0) * spd, bullet_damage)
+				spawn(global_position + dir * 55.0, dir, (265.0 + tier * 6.0) * spd, bullet_damage)
 			if enraged and attack_count % 3 == 0 and player:
 				var aim3 = player.global_position - global_position
 				var aim = Vector2(aim3.x, aim3.y).normalized()
 				for i in 3:
 					var d2 = aim.rotated((i - 1) * 0.25)
-					world.spawn_enemy_bullet(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage, 1.2, 1.8)
+					spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage, 1.2, 1.8)
 
 # 幻影专属：原地留残影 → 闪现到新位置 → 立刻放一圈刺弹
 func _teleport():
@@ -187,7 +216,7 @@ func _teleport():
 		world.play_sfx("hit", -6.0, 0.3)
 	for i in 8:
 		var dir = Vector3(cos(TAU * i / 8.0 + randf() * 0.5), sin(TAU * i / 8.0 + randf() * 0.5), 0.0)
-		world.spawn_enemy_bullet(global_position + dir * 55.0, dir, 265.0, bullet_damage)
+		spawn(global_position + dir * 55.0, dir, 265.0, bullet_damage)
 
 func take_damage(amount):
 	if dead:
@@ -218,6 +247,27 @@ func _enrage():
 		world.flash_ui(Color(1, 0.3, 0.2), 0.25)
 	if world.has_method("play_sfx"):
 		world.play_sfx("warning", -4.0, 0.2)
+	# 狂暴标识：机体外圈常驻红色脉冲环，一眼看出 Boss 已狂暴
+	var ring := MeshInstance3D.new()
+	ring.name = "EnrageRing"
+	var torus := TorusMesh.new()
+	torus.inner_radius = 9.0
+	torus.outer_radius = 11.0
+	ring.mesh = torus
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(1, 0.25, 0.2, 0.6)
+	m.emission_enabled = true
+	m.emission = Color(1, 0.25, 0.2)
+	m.emission_energy_multiplier = 1.8
+	ring.material_override = m
+	ring.rotation_degrees = Vector3(90, 0, 0)
+	ring.scale = Vector3.ONE * 8.0
+	add_child(ring)
+	var rt := ring.create_tween().set_loops()
+	rt.tween_property(m, "albedo_color:a", 0.25, 0.6)
+	rt.tween_property(m, "albedo_color:a", 0.6, 0.6)
 
 func _die():
 	if dead:

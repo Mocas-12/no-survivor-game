@@ -50,7 +50,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 - 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic) — a missed core hovers at the bottom edge instead of vanishing
 - 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs, and enemies toughen with every boss wave
 - 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
-- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well; while active, the ship carries a persistent ability aura (radius rings / shield bubble / orbiting motes), the HUD indicator stays on, and timed buffs show a countdown bar
+- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well; while active, the ship carries a themed aura (orbiting frost snowflakes / radius rings / shield bubble), the HUD indicator stays on, and timed buffs show a countdown bar
 - 💀 **A cinematic death**: exploding in slow motion before the results screen — unless you carry a Phoenix Core, which revives you with a screen-clearing shockwave
 
 ## 👾 Enemy Fleet
@@ -77,6 +77,8 @@ When the kill counter crosses the threshold an alarm sounds, spawns slow to a tr
 | 🟢 **Fortress** | teal mega-carrier | triple rotating spiral streams |
 | 🟡 **Hunter** | gold twin-claw stalker | homing rounds + 6-way shots |
 | 🔵 **Phantom** | blue crystal ghost | teleports, then bursts 8-spike volleys |
+
+Every boss fires its own signature rounds — the bullet is the identity: Destructor's **crimson heavy shells**, Interceptor's **violet darts**, Fortress's **emerald lance bolts**, Hunter's **gold stingers** (with a faint trail), Phantom's **cyan crystal shards**. When a boss enrages, a pulsing red ring wraps its hull.
 
 Defeating a boss chains explosions across the screen and drops a **power core** — catch it to transform your fighter; even if you let it drift to the bottom it hovers there until you come get it. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
 

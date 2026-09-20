@@ -16,6 +16,7 @@ const Fx := preload("res://fx.gd")
 const Upgrades := preload("res://upgrades.gd")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
+const SNOW_TEX := preload("res://assets/aura_snow.png")
 
 # 形态特殊能力：每次变形按形态序号循环获得一种（20 形态 = 每种能力两轮）
 const ABILITY_ORDER := ["nova", "overcharge", "frost", "flame", "magnet", "leech", "aegis", "thrust", "barrage", "gravity"]
@@ -76,6 +77,7 @@ var _buff_count0 := 0
 var _prebuilt_model: Node3D = null  # 变形预建的新机体（提前分摊构建开销）
 var _cocoon: MeshInstance3D = null  # 变形能量茧（每帧跟随主角，防止飞出光圈）
 var _aura: Node3D = null            # 能力常驻光环（跟随主角的世界空间节点）
+var _aura_spinners: Array = []      # [粒子节点, 角速度]：旋转发射器实现轨道环绕
 
 # 3.6 卡牌与被动（升级系统 / 存档设置）
 var card_taken := {}             # 卡 id → 已选次数（可叠加卡显示 Lv.N）
@@ -207,8 +209,13 @@ func _process(delta):
 	if _aura != null:
 		if is_instance_valid(_aura):
 			_aura.position = player.global_position
+			# 轨道环绕：旋转发射器节点（CPUParticles 无轨道速度参数，本地坐标下整体旋转）
+			for s in _aura_spinners:
+				if is_instance_valid(s[0]):
+					s[0].rotation.z += s[1] * delta
 		else:
 			_aura = null
+			_aura_spinners.clear()
 	# 限时增益倒计时条
 	if buff_kind != "" and buff_bar.visible:
 		buff_bar.value = buff_left
@@ -471,7 +478,7 @@ func _on_boss_died(pos: Vector3):
 	update_ui()
 	$Timer.start()
 
-func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing := 0.0, homing_time := 0.0):
+func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing := 0.0, homing_time := 0.0, style := "shooter"):
 	var b = enemy_bullet_scene.instantiate()
 	b.position = pos
 	b.dir = dir
@@ -479,6 +486,7 @@ func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing :
 	b.damage = damage
 	b.homing = homing
 	b.homing_time = homing_time
+	b.style = style
 	add_child(b)
 
 func spawn_lightning(from: Vector3, to: Vector3):
@@ -650,6 +658,7 @@ func _clear_aura():
 		if is_instance_valid(_aura):
 			_aura.queue_free()
 		_aura = null
+	_aura_spinners.clear()
 
 func _build_aura(id: String):
 	_clear_aura()
@@ -657,32 +666,26 @@ func _build_aura(id: String):
 	_aura = Node3D.new()
 	_aura.position = player.global_position
 	add_child(_aura)
-	# 环绕光尘：能力色微光粒子绕机体升腾
-	var p := CPUParticles3D.new()
-	p.amount = 14
-	p.lifetime = 0.9
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 42.0
-	p.direction = Vector3(0, 1, 0)
-	p.spread = 20.0
-	p.gravity = Vector3.ZERO
-	p.initial_velocity_min = 20.0
-	p.initial_velocity_max = 55.0
-	p.scale_amount_min = 0.5
-	p.scale_amount_max = 1.3
-	var m := SphereMesh.new()
-	m.radius = 2.2
-	m.height = 4.4
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mm.albedo_color = col
-	mm.emission_enabled = true
-	mm.emission = col
-	mm.emission_energy_multiplier = 2.2
-	m.material = mm
-	p.mesh = m
-	_aura.add_child(p)
+	# 主题环绕粒子：每种能力有自己的动态（寒霜 = 细雪片沿轨道绕机旋转）
+	match id:
+		"frost":
+			_motes(Color(0.93, 0.97, 1.0), 10, 2.6, 48.0, 1.8, 0.0, 0.0, Vector3(0, -13, 0), 0.9, 1.5, _snowflake_mesh())
+		"flame":
+			_motes(col, 9, 0.8, 0.0, 0.0, 60.0, 140.0, Vector3(0, 70, 0), 1.2, 2.2)
+		"magnet":
+			_motes(col, 8, 1.4, 30.0, 3.2, 0.0, 0.0, Vector3.ZERO, 0.6, 1.0)
+		"leech":
+			_motes(col, 7, 1.6, 0.0, 0.0, 15.0, 45.0, Vector3(0, -40, 0), 0.6, 1.1)
+		"gravity":
+			_motes(col, 10, 1.9, 40.0, -1.4, 0.0, 0.0, Vector3.ZERO, 0.8, 1.3)
+		"overcharge":
+			_motes(col, 12, 0.45, 0.0, 0.0, 110.0, 210.0, Vector3.ZERO, 0.5, 1.0)
+		"thrust":
+			_motes(col, 10, 0.5, 22.0, 0.0, 40.0, 90.0, Vector3(0, -150, 0), 0.6, 1.1)
+		"barrage":
+			_motes(col, 9, 0.9, 34.0, 3.8, 0.0, 0.0, Vector3.ZERO, 0.5, 0.9)
+		"aegis":
+			pass   # 护盾只有能量泡，干净一些
 	# 半径指示圈：让"力场范围"看得见（数值与实际效果半径一致）
 	var radius := 0.0
 	match id:
@@ -711,6 +714,67 @@ func _build_aura(id: String):
 		var bt := bubble.create_tween().set_loops()
 		bt.tween_property(bm, "albedo_color:a", 0.3, 0.7)
 		bt.tween_property(bm, "albedo_color:a", 0.14, 0.7)
+
+# 能力环绕粒子通用构建：环状/球状发射 + 可选轨道旋转
+func _motes(col: Color, amount: int, life: float, ring_radius: float, orbital: float, vel_min: float, vel_max: float, grav: Vector3, smin: float, smax: float, mesh: Mesh = null):
+	var p := CPUParticles3D.new()
+	p.amount = amount
+	p.lifetime = life
+	if ring_radius > 0.0:
+		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+		p.emission_ring_radius = ring_radius
+		p.emission_ring_inner_radius = maxf(ring_radius - 6.0, 0.0)
+		p.emission_ring_axis = Vector3(0, 0, 1)   # 游戏平面法线：轨道绕机体水平旋转
+		p.emission_ring_height = 8.0
+	else:
+		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		p.emission_sphere_radius = 42.0
+	p.spread = 180.0
+	if orbital != 0.0:
+		# 轨道环绕：本地坐标 + 旋转发射器节点（world._process 驱动）
+		p.local_coords = true
+		_aura_spinners.append([p, orbital])
+	p.gravity = grav
+	p.initial_velocity_min = vel_min
+	p.initial_velocity_max = vel_max
+	p.scale_amount_min = smin
+	p.scale_amount_max = smax
+	var m := SphereMesh.new()
+	m.radius = 2.2
+	m.height = 4.4
+	var mm := StandardMaterial3D.new()
+	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mm.vertex_color_use_as_albedo = true
+	mm.emission_enabled = true
+	mm.emission = col
+	mm.emission_energy_multiplier = 2.2
+	m.material = mm
+	p.mesh = mesh if mesh != null else m
+	var g := Gradient.new()
+	g.colors = PackedColorArray([Color(col.r, col.g, col.b, 0.95), Color(col.r, col.g, col.b, 0.0)])
+	p.color_ramp = g
+	_aura.add_child(p)
+	p.emitting = true
+	return p
+
+var _flake_mesh: QuadMesh = null
+
+# 寒霜细雪片：六臂雪花贴图 + 面向镜头
+func _snowflake_mesh() -> QuadMesh:
+	if _flake_mesh == null:
+		_flake_mesh = QuadMesh.new()
+		_flake_mesh.size = Vector2(15, 15)
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		m.albedo_texture = SNOW_TEX
+		m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		m.emission_enabled = true
+		m.emission = Color(0.75, 0.9, 1.0)
+		m.emission_energy_multiplier = 1.1
+		_flake_mesh.material = m
+	return _flake_mesh
 
 func _aura_radius_ring(col: Color, radius: float):
 	var ring := MeshInstance3D.new()
