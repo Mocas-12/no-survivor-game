@@ -5,6 +5,7 @@ extends Area3D
 const MB := preload("res://model_builder.gd")
 
 var xp_value = 1        # 拾取后获得的经验
+var tier = 1            # 水晶档位：1 白（小）/ 2 绿（中）/ 3 紫（大）
 var magnet_range = 180.0
 var magnet_speed = 700.0
 var fall_speed = 90.0
@@ -12,7 +13,7 @@ var t = randf() * TAU
 @onready var player = get_tree().get_first_node_in_group("player")
 
 func _ready():
-	add_child(MB.build_gem())
+	add_child(MB.build_gem(tier))
 	body_entered.connect(_on_body_entered)
 
 func _process(delta):

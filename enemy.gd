@@ -2,7 +2,7 @@ extends CharacterBody3D
 
 # 敌机（3D）：6 种机型，滚转朝向玩家，追击 + 撞击 + 炮手机开火
 
-signal died(pos: Vector3, value: int, fx_color: Color)
+signal died(pos: Vector3, value: int, fx_color: Color, max_hp: int)
 
 const MB := preload("res://model_builder.gd")
 
@@ -42,6 +42,7 @@ var hover_y := -9999.0      # 炮手机悬停高度
 var hover_done := false     # 炮手机已完成悬停（避免反复触发）
 var fire_cd = 0.0
 var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
+var max_hp = 3           # 满血血量（决定掉落的水晶档位）
 var model: Node3D = null
 
 @onready var player = get_tree().get_first_node_in_group("player")
@@ -51,6 +52,7 @@ func setup(type: String):
 	var st: Dictionary = STATS[type]
 	speed = st["speed"]
 	health = st["hp"]
+	max_hp = health
 	score_value = st["score"]
 	damage = st["damage"]
 	scale = Vector3.ONE * st["scale"]
@@ -68,6 +70,7 @@ func setup(type: String):
 func apply_tier(tier: int):
 	if tier > 1:
 		health = ceili(health * (1.0 + 0.12 * (tier - 1)))
+		max_hp = health
 
 func _physics_process(delta):
 	if dead:
@@ -169,7 +172,7 @@ func die():
 	dead = true
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
-	died.emit(global_position, score_value, fx_color)
+	died.emit(global_position, score_value, fx_color, max_hp)
 	$ExplosionParticles.emitting = true
 	$Sparks.emitting = true
 	if model:

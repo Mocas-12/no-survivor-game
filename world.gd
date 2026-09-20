@@ -390,7 +390,7 @@ func spawn_minions(n: int):
 
 # --- 击杀与经验 ---
 
-func _on_enemy_died(pos: Vector3, value, fx_color):
+func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 	score += value
 	kill_count += 1
 
@@ -404,10 +404,16 @@ func _on_enemy_died(pos: Vector3, value, fx_color):
 	play_sfx("explode", -8.0, 0.12)
 	_shake(6.0 if value >= 30 else 2.5)
 
-	# 掉落经验水晶
+	# 掉落经验水晶：按敌机血量分三档（白 1 / 绿 3 / 紫 8）
+	var tier := 1
+	if max_hp >= 9:
+		tier = 3
+	elif max_hp >= 4:
+		tier = 2
 	var gem = gem_scene.instantiate()
 	gem.position = pos
-	gem.xp_value = 3 if value >= 30 else (2 if value >= 20 else 1)
+	gem.tier = tier
+	gem.xp_value = [1, 3, 8][tier - 1]
 	add_child(gem)
 
 	update_ui()

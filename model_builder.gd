@@ -147,15 +147,23 @@ static func glow_mat(color: Color, energy := 2.2) -> StandardMaterial3D:
 	m.emission_energy_multiplier = energy
 	return m
 
-static func build_gem() -> Node3D:
+# 经验水晶三档：白（小）/ 绿（中）/ 紫（大），按敌机血量掉落
+const GEM_TIERS := {
+	1: {"size": Vector3(9, 9, 6), "color": Color(0.93, 0.95, 1.0)},
+	2: {"size": Vector3(13, 13, 9), "color": Color(0.4, 1.0, 0.5)},
+	3: {"size": Vector3(18, 18, 12), "color": Color(0.8, 0.45, 1.0)},
+}
+
+static func build_gem(tier := 1) -> Node3D:
 	# 旋转的水晶方块（父节点负责旋转动画）
+	var cfg: Dictionary = GEM_TIERS.get(tier, GEM_TIERS[1])
 	var root := Node3D.new()
 	var mi := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(13, 13, 9)
+	bm.size = cfg["size"]
 	mi.mesh = bm
 	mi.rotation_degrees = Vector3(0, 0, 45)
-	mi.material_override = glow_mat(Color(0.45, 0.9, 1.0), 2.4)
+	mi.material_override = glow_mat(cfg["color"], 2.4)
 	root.add_child(mi)
 	return root
 
