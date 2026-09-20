@@ -122,8 +122,10 @@ func _run() -> void:
 	print("== 追踪导弹道具 ==")
 	check(world.homing_charges >= 1, "击杀 Boss 获得追踪导弹")
 	var hc: int = world.homing_charges
+	world.player.shoot()   # 保证屏幕上有子弹（无子弹时道具不消耗）
+	await get_tree().process_frame
 	world._use_homing()
-	check(world.homing_charges == hc - 1, "点击使用追踪导弹")
+	check(world.homing_charges == hc - 1, "点击触发全场子弹转追踪")
 
 	print("== 凤凰复活 ==")
 	world.revive_charges = 1

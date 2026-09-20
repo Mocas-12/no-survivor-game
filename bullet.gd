@@ -107,7 +107,31 @@ var _created: Array = []         # 动态创建的粒子发射器（重建时销
 var _fx_all: Array = []          # 全部发射器（回收时统一停发）
 
 func _ready():
+	add_to_group("player_bullets")   # 追踪导弹道具按此分组把全场子弹转为追踪
 	body_entered.connect(_on_body_entered)
+
+# 追踪导弹道具：把飞行中的这颗子弹转为追踪弹（镀金标识），返回是否生效
+func make_homing() -> bool:
+	if not _active:
+		return false
+	homing = maxf(homing, 5.0)
+	homing_time = maxf(homing_time, 4.0)
+	_retarget = 0.0
+	_target = null
+	$Mesh.material_override = _homing_mat()
+	return true
+
+static func _homing_mat() -> StandardMaterial3D:
+	if not _body_mats.has("homing"):
+		var c := Color(1.0, 0.85, 0.35)
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = c
+		m.emission_enabled = true
+		m.emission = c
+		m.emission_energy_multiplier = 3.0
+		_body_mats["homing"] = m
+	return _body_mats["homing"]
 
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):

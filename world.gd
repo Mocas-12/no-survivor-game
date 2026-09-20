@@ -1079,33 +1079,30 @@ func _update_pause_labels():
 	$UI/PausePanel/Box/SoundButton.text = I18n.T("sound_on") if muted else I18n.T("sound_off")
 	$UI/PausePanel/Box/FxButton.text = I18n.T("fx_on") if reduce_fx else I18n.T("fx_off")
 
-# --- 追踪导弹道具：击破 Boss 获得，点击鼠标 / 右下角按钮释放一轮追踪齐射 ---
+# --- 追踪导弹道具：击破 Boss 获得，点击鼠标 / 右下角按钮触发——
+#     当前整个屏幕上的主角子弹全部转为追踪弹（镀金 + 音效 + 特效） ---
 
 func _use_homing():
 	if homing_charges <= 0 or dying:
 		return
+	# 转换全场飞行中的子弹
+	var converted := 0
+	for b in get_tree().get_nodes_in_group("player_bullets"):
+		if b.has_method("make_homing") and b.make_homing():
+			converted += 1
+	if converted == 0:
+		# 没有子弹可转：不消耗道具，给出提示
+		_toast(I18n.T("no_bullets"), Color(0.7, 0.8, 0.9))
+		play_sfx("hit", -10.0, 0.1)
+		return
 	homing_charges -= 1
 	_update_homing_btn()
-	var n := mini(player.bullet_count, 6)
-	var spacing := 0.26
-	var start := -(n - 1) / 2.0 * spacing
-	var el_lv := 0
-	if player.element != "normal":
-		el_lv = maxi(1, int(player.element_levels.get(player.element, 1)))
-	for i in n:
-		var b = BulletScript.take()
-		if b == null:
-			b = BulletScene.instantiate()
-			add_child(b)
-		var ang: float = PI / 2 + start + i * spacing
-		b.launch(player.damage, player.element, 0.55 * player.proj_speed_mul, 0.0, 4.5, 4.0, el_lv,
-			player.global_position + Vector3(0, 44.0 * player.base_scale, 0.5),
-			Vector3(cos(ang), sin(ang), 0.0))
-		b.crit = player.crit_chance
-		b.reaction_boost = player.reaction_boost
-		b.mark_boost = player.mark_boost
-	play_sfx("shoot", -6.0, 0.08)
-	player.get_node("MuzzleFlash").restart()
+	# 触发音效 + 特效：金光闪 + 主角冲击波环
+	play_sfx("transform", -4.0, 0.1)
+	flash_ui(Color(1, 0.85, 0.4), 0.18)
+	_shake(6.0)
+	spawn_ring(player.position, Color(1, 0.85, 0.4), 0.3, 2.8, 0.5)
+	confetti_burst(player.position, 14, Color(1, 0.85, 0.4))
 
 func _update_homing_btn():
 	homing_btn.text = I18n.T("btn_homing") % homing_charges

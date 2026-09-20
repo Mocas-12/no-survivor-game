@@ -139,7 +139,7 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 | Melt | Fire + chilled | 200% single-target burst |
 | Tempest | Storm + Wind | three lightning strikes around the target |
 
-**Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to launch a homing volley. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
+**Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to trigger it: **every player bullet on screen turns into a homing round** (gilded, with a golden flash and a transform sfx). If no bullets are on screen, the charge is not consumed. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 
 ## ✨ Game Feel
 
