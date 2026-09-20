@@ -199,13 +199,14 @@ func _ready():
 	# 手机摇杆输入接入玩家
 	$TouchUI.moved.connect(func(d): player.touch_move = d)
 
-	# 背景音乐：导入时已设置无缝循环（bgm.wav.import loop_mode=1），
-	# 播完自动重播作为保险（等开始面板点击后再播放，满足浏览器音频手势要求）
+	# 背景音乐：导入时已设置无缝循环（bgm.wav.import loop_mode=1），播完自动重播作为保险。
+	# 初始即播放（桌面端立即可闻）；网页端受浏览器手势限制，点击开始后自动接上
 	bgm_player = AudioStreamPlayer.new()
 	bgm_player.stream = BGM
 	bgm_player.volume_db = -13.0
 	add_child(bgm_player)
 	bgm_player.finished.connect(func(): bgm_player.play())
+	bgm_player.play()
 
 	update_ui()
 	game_over_panel.hide()
@@ -1182,7 +1183,8 @@ func _on_start_pressed():
 	start_panel.hide()
 	pause_button.show()
 	get_tree().paused = false
-	bgm_player.play()          # 在用户手势内启动音频（解锁手机端声音）
+	if not bgm_player.playing:
+		bgm_player.play()          # 网页端音频手势解锁后接上（桌面端已在播放）
 	_request_web_fullscreen()
 
 func _request_web_fullscreen():

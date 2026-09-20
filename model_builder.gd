@@ -61,8 +61,43 @@ static func warm_up() -> void:
 
 static func _load_cached(path: String) -> Resource:
 	if not _cache.has(path):
-		_cache[path] = load(path)
+		var res = load(path)
+		# 飞船 OBJ 按面法线导入显得棱角粗糙：运行时焊接顶点重算平滑法线
+		if path.ends_with(".obj") and res is Mesh:
+			res = _smooth_normals(res)
+		_cache[path] = res
 	return _cache[path]
+
+# 平滑法线：把同一位置的重复顶点法线取平均，平面硬边 → 圆润过渡
+static func _smooth_normals(mesh: Mesh) -> Mesh:
+	var am := ArrayMesh.new()
+	for s in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(s)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		if verts.size() == 0 or normals.size() != verts.size():
+			am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			am.surface_set_material(s, mesh.surface_get_material(s))
+			continue
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		if indices.is_empty():
+			indices = PackedInt32Array(range(verts.size()))
+		# 按位置累积法线
+		var acc := {}
+		for i in indices.size():
+			var vi := indices[i]
+			acc[verts[vi]] = acc.get(verts[vi], Vector3.ZERO) + normals[vi]
+		# 写回平滑法线
+		var new_normals := PackedVector3Array()
+		new_normals.resize(verts.size())
+		for i in verts.size():
+			var n: Vector3 = acc.get(verts[i], normals[i])
+			new_normals[i] = n.normalized() if n.length() > 0.001 else normals[i].normalized()
+		arrays[Mesh.ARRAY_NORMAL] = new_normals
+		arrays[Mesh.ARRAY_TANGENT] = null   # 不用法线贴图，丢弃旧切线避免与平滑法线打架
+		am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		am.surface_set_material(s, mesh.surface_get_material(s))
+	return am
 
 # 涂装材质共享缓存：同舰同色同强度只建一份，变形换装零材质分配
 static func _load_mat(ship: String, color: String, glow: Color, energy: float) -> StandardMaterial3D:
@@ -71,7 +106,7 @@ static func _load_mat(ship: String, color: String, glow: Color, energy: float) -
 		var m := StandardMaterial3D.new()
 		m.albedo_texture = _load_cached("res://assets/ships/%s/Textures/%s_%s.png" % [ship, ship, color])
 		m.metallic = 0.35
-		m.roughness = 0.5
+		m.roughness = 0.45
 		m.emission_enabled = true
 		m.emission = glow
 		m.emission_energy_multiplier = energy
