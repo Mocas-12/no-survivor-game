@@ -92,7 +92,7 @@ func shoot():
 			get_tree().current_scene.add_child(b)
 
 		var ang: float = PI / 2 + start + i * spacing
-		var s_mul := speed_mul
+		var s_mul: float = speed_mul
 		var hom := 0.0
 		var h_time := 0.0
 		if pattern == "homing":

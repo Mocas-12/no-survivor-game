@@ -313,7 +313,7 @@ func _formation_line():
 
 func _formation_pincer():
 	var type := "fast" if score >= 40 else "normal"
-	var vx := 70.0 + boss_tier * 6.0
+	var vx: float = 70.0 + boss_tier * 6.0
 	for side in 2:
 		var dir := 1.0 if side == 0 else -1.0
 		for row in 4:

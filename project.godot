@@ -12,8 +12,12 @@ config_version=5
 
 config/name="SurvivorGame"
 run/main_scene="uid://ccx7tcudnlaiy"
-config/features=PackedStringArray("4.6", "GL Compatibility")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[display]
+
+window/stretch/mode="canvas_items"
 
 [gui]
 
@@ -30,11 +34,6 @@ shoot={
 [input_devices]
 
 pointing/emulate_mouse_from_touch=false
-
-[display]
-
-window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
 
 [rendering]
 
