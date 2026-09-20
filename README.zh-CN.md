@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./screenshots/app_icon.png" width="112" alt="No Survivor Game 图标" />
+
 # No Survivor Game
 
 **Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大 Boss 舰队、元素武器、形态进化**

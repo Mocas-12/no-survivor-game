@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="./screenshots/app_icon.png" width="112" alt="No Survivor Game icon" />
+
 # No Survivor Game
 
 **A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5-boss fleet, elemental weapons, 20 evolving 3D ship forms**
