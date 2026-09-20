@@ -174,6 +174,9 @@ func _ready():
 	$UI/LevelUpPanel/Box/Title.text = I18n.T("levelup_title")
 	$UI/StartPanel/Title.text = I18n.T("start_title")
 	$UI/StartPanel/Hint.text = I18n.T("start_hint")
+	if muted:
+		# 静音状态会持久化：在开始面板上明示，避免"游戏没声音"的误会
+		$UI/StartPanel/Hint.text += "\n" + I18n.T("muted_hint")
 	start_button.text = I18n.T("btn_start")
 	pause_button.text = I18n.T("btn_pause_mini")
 	$UI/PausePanel/Title.text = I18n.T("pause_title")
