@@ -58,11 +58,11 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 | Enemy | Look | HP | Speed | Score | Touch Damage | XP | Special |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Grunt | red strike fighter | 3 | 150 | 10 | 1 | 1 | — |
-| Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 | — |
+| Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 | periodic dash bursts |
 | Swift | green micro-fighter | 1 | 300 | 8 | 1 | 1 | serpentine weaving |
-| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 1 | fires at the player |
-| Guard | silver armored wedge | 8 | 80 | 25 | 2 | 2 | — |
-| Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 3 | — |
+| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 1 | hovers in the upper half and fires |
+| Guard | silver armored wedge | 8 | 80 | 25 | 2 | 2 | slow lateral patrol |
+| Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 3 | stop-and-go advance |
 
 New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150). Every boss wave defeated hardens the whole fleet (+12% HP per wave), and every ~15s a formation assault sweeps in: V-shaped swift squadrons, slow shield walls, or pincers converging from both flanks.
 

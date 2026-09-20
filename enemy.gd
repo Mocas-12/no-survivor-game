@@ -33,6 +33,10 @@ var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
 var slow_strength := 0.45   # 减速强度（寒冰弹头等级越高越强）
 var sway_t = 0.0
+var phase_t = 0.0           # 行为相位计时（冲刺/顿挫循环用）
+var hover_left := 0.0       # 炮手机悬停剩余时间
+var hover_y := -9999.0      # 炮手机悬停高度
+var hover_done := false     # 炮手机已完成悬停（避免反复触发）
 var fire_cd = 0.0
 var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
 var model: Node3D = null
@@ -68,11 +72,38 @@ func _physics_process(delta):
 	slow_timer = maxf(0.0, slow_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
 	var cur_speed = speed * (1.0 - slow_strength) if slow_timer > 0.0 else speed
-	velocity = Vector3(vx, -cur_speed, 0.0)
-	if kind == "swift":
-		# 蛇形走位：固定航向下叠加水平正弦摆动
-		sway_t += delta * 6.0
-		velocity.x = sin(sway_t) * 90.0
+	var vel := Vector3(vx, -cur_speed, 0.0)
+	phase_t += delta
+	# 各机型专属移动方式（均不追踪主角，只影响各自的进场轨迹）
+	match kind:
+		"swift":
+			# 疾风机：蛇形走位
+			sway_t += delta * 6.0
+			vel.x = sin(sway_t) * 90.0
+		"fast":
+			# 快速机：冲刺——滑行 0.8 秒 → 猛冲 0.5 秒循环，速度 ×2.2
+			var burst := 2.2 if fmod(phase_t, 1.3) > 0.8 else 1.0
+			vel *= burst
+		"shooter":
+			# 炮手机：压到上半区悬停开火 4 秒，随后继续俯冲
+			if hover_y < -9000.0:
+				hover_y = randf_range(40.0, 150.0)
+			if not hover_done and hover_left <= 0.0 and position.y <= hover_y:
+				hover_left = 4.0
+			if hover_left > 0.0:
+				hover_left -= delta
+				vel.y = -cur_speed * 0.12
+				if hover_left <= 0.0:
+					hover_done = true
+		"shield":
+			# 盾机：缓慢横向巡逻（宽幅低速摆动）
+			sway_t += delta * 1.3
+			vel.x = sin(sway_t) * 40.0 + vx
+		"tank":
+			# 重装机：顿挫式推进——走 1 秒停 0.35 秒，压迫感十足
+			if fmod(phase_t, 1.35) > 1.0:
+				vel = Vector3.ZERO
+	velocity = vel
 	move_and_slide()
 
 	# 飞出屏幕底部即回收（正常弹幕游戏：漏过的敌机直接离场）
