@@ -48,14 +48,18 @@ func _run() -> void:
 	check(world.pending_level_ups == 0 and not world.levelup_panel.visible, "全部升级选择完成")
 
 	print("== 元素/弹道切换 ==")
+	# 随机升级卡可能已选过元素/弹道，这里以基线增量断言，不假设从 0 开始
+	var fire0 := int(world.player.element_levels.get("fire", 0))
+	var hom0 := int(world.player.pattern_levels.get("homing", 0))
 	world.pick_element("fire")
 	world.pick_element("fire")
-	check(int(world.player.element_levels.get("fire", 0)) == 2, "同元素重复选取升级 Lv.2")
+	check(int(world.player.element_levels.get("fire", 0)) == fire0 + 2, "同元素重复选取升级 Lv.2")
 	world.pick_element("ice")
-	check(world.player.element == "ice" and int(world.player.element_levels.get("fire", 0)) == 2, "切换元素后原等级保留")
+	check(world.player.element == "ice" and int(world.player.element_levels.get("fire", 0)) == fire0 + 2, "切换元素后原等级保留")
 	world.pick_pattern("homing")
+	check(world.player.pattern == "homing" and int(world.player.pattern_levels.get("homing", 0)) == hom0 + 1, "选追踪弹道")
 	world.pick_pattern("wave")
-	check(world.player.pattern == "wave" and int(world.player.pattern_levels.get("homing", 0)) == 1, "切换弹道后等级保留")
+	check(world.player.pattern == "wave" and int(world.player.pattern_levels.get("homing", 0)) == hom0 + 1, "切换弹道后等级保留")
 	world.pick_pattern("spread")
 
 	print("== 暂停菜单 ==")
