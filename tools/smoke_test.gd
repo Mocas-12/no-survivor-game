@@ -122,6 +122,14 @@ func _run() -> void:
 		await get_tree().create_timer(1.2).timeout
 	check(world.omega_slain, "OMEGA 被击破，胜利结算")
 
+	print("== 胜利结算 ==")
+	# 击破演出落定（2.6s 延迟）后弹出胜利结算面板
+	await get_tree().create_timer(1.8).timeout
+	check(world.victory_panel.visible, "胜利结算面板弹出")
+	check(get_tree().paused, "胜利结算暂停战斗")
+	world._continue_endless()
+	check(not get_tree().paused and not world.victory_panel.visible, "继续无尽解除暂停")
+
 	print("== 追踪导弹道具 ==")
 	check(world.homing_charges >= 1, "击杀 Boss 获得追踪导弹")
 	var hc: int = world.homing_charges

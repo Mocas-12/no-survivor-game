@@ -434,6 +434,93 @@ grow_vertical = 2
 theme = SubResource("Theme_ui")
 text = "退出游戏"
 
+[node name="VictoryPanel" type="ColorRect" parent="UI"]
+process_mode = 3
+visible = false
+offset_right = 1151.0
+offset_bottom = 642.0
+color = Color(0.04, 0.06, 0.12, 0.88)
+script = ExtResource("9_pfx")
+
+[node name="Title" type="Label" parent="UI/VictoryPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -170.0
+offset_right = 300.0
+offset_bottom = -104.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 48
+text = "✦ 胜 利 ✦"
+horizontal_alignment = 1
+
+[node name="Sub" type="Label" parent="UI/VictoryPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -96.0
+offset_right = 300.0
+offset_bottom = -68.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 20
+text = "灭世母舰已被击破"
+horizontal_alignment = 1
+
+[node name="Box" type="VBoxContainer" parent="UI/VictoryPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -44.0
+offset_right = 260.0
+offset_bottom = 190.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="StatsLabel" type="Label" parent="UI/VictoryPanel/Box"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "最终积分: 0"
+horizontal_alignment = 1
+
+[node name="EndlessButton" type="Button" parent="UI/VictoryPanel/Box"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+text = "继续无尽模式"
+
+[node name="RestartButton" type="Button" parent="UI/VictoryPanel/Box"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+text = "重新开始"
+
+[node name="QuitButton" type="Button" parent="UI/VictoryPanel/Box"]
+custom_minimum_size = Vector2(280, 52)
+layout_mode = 2
+theme = SubResource("Theme_ui")
+text = "退出游戏"
+
 [node name="LevelUpPanel" type="ColorRect" parent="UI"]
 process_mode = 3
 visible = false
