@@ -17,7 +17,7 @@
 
 *桌面：移动鼠标驾驶战机，火力全自动 · 手机：左半屏摇杆移动*
 
-<img src="./screenshots/gameplay.png" width="49%" alt="战斗画面" /> <img src="./screenshots/boss.png" width="49%" alt="Boss 战" />
+<img src="./screenshots/gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/boss.png" width="32%" alt="Boss 战" /> <img src="./screenshots/victory.png" width="32%" alt="胜利结算" />
 
 </div>
 
@@ -68,7 +68,7 @@
 
 **经验水晶三档**，按敌机血量掉落：⚪ 白（小）1 点 · 🟢 绿（中）3 点 · 🟣 紫（大）8 点——越肉的家伙掉的水晶越大越值钱。
 
-积分达到 20 / 40 / 60 / 100 / 150 时，疾风机、快速机、炮手机、盾机、重装机陆续登场。每击破一波 Boss，全体敌机血量 +12% 逐波增厚；并且每约 15 秒有一波编队突击：疾风机 V 字纵队、盾机横墙、或从两翼斜插的包抄梯队。
+积分达到 20 / 40 / 60 / 100 / 150 时，疾风机、快速机、炮手机、盾机、重装机陆续登场。每击破一波 Boss，全体敌机血量 ×1.15 复合增厚（对冲后期火力成长）；并且每约 15 秒有一波编队突击：疾风机 V 字纵队、盾机横墙、或从两翼斜插的包抄梯队。
 
 ## 👑 Boss 舰队
 
@@ -86,7 +86,7 @@
 
 第二轮循环（第 6 波）起，每个 Boss 还会随机携带一个**词缀**（名字旁标注）——**迅捷**（弹速 +25%）、**坚壁**（血量 +50%）、**增援**（定期召唤小怪）、**遗言**（死亡时爆出一圈弹幕）。
 
-五种 Boss 打满两轮（10 波）后，终局 **OMEGA 灭世母舰** 降临——它吞噬了整支舰队：轮转释放全部五种专属弹形，70% 血量狂暴，35% 觉得不够还会获得幻影的瞬移并泼出全屏毁灭环。击破它即**胜利结算**（存档永久记下徽章），之后可继续无尽模式冲击更高分。
+五种 Boss 打满两轮（10 波）后，终局 **OMEGA 灭世母舰** 降临——它吞噬了整支舰队：轮转释放全部五种专属弹形，70% 血量狂暴，35% 觉得不够还会获得幻影的瞬移并泼出全屏毁灭环。击破它即触发**胜利结算**——战绩回顾、永久徽章存档与「继续无尽 / 重开」选择，之后可带着满级机体冲击更高分。
 
 击破 Boss 触发连环爆炸，并掉落一枚**核心装备**——接住即变形；就算任它飘到屏幕底部，它也会悬停在那里等你来接。Boss 血量过半会**狂暴**：攻速、弹速与弹幕密度全面提升。
 
@@ -177,8 +177,10 @@ no-survivor-game/
 │   ├── sounds/            # 合成音效 + 循环 BGM（tools/gen_sounds.py）
 │   └── *.png              # 视差星空层 + 触屏摇杆 + 雪花贴图（tools/gen_assets.py）
 ├── scenes/                # 9 个场景：主世界 / 玩家 / 敌机 / Boss / 双方子弹 / 核心 / 水晶
-├── scripts/               # 全部游戏逻辑（18 个脚本）
-│   ├── world.gd           # 游戏状态、波次/Boss/编队调度、升级 UI、暂停、音频、存档
+├── scripts/               # 全部游戏逻辑（20 个脚本）
+│   ├── world.gd           # 游戏状态中枢：UI / 音频 / 存档 / 暂停 / 结算
+│   ├── spawn_director.gd  # 刷怪 / 编队 / Boss 调度（静态模块）
+│   ├── form_ability.gd    # 变形演出 / 形态能力 / 光环（静态模块）
 │   ├── player.gd          # 鼠标/触屏驾驶、元素与弹道系统、20 形态、阵亡/复活
 │   ├── enemy.gd           # 6 种敌机、专属移动、Boss 波数血量缩放
 │   ├── boss.gd            # 6 种 Boss（含终局 OMEGA）、循环词缀、专属狂暴特效
@@ -190,7 +192,7 @@ no-survivor-game/
 │   ├── fx.gd              # 一次性特效库：冲击波环、爆炸、彩带、闪电
 │   ├── model_builder.gd   # 飞船模型加载 + 法线平滑（Quaternius CC0 舰队）
 │   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
-├── tools/                 # 开发工具：贴图/音效生成器 + 无头冒烟测试 + 截图与模型预览
+├── tools/                 # 开发工具：贴图/音效生成器 + 无头冒烟测试 + 无头平衡测试 + 截图与模型预览
 ├── docs/                  # 已部署的网页版（GitHub Pages 指向这里）
 ├── screenshots/           # README 截图
 ├── project.godot          # Godot 工程配置（主场景 / 渲染器 / 内嵌字体）
@@ -220,6 +222,13 @@ cp -r build/web/* docs/    # 提交推送后自动重新部署
 ```bash
 python tools/gen_assets.py
 python tools/gen_sounds.py
+```
+
+**无头测试**（不打开编辑器验证核心流程 / 输出平衡数据）：
+
+```bash
+godot --headless --path . res://tools/smoke_test.tscn    # 35 项流程断言
+godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打完整局，输出 Boss TTK / 承伤 / 节奏数据表
 ```
 
 ## ❓ 常见问题

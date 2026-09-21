@@ -68,7 +68,7 @@ Pilot your fighter by mouse on desktop or a virtual joystick on touch screens �
 
 **XP gems come in three tiers** dropped by enemy HP: ⚪ white (small) 1 XP · 🟢 green (medium) 3 XP · 🟣 purple (large) 8 XP — the tougher the foe, the bigger and richer the crystal.
 
-New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150). Every boss wave defeated hardens the whole fleet (+12% HP per wave), and every ~15s a formation assault sweeps in: V-shaped swift squadrons, slow shield walls, or pincers converging from both flanks.
+New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150). Every boss wave defeated hardens the whole fleet (compounding ×1.15 HP per wave, keeping pace with your firepower), and every ~15s a formation assault sweeps in: V-shaped swift squadrons, slow shield walls, or pincers converging from both flanks.
 
 ## 👑 Boss Fleet
 
@@ -86,7 +86,7 @@ Every boss fires its own signature rounds — the bullet is the identity: Destru
 
 From the second cycle (wave 6) onward each boss also carries a random **affix** (shown next to its name) — **Swift** (+25% bullet speed), **Fortified** (+50% HP), **Summoner** (calls minions), **Vengeful** (detonates a bullet ring on death).
 
-After two full cycles (10 waves) of the five bosses, the final **OMEGA mothership** descends — it has devoured the entire fleet: it rotates through all five signature bullet styles, enrages at 70% HP, and below 35% it gains Phantom's teleport plus full-screen destructor rings. Bringing it down triggers the **victory banner** (the badge is saved permanently), after which endless mode continues for a higher score.
+After two full cycles (10 waves) of the five bosses, the final **OMEGA mothership** descends — it has devoured the entire fleet: it rotates through all five signature bullet styles, enrages at 70% HP, and below 35% it gains Phantom's teleport plus full-screen destructor rings. Bringing it down triggers the **victory settlement** — a run recap, a permanently saved badge and the endless / restart choice — after which endless mode continues for a higher score.
 
 Defeating a boss chains explosions across the screen and drops a **power core** — catch it to transform your fighter; even if you let it drift to the bottom it hovers there until you come get it. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
 
@@ -177,8 +177,10 @@ no-survivor-game/
 │   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
 │   └── *.png              # parallax starfield + touch joystick + snowflake (gen_assets.py)
 ├── scenes/                # 9 scenes: world / player / enemies / bosses / bullets / core / gem
-├── scripts/               # all game logic (18 scripts)
-│   ├── world.gd           # game state, waves/bosses/formations, upgrade UI, pause, audio, save
+├── scripts/               # all game logic (20 scripts)
+│   ├── world.gd           # state hub: UI / audio / save / pause / settlement
+│   ├── spawn_director.gd  # spawning / formations / boss scheduling (static module)
+│   ├── form_ability.gd    # morph cinematic / form powers / auras (static module)
 │   ├── player.gd          # mouse/touch piloting, elements & patterns, 20 forms, death/revive
 │   ├── enemy.gd           # 6 enemy types, signature movement, boss-wave scaling
 │   ├── boss.gd            # 6 bosses (incl. final OMEGA), cycle affixes, signature enrage FX
@@ -190,7 +192,7 @@ no-survivor-game/
 │   ├── fx.gd              # one-shot VFX library: shockwave rings, explosions, confetti, lightning
 │   ├── model_builder.gd   # ship model loading + normal smoothing (Quaternius CC0 fleet)
 │   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
-├── tools/                 # dev tools: art/audio generators + headless smoke test + capture
+├── tools/                 # dev tools: art/audio generators + headless smoke & balance tests + capture
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
 ├── screenshots/           # README screenshots
 ├── project.godot          # Godot project config (main scene / renderer / embedded font)
