@@ -16,25 +16,11 @@ const I18n := preload("res://scripts/i18n.gd")
 const SaveGame := preload("res://scripts/save.gd")
 const Fx := preload("res://scripts/fx.gd")
 const Upgrades := preload("res://scripts/upgrades.gd")
+const SpawnDirector := preload("res://scripts/spawn_director.gd")
+const FormAbility := preload("res://scripts/form_ability.gd")
 const GOLD := Color(1, 0.84, 0.35)
 const CYAN := Color(0.55, 0.9, 1)
-const SNOW_TEX := preload("res://assets/aura_snow.png")
 const UI_FONT := preload("res://assets/fonts/ZCOOLKuaiLe-Regular.ttf")
-
-# 形态特殊能力：每次变形按形态序号循环获得一种（20 形态 = 每种能力两轮）
-const ABILITY_ORDER := ["nova", "overcharge", "frost", "flame", "magnet", "leech", "aegis", "thrust", "barrage", "gravity"]
-const ABILITIES := {
-	"nova": {"color": Color(1, 0.55, 0.3)},      # 变形瞬间：冲击波重创周围敌机
-	"overcharge": {"color": Color(1, 0.85, 0.3)}, # 6 秒射速翻倍
-	"frost": {"color": Color(0.55, 0.85, 1)},     # 持续：冻结周围敌机
-	"flame": {"color": Color(1, 0.45, 0.2)},      # 持续：灼烧周围敌机
-	"magnet": {"color": Color(0.45, 0.9, 1)},     # 持续：拾取磁吸范围翻倍
-	"leech": {"color": Color(0.4, 0.95, 0.5)},    # 持续：击杀概率回复生命
-	"aegis": {"color": Color(0.75, 0.55, 1)},     # 持续：受到的所有伤害 -1
-	"thrust": {"color": Color(0.8, 0.95, 1)},     # 6 秒移速大幅提升
-	"barrage": {"color": Color(1, 0.8, 0.25)},    # 6 秒 +1 弹道且射速提升
-	"gravity": {"color": Color(0.45, 0.55, 1)},   # 持续：靠近主角的敌方子弹减速
-}
 
 # 音效表（tools/gen_sounds.py 程序化合成）
 const SFX := {
@@ -72,9 +58,6 @@ var regen_accum = 0.0   # 脱战回血的小数累积
 var dying = false       # 主角阵亡演出中（结算面板尚未弹出）
 var run_time := 0.0     # 本局战斗时长（暂停/升级/演出不计）
 
-# 循环词缀池（tier 6 起 Boss 随机携带一种）
-const AFFIXES := ["swift", "wall", "reinforce", "vengeful"]
-
 # 3.5 形态能力
 var ability := ""                # 当前形态能力 id（空 = 初始形态无能力）
 var ability_tick := 0.0          # 光环效果计时
@@ -87,6 +70,7 @@ var _prebuilt_model: Node3D = null  # 变形预建的新机体（提前分摊构
 var _cocoon: MeshInstance3D = null  # 变形能量茧（每帧跟随主角，防止飞出光圈）
 var _aura: Node3D = null            # 能力常驻光环（跟随主角的世界空间节点）
 var _aura_spinners: Array = []      # [粒子节点, 角速度]：旋转发射器实现轨道环绕
+var _flake_mesh: QuadMesh = null   # 寒霜细雪片网格（缓存，form_ability.gd 使用）
 
 # 3.6 卡牌与被动（升级系统 / 存档设置）
 var card_taken := {}             # 卡 id → 已选次数（可叠加卡显示 Lv.N）
@@ -237,25 +221,8 @@ func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
 	for i in star_mats.size():
 		star_mats[i].uv1_offset.y -= star_speeds[i] * delta / star_tex_h[i]
-	# 变形能量茧 / 能力光环跟随主角：机体移动时光圈贴着走，不会留在原地
-	if _cocoon != null:
-		if is_instance_valid(_cocoon):
-			_cocoon.position = player.global_position
-		else:
-			_cocoon = null
-	if _aura != null:
-		if is_instance_valid(_aura):
-			_aura.position = player.global_position
-			# 轨道环绕：旋转发射器节点（CPUParticles 无轨道速度参数，本地坐标下整体旋转）
-			for s in _aura_spinners:
-				if is_instance_valid(s[0]):
-					s[0].rotation.z += s[1] * delta
-		else:
-			_aura = null
-			_aura_spinners.clear()
-	# 限时增益倒计时条
-	if buff_kind != "" and buff_bar.visible:
-		buff_bar.value = buff_left
+	# 形态能力系统：能量茧/光环跟随 + 限时增益 + 持续型脉冲（实现在 form_ability.gd）
+	FormAbility.process(self, delta)
 	if dying:
 		return
 	run_time += delta
@@ -267,32 +234,8 @@ func _process(delta):
 			regen_accum -= 1.0
 			health = mini(health + 1, max_health)
 			update_ui()
-	# 限时增益倒计时
-	if buff_left > 0.0:
-		buff_left -= delta
-		if buff_left <= 0.0:
-			_end_buff()
-	# 持续型能力光环：冻结 / 灼烧周围敌机
-	if ability == "frost" or ability == "flame":
-		ability_tick -= delta
-		if ability_tick <= 0.0:
-			ability_tick = 0.4
-			var radius := 250.0 if ability == "frost" else 210.0
-			for m in get_tree().get_nodes_in_group("mobs"):
-				if m.dead:
-					continue
-				if m.global_position.distance_to(player.global_position) > radius:
-					continue
-				if ability == "frost" and m.has_method("slow_down"):
-					m.slow_down(0.45)
-				elif ability == "flame" and m.has_method("take_damage"):
-					m.take_damage(1)
-	# 编队波次：与散刷并行的阵型压力（Boss 战期间停用）
-	if not boss_active and health > 0:
-		formation_cd -= delta
-		if formation_cd <= 0.0:
-			formation_cd = randf_range(13.0, 19.0)
-			_spawn_formation()
+	# 刷怪与 Boss 调度（实现在 spawn_director.gd）
+	SpawnDirector.process(self, delta)
 
 func _unhandled_input(event):
 	# 鼠标左键：消耗追踪导弹道具（桌面端；手机用右下角按钮）
@@ -325,81 +268,18 @@ func play_sfx(name: String, volume_db := 0.0, pitch_jitter := 0.05):
 func _shake(amount: float):
 	camera.add_shake(amount * (0.3 if reduce_fx else 1.0))
 
-# --- 刷怪 ---
-
-func _spawn_enemy():
-	var enemy = enemy_scene.instantiate()
-	# 抢滩登陆：敌机从屏幕上方随机位置出现
-	enemy.position = Vector3(randf_range(-576.0, 576.0), 404.0, 0.0)
-	enemy.setup(pick_enemy_type())
-	enemy.apply_tier(boss_tier)
-	enemy.died.connect(_on_enemy_died)
-	add_child(enemy)
+# --- 刷怪（实现在 spawn_director.gd，这里保留计时器接线与外部调用面） ---
 
 func _on_timer_timeout():
-	_spawn_enemy()
+	SpawnDirector.spawn_enemy(self)
 
-func pick_enemy_type() -> String:
-	var roll = randf()
-	if score >= 150 and roll < 0.12:
-		return "tank"
-	if score >= 100 and roll < 0.24:
-		return "shield"
-	if score >= 60 and roll < 0.40:
-		return "shooter"
-	if score >= 40 and roll < 0.58:
-		return "fast"
-	if score >= 20 and roll < 0.76:
-		return "swift"
-	return "normal"
-
-# --- 编队波次：V 字纵队 / 横排盾墙 / 两翼包抄 ---
-
+# 编队波次（冒烟测试直接调用）
 func _spawn_formation():
-	var roll := randf()
-	if score >= 100 and roll < 0.35:
-		_formation_pincer()
-	elif score >= 60 and roll < 0.65:
-		_formation_line()
-	else:
-		_formation_vee()
+	SpawnDirector._spawn_formation(self)
 
-func _formation_vee():
-	var count := 5 + mini(boss_tier, 4)
-	var type := "swift" if score >= 20 else "normal"
-	var cx := randf_range(-240.0, 240.0)
-	for i in count:
-		var k := i - (count - 1) / 2.0
-		_spawn_formation_enemy(type, Vector3(cx + k * 54.0, 404.0 + absf(k) * 40.0, 0.0))
-
-func _formation_line():
-	var count := 5
-	var type := "shield" if score >= 100 else "normal"
-	for i in count:
-		var x := -380.0 + 760.0 * i / float(count - 1)
-		_spawn_formation_enemy(type, Vector3(x, 404.0, 0.0))
-
-func _formation_pincer():
-	var type := "fast" if score >= 40 else "normal"
-	var vx: float = 70.0 + boss_tier * 6.0
-	for side in 2:
-		var dir := 1.0 if side == 0 else -1.0
-		for row in 4:
-			_spawn_formation_enemy(type, Vector3(-560.0 * dir, 330.0 + row * 46.0, 0.0), vx * dir)
-
-func _spawn_formation_enemy(type: String, pos: Vector3, vx := 0.0):
-	var enemy = enemy_scene.instantiate()
-	enemy.position = pos
-	enemy.setup(type)
-	enemy.apply_tier(boss_tier)
-	enemy.vx = vx
-	enemy.died.connect(_on_enemy_died)
-	add_child(enemy)
-
-# 增援词缀：Boss 定期召唤小怪
+# 增援词缀：Boss 定期召唤小怪（boss.gd 经 has_method 守卫调用）
 func spawn_minions(n: int):
-	for i in n:
-		_spawn_formation_enemy(pick_enemy_type(), Vector3(randf_range(-500.0, 500.0), 404.0, 0.0))
+	SpawnDirector.spawn_minions(self, n)
 
 # --- 击杀与经验 ---
 
@@ -430,7 +310,7 @@ func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 	add_child(gem)
 
 	update_ui()
-	_maybe_boss()
+	SpawnDirector.maybe_boss(self)
 
 func add_xp(amount):
 	play_sfx("pickup", -10.0, 0.08)
@@ -444,137 +324,20 @@ func add_xp(amount):
 	if pending_level_ups > 0 and not levelup_panel.visible:
 		show_level_up()
 
-# --- Boss 战 ---
-
-func _maybe_boss():
-	if boss_active or health <= 0:
-		return
-	if kill_count >= next_boss_at:
-		_start_boss()
+# --- Boss 战（实现在 spawn_director.gd，这里保留外部调用面：smoke_test / capture.gd / 信号连接） ---
 
 func _start_boss():
-	boss_active = true
-	update_ui()   # 刷怪降频：Boss 战期间保留 1.7 秒低频续刷，避免屏幕空旷 / 经验断粮
-	play_sfx("warning", -2.0, 0.0)
-
-	if omega_armed:
-		warning_label.text = I18n.T("warning_omega")
-		warning_label.modulate = Color(0.95, 0.85, 0.4)
-	else:
-		warning_label.text = I18n.T("warning_boss") % (boss_tier + 1)
-		warning_label.modulate = Color(1, 1, 1)
-	warning_label.modulate.a = 1.0
-	warning_label.show()
-	var tw = create_tween()
-	tw.set_loops(5)
-	tw.tween_property(warning_label, "modulate:a", 0.15, 0.22)
-	tw.tween_property(warning_label, "modulate:a", 1.0, 0.22)
-	await get_tree().create_timer(2.2).timeout
-	warning_label.hide()
-	if health <= 0 or not is_inside_tree():
-		boss_active = false
-		return
-	_spawn_boss()
+	SpawnDirector.start_boss(self)
 
 func _spawn_boss():
-	boss_tier += 1
-	var boss = boss_scene.instantiate()
-	if omega_armed:
-		boss.setup(6, boss_tier)
-		omega_armed = false
-	else:
-		var id = ((boss_tier - 1) % 5) + 1
-		# 第二轮循环（tier 6）起，Boss 随机携带一个词缀
-		var affix := ""
-		if boss_tier >= 6:
-			affix = AFFIXES[randi() % AFFIXES.size()]
-		boss.setup(id, boss_tier, affix)
-	boss.died.connect(_on_boss_died)
-	boss.hp_changed.connect(_on_boss_hp)
-	add_child(boss)
-
-	boss_name_label.text = "【 %s 】" % boss.full_name()
-	boss_name_label.show()
-	boss_bar.max_value = boss.max_hp
-	boss_bar.value = boss.max_hp
-	boss_bar.show()
-
-	spawn_ring(Vector3(0, 174, 0), Color(1, 0.4, 0.4), 0.4, 3.0, 0.7)
-	_shake(8.0)
+	SpawnDirector._spawn_boss(self)
 
 func _on_boss_hp(hp, max_hp):
 	boss_bar.max_value = max_hp
 	boss_bar.value = hp
 
 func _on_boss_died(pos: Vector3, is_omega := false):
-	boss_active = false
-	boss_name_label.hide()
-	boss_bar.hide()
-
-	score += 150 + 50 * boss_tier
-	play_sfx("boss_die")
-	_shake(18.0)
-	flash_ui(Color(1, 0.6, 0.3), 0.45)
-	for i in 3:
-		spawn_ring(pos + Vector3(randf_range(-60, 60), randf_range(-40, 40), 0.0), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
-
-	if is_omega and not omega_slain:
-		# ✦ 胜利：灭世母舰被击破（记录徽章，随后进入无尽模式）
-		omega_slain = true
-		score += 2000
-		next_boss_at = kill_count + 80
-		var data := SaveGame.load_data()
-		data["omega"] = true
-		SaveGame.save_data(data)
-		warning_label.text = I18n.T("victory")
-		warning_label.modulate = Color(1, 0.85, 0.35)
-		warning_label.modulate.a = 1.0
-		warning_label.show()
-		var vtw = create_tween()
-		vtw.tween_interval(2.2)
-		vtw.tween_property(warning_label, "modulate:a", 0.0, 0.8)
-		vtw.tween_callback(warning_label.hide)
-		flash_ui(Color(1, 0.85, 0.35), 0.5)
-		play_sfx("levelup", 0.0)
-		_shake(24.0)
-		for i in 6:
-			spawn_ring(pos + Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0), Color(1, 0.85, 0.35) if i % 2 == 0 else CYAN, 0.3, 3.0 + i * 0.7, 0.8)
-		# 演出落定后弹出胜利结算（终点弧线的落点：战绩 + 徽章 + 无尽/重开选择）
-		get_tree().create_timer(2.6).timeout.connect(_show_victory)
-	elif boss_tier >= 10 and not omega_slain:
-		# 五种 Boss 两轮循环完毕：武装终局 OMEGA，短间隔后降临
-		omega_armed = true
-		next_boss_at = kill_count + 25
-	else:
-		next_boss_at = kill_count + 50 + boss_tier * 10
-
-	# 掉落核心装备：接住后战机渐进变形
-	var core = core_scene.instantiate()
-	core.position = pos
-	core.form_target = mini(player.form + 1, 19)
-	add_child(core)
-	# 追踪导弹道具：每击破一个 Boss 获得 1 枚
-	homing_charges += 1
-	_update_homing_btn()
-	_toast(I18n.T("gain_homing"), GOLD)	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
-	var wave := mini(10 + boss_tier * 2, 22)
-	warning_label.text = I18n.T("warning_reinforce")
-	warning_label.modulate.a = 1.0
-	warning_label.show()
-	var wtw = create_tween()
-	wtw.tween_interval(1.1)
-	wtw.tween_property(warning_label, "modulate:a", 0.0, 0.4)
-	wtw.tween_callback(warning_label.hide)
-	play_sfx("warning", -6.0, 0.1)
-	for i in wave:
-		# 不设 process_always：暂停（暂停菜单/结算）期间不再刷怪
-		get_tree().create_timer(0.3 + i * 0.16).timeout.connect(func():
-			# 主角阵亡、下一 Boss 已入场或面板暂停（升级/胜利结算）期间停止增援
-			if health > 0 and not boss_active and not dying and not get_tree().paused:
-				_spawn_enemy())
-
-	update_ui()
-	$Timer.start()
+	SpawnDirector.on_boss_died(self, pos, is_omega)
 
 func spawn_enemy_bullet(pos: Vector3, dir: Vector3, speed, damage := 1, homing := 0.0, homing_time := 0.0, style := "shooter"):
 	var b = enemy_bullet_scene.instantiate()
@@ -592,318 +355,10 @@ func spawn_lightning(from: Vector3, to: Vector3):
 
 # --- 核心装备：连贯 3D 变形演出 ---
 
+# --- 核心装备变形与形态能力（实现在 form_ability.gd；core.gd 经 has_method 调用） ---
+
 func apply_core(form):
-	play_sfx("transform")
-	flash_ui(CYAN, 0.35)
-	_shake(8.0)
-	confetti_burst(player.position, 24, CYAN)
-	_end_buff()   # 旧形态的限时增益随变形结束
-	_apply_form_bonus(form)
-	update_ui()
-	# 立刻预建新机体：构建开销落在有白闪+震屏掩护的这一帧，换装瞬间零生成
-	_prebuilt_model = MB.build_player_form(form)
-
-	# 渐进变形（不暂停）：机体收缩 → 能量茧包裹 → 茧内脉冲重塑 → 破茧揭示新形态 + 形态能力
-	var accent: Color = MB.ACCENTS[form % MB.ACCENTS.size()]
-	var tw = create_tween()
-	tw.tween_property(player, "scale", Vector3.ONE * 0.22, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_callback(func(): _morph_cocoon(form, accent))
-	# 连环冲击波
-	for i in 3:
-		get_tree().create_timer(0.1 + i * 0.15, true).timeout.connect(func():
-			if is_instance_valid(player):
-				spawn_ring(player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.0 + i * 0.5, 0.45))
-
-func _morph_cocoon(form, accent: Color):
-	# 能量茧：包裹收缩的机体，颜色从青色渐变为新形态主题色，三次脉冲后破茧
-	var cocoon := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 30.0
-	sm.height = 60.0
-	cocoon.mesh = sm
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(CYAN.r, CYAN.g, CYAN.b, 0.0)
-	m.emission_enabled = true
-	m.emission = CYAN
-	m.emission_energy_multiplier = 2.2
-	cocoon.material_override = m
-	cocoon.position = player.position
-	add_child(cocoon)
-	_cocoon = cocoon
-
-	player.set_form(form, _prebuilt_model)
-	_prebuilt_model = null
-
-	var tw := cocoon.create_tween()
-	# 包裹：茧体胀起并显现（节奏压缩：拾取 → 破茧全程约 1 秒，不再长时间小机体）
-	tw.tween_property(m, "albedo_color:a", 0.68, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	# 茧色渐变 → 新形态的主题色（形态特征预兆）
-	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.68), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.parallel().tween_property(m, "emission", accent, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# 两次快速重塑脉冲：新形态在茧内逐次成形
-	for i in 2:
-		tw.tween_property(cocoon, "scale", Vector3.ONE * (1.24 + 0.1 * i), 0.09).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tw.tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.09).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# 破茧：能量迸发，新机体翻滚着登场；能力激活分到下一帧，避免同一帧挤爆
-	tw.tween_callback(func():
-		_cocoon = null
-		spawn_explosion(cocoon.position, accent, false)
-		spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
-		cocoon.queue_free()
-		_spawn_reveal()
-		get_tree().create_timer(0.05, true).timeout.connect(func(): _activate_ability(form)))
-
-func _spawn_reveal():
-	_spawn_evolution_beam()
-	var tw2 = create_tween()
-	tw2.set_parallel(true)
-	tw2.tween_property(player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
-	tw2.tween_property(player, "scale", Vector3.ONE * player.base_scale * 1.32, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw2.chain().tween_property(player, "scale", Vector3.ONE * player.base_scale, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-# --- 形态特殊能力 ---
-
-func _activate_ability(form: int):
-	_end_buff()
-	ability = ABILITY_ORDER[form % ABILITY_ORDER.size()]
-	var info: Dictionary = ABILITIES[ability]
-	var col: Color = info["color"]
-	var ability_name: String = I18n.T("ab_" + ability)
-	player.set_meta("magnet_mul", 2.2 if ability == "magnet" else 1.0)
-	# 公告横幅
-	ability_label.text = I18n.T("ability") % ability_name
-	ability_label.modulate = Color(col.r, col.g, col.b, 0.0)
-	ability_label.show()
-	var tw := ability_label.create_tween()
-	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tw.tween_property(ability_label, "modulate:a", 1.0, 0.25)
-	tw.tween_interval(1.7)
-	tw.tween_property(ability_label, "modulate:a", 0.0, 0.4)
-	tw.tween_callback(ability_label.hide)
-	# 能力入场特效
-	spawn_ring(player.position, col, 0.3, 3.0, 0.55)
-	confetti_burst(player.position, 16, col)
-	# 常驻能力指示器（左上角，能力色常显，不再只靠 2 秒横幅）
-	ability_chip.text = "✦ " + ability_name
-	ability_chip.modulate = Color(col.r, col.g, col.b)
-	ability_chip.show()
-	# 常驻能力光环：光尘 + 半径圈 / 护盾泡（引力新星是瞬间爆发，无常驻视觉）
-	if ability != "nova":
-		_build_aura(ability)
-	match ability:
-		"nova":
-			# 引力新星：变形瞬间冲击波重创周围敌机
-			spawn_ring(player.position, col, 0.5, 5.2, 0.7)
-			_shake(10.0)
-			for m in get_tree().get_nodes_in_group("mobs"):
-				if m.dead:
-					continue
-				if m.global_position.distance_to(player.global_position) < 430.0:
-					if m.has_method("take_damage"):
-						m.take_damage(12)
-					if m.has_method("knockback"):
-						var away = (m.global_position - player.global_position).normalized()
-						m.knockback(Vector3(away.x, away.y, 0) * 70.0)
-		"overcharge":
-			_start_buff("overcharge", 6.0)
-		"thrust":
-			_start_buff("thrust", 6.0)
-		"barrage":
-			_start_buff("barrage", 6.0)
-
-func _start_buff(kind: String, dur: float):
-	_end_buff()
-	buff_kind = kind
-	buff_left = dur
-	buff_bar.max_value = dur
-	buff_bar.value = dur
-	buff_bar.show()
-	match kind:
-		"overcharge":
-			_buff_cooldown0 = player.fire_cooldown
-			player.fire_cooldown = maxf(0.045, player.fire_cooldown * 0.5)
-		"thrust":
-			_buff_speed0 = player.speed
-			player.speed = int(player.speed * 1.6)
-		"barrage":
-			_buff_cooldown0 = player.fire_cooldown
-			_buff_count0 = player.bullet_count
-			player.bullet_count = mini(player.bullet_count + 1, 9)
-			player.fire_cooldown = maxf(0.045, player.fire_cooldown * 0.75)
-
-func _end_buff():
-	if buff_kind == "":
-		return
-	match buff_kind:
-		"overcharge", "barrage":
-			player.fire_cooldown = _buff_cooldown0
-		"thrust":
-			player.speed = _buff_speed0
-	if buff_kind == "barrage":
-		player.bullet_count = _buff_count0
-	buff_kind = ""
-	buff_left = 0.0
-	buff_bar.hide()
-	_clear_aura()   # 限时增益的常驻光环随增益结束消散
-
-# --- 能力常驻视觉：环绕光尘 + 半径指示圈 / 护盾泡（跟随主角的世界空间节点） ---
-
-func _clear_aura():
-	if _aura != null:
-		if is_instance_valid(_aura):
-			_aura.queue_free()
-		_aura = null
-	_aura_spinners.clear()
-
-func _build_aura(id: String):
-	_clear_aura()
-	var col: Color = ABILITIES[id]["color"]
-	_aura = Node3D.new()
-	_aura.position = player.global_position
-	add_child(_aura)
-	# 主题环绕粒子：每种能力有自己的动态（寒霜 = 细雪片沿轨道绕机旋转）
-	match id:
-		"frost":
-			_motes(Color(0.93, 0.97, 1.0), 10, 2.6, 48.0, 1.8, 0.0, 0.0, Vector3(0, -13, 0), 0.9, 1.5, _snowflake_mesh())
-		"flame":
-			_motes(col, 9, 0.8, 0.0, 0.0, 60.0, 140.0, Vector3(0, 70, 0), 1.2, 2.2)
-		"magnet":
-			_motes(col, 8, 1.4, 30.0, 3.2, 0.0, 0.0, Vector3.ZERO, 0.6, 1.0)
-		"leech":
-			_motes(col, 7, 1.6, 0.0, 0.0, 15.0, 45.0, Vector3(0, -40, 0), 0.6, 1.1)
-		"gravity":
-			_motes(col, 10, 1.9, 40.0, -1.4, 0.0, 0.0, Vector3.ZERO, 0.8, 1.3)
-		"overcharge":
-			_motes(col, 12, 0.45, 0.0, 0.0, 110.0, 210.0, Vector3.ZERO, 0.5, 1.0)
-		"thrust":
-			_motes(col, 10, 0.5, 22.0, 0.0, 40.0, 90.0, Vector3(0, -150, 0), 0.6, 1.1)
-		"barrage":
-			_motes(col, 9, 0.9, 34.0, 3.8, 0.0, 0.0, Vector3.ZERO, 0.5, 0.9)
-		"aegis":
-			pass   # 护盾只有能量泡，干净一些
-	# 相位护盾：包裹机体的半透明能量泡，呼吸明暗
-	if id == "aegis":
-		var bubble := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 62.0
-		sm.height = 124.0
-		bubble.mesh = sm
-		var bm := StandardMaterial3D.new()
-		bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		bm.albedo_color = Color(col.r, col.g, col.b, 0.16)
-		bm.emission_enabled = true
-		bm.emission = col
-		bm.emission_energy_multiplier = 1.4
-		bubble.material_override = bm
-		_aura.add_child(bubble)
-		var bt := bubble.create_tween().set_loops()
-		bt.tween_property(bm, "albedo_color:a", 0.3, 0.7)
-		bt.tween_property(bm, "albedo_color:a", 0.14, 0.7)
-
-# 能力环绕粒子通用构建：环状/球状发射 + 可选轨道旋转
-func _motes(col: Color, amount: int, life: float, ring_radius: float, orbital: float, vel_min: float, vel_max: float, grav: Vector3, smin: float, smax: float, mesh: Mesh = null):
-	var p := CPUParticles3D.new()
-	p.amount = amount
-	p.lifetime = life
-	if ring_radius > 0.0:
-		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
-		p.emission_ring_radius = ring_radius
-		p.emission_ring_inner_radius = maxf(ring_radius - 6.0, 0.0)
-		p.emission_ring_axis = Vector3(0, 0, 1)   # 游戏平面法线：轨道绕机体水平旋转
-		p.emission_ring_height = 8.0
-	else:
-		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-		p.emission_sphere_radius = 42.0
-	p.spread = 180.0
-	if orbital != 0.0:
-		# 轨道环绕：本地坐标 + 旋转发射器节点（world._process 驱动）
-		p.local_coords = true
-		_aura_spinners.append([p, orbital])
-	p.gravity = grav
-	p.initial_velocity_min = vel_min
-	p.initial_velocity_max = vel_max
-	p.scale_amount_min = smin
-	p.scale_amount_max = smax
-	var m := SphereMesh.new()
-	m.radius = 2.2
-	m.height = 4.4
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mm.vertex_color_use_as_albedo = true
-	mm.emission_enabled = true
-	mm.emission = col
-	mm.emission_energy_multiplier = 2.2
-	m.material = mm
-	p.mesh = mesh if mesh != null else m
-	var g := Gradient.new()
-	g.colors = PackedColorArray([Color(col.r, col.g, col.b, 0.95), Color(col.r, col.g, col.b, 0.0)])
-	p.color_ramp = g
-	_aura.add_child(p)
-	p.emitting = true
-	return p
-
-var _flake_mesh: QuadMesh = null
-
-# 寒霜细雪片：六臂雪花贴图 + 面向镜头
-func _snowflake_mesh() -> QuadMesh:
-	if _flake_mesh == null:
-		_flake_mesh = QuadMesh.new()
-		_flake_mesh.size = Vector2(15, 15)
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		m.albedo_texture = SNOW_TEX
-		m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		m.emission_enabled = true
-		m.emission = Color(0.75, 0.9, 1.0)
-		m.emission_energy_multiplier = 1.1
-		_flake_mesh.material = m
-	return _flake_mesh
-
-func _aura_radius_ring(col: Color, radius: float):
-	# 已按反馈移除机体外圈的大光圈，只保留雪花 / 火焰等粒子特效
-	pass
-
-func _spawn_evolution_beam():
-	# 冲天光柱
-	var mi = MeshInstance3D.new()
-	var cm = CylinderMesh.new()
-	cm.top_radius = 10.0
-	cm.bottom_radius = 26.0
-	cm.height = 760.0
-	mi.mesh = cm
-	var m = StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(0.6, 0.9, 1, 0.5)
-	m.emission_enabled = true
-	m.emission = Color(0.6, 0.9, 1)
-	m.emission_energy_multiplier = 1.8
-	mi.material_override = m
-	mi.position = player.position + Vector3(0, 320, 0)
-	add_child(mi)
-	var tw = mi.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(mi, "scale", Vector3(2.2, 1.15, 2.2), 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(m, "albedo_color:a", 0.0, 0.5)
-	tw.chain().tween_callback(mi.queue_free)
-
-func _apply_form_bonus(n):
-	# 每次变形的渐进成长：弹道/伤害/射速/生命交替增强
-	if n % 2 == 1:
-		player.bullet_count = mini(player.bullet_count + 1, 8)
-	if n % 3 == 0:
-		player.damage += 1
-	player.fire_cooldown = maxf(0.055, player.fire_cooldown * 0.94)
-	if n % 4 == 0:
-		max_health += 2
-		health = mini(health + 3, max_health)
-
+	FormAbility.apply_core(self, form)
 # --- 升级三选一（15 张卡池随机抽 3，可叠加卡显示 Lv.N） ---
 
 func show_level_up():
@@ -1022,7 +477,7 @@ func _do_revive():
 func _start_death():
 	dying = true
 	pause_button.hide()
-	_clear_aura()
+	FormAbility.clear_aura(self)
 	ability_chip.hide()
 	buff_bar.hide()
 	$TouchUI.reset()
