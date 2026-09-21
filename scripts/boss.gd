@@ -347,11 +347,12 @@ func _enrage_fx():
 				orb.material_override = m
 				orb.position = offset
 				add_child(orb)
-				nodes.append(m)
-			for m in nodes:
-				var nt: Tween = m.create_tween().set_loops()
-				nt.tween_property(m, "emission_energy_multiplier", 3.2, 0.5)
-				nt.tween_property(m, "emission_energy_multiplier", 1.2, 0.5)
+				nodes.append(orb)
+			for orb in nodes:
+				var mat: StandardMaterial3D = orb.material_override
+				var nt: Tween = orb.create_tween().set_loops()
+				nt.tween_property(mat, "emission_energy_multiplier", 3.2, 0.5)
+				nt.tween_property(mat, "emission_energy_multiplier", 1.2, 0.5)
 		4:
 			# 猎手：金色电弧绕机体噼啪
 			_streaks(Color(1, 0.8, 0.3), true)
