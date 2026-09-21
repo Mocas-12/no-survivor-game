@@ -1,8 +1,11 @@
 extends Area3D
 
 # 玩家子弹（3D）：5 种元素染色 + 命中特效 + 波浪/追踪弹道
-# 性能：材质/网格按元素静态共享；子弹死亡后回池复用（见 take / _recycle），
+# 性能：材质/网格按元素静态共享（网格与渐变缓存在 fx.gd）；子弹死亡后回池复用（见 take / _recycle），
 #       高射速下不再每发新建材质与粒子发射器
+# 元素命中 / 反应特效统一走 fx.gd 的 burst 工厂（一份模板，参数化色带 / 速度 / 收缩曲线）
+
+const Fx := preload("res://scripts/fx.gd")
 
 const ELEMENT_COLORS := {
 	"normal": Color(1, 1, 1),
@@ -15,7 +18,6 @@ const ELEMENT_COLORS := {
 
 # --- 静态共享缓存与对象池 ---
 static var _body_mats := {}
-static var _meshes := {}
 static var _pool: Array = []
 
 # 从池里取一颗可复用的子弹（仍在场景树中）；空池返回 null，由调用方实例化新弹
@@ -37,53 +39,6 @@ static func _body_mat(element: String) -> StandardMaterial3D:
 		m.emission_energy_multiplier = 2.6
 		_body_mats[element] = m
 	return _body_mats[element]
-
-static func _drop(c: Color, r: float) -> SphereMesh:
-	var key := "d|%s|%.1f" % [c.to_html(), r]
-	if not _meshes.has(key):
-		var sm := SphereMesh.new()
-		sm.radius = r
-		sm.height = r * 2.0
-		var mm := StandardMaterial3D.new()
-		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mm.albedo_color = c
-		mm.emission_enabled = true
-		mm.emission = c
-		mm.emission_energy_multiplier = 1.8
-		sm.material = mm
-		_meshes[key] = sm
-	return _meshes[key]
-
-static func _leaf() -> BoxMesh:
-	if not _meshes.has("leaf"):
-		var bm := BoxMesh.new()
-		bm.size = Vector3(5.0, 0.6, 3.0)
-		var mm := StandardMaterial3D.new()
-		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mm.albedo_color = Color(0.55, 0.9, 0.35)
-		mm.emission_enabled = true
-		mm.emission = Color(0.35, 0.75, 0.25)
-		mm.emission_energy_multiplier = 1.1
-		bm.material = mm
-		_meshes["leaf"] = bm
-	return _meshes["leaf"]
-
-static func _streak() -> BoxMesh:
-	if not _meshes.has("streak"):
-		var bm := BoxMesh.new()
-		bm.size = Vector3(0.9, 0.9, 16.0)
-		var mm := StandardMaterial3D.new()
-		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mm.albedo_color = Color(0.8, 1.0, 0.75)
-		mm.emission_enabled = true
-		mm.emission = Color(0.6, 0.9, 0.55)
-		mm.emission_energy_multiplier = 1.2
-		bm.material = mm
-		_meshes["streak"] = bm
-	return _meshes["streak"]
 
 # --- 运行时状态 ---
 var speed = 800.0
@@ -168,7 +123,7 @@ func _rebuild_fx():
 	_fx_element = element
 	_has_water_fx = wave_amp > 0.0
 	var c: Color = ELEMENT_COLORS[element]
-	$Trail.mesh = _drop(c, 1.4)
+	$Trail.mesh = Fx.drop(c, 1.4)
 	$Trail.emitting = true
 	match element:
 		"fire":
@@ -195,21 +150,6 @@ func _add_emitter(amount: int, lifetime: float) -> CPUParticles3D:
 	_fx_all.append(p)
 	return p
 
-func _gradient(colors: Array) -> Gradient:
-	var g := Gradient.new()
-	var offsets := PackedFloat32Array()
-	for i in colors.size():
-		offsets.append(float(i) / maxf(colors.size() - 1, 1.0))
-	g.offsets = offsets
-	g.colors = PackedColorArray(colors)
-	return g
-
-func _shrink_curve() -> Curve:
-	var cur := Curve.new()
-	cur.add_point(Vector2(0.0, 1.0))
-	cur.add_point(Vector2(1.0, 0.15))
-	return cur
-
 # 火焰：火舌拖尾（火苗向上飘蹿 + 黄→橙→红渐隐），烧灼感更明显
 func _attach_flame_trail():
 	var f := _add_emitter(8, 0.5)
@@ -220,9 +160,9 @@ func _attach_flame_trail():
 	f.initial_velocity_max = 130.0
 	f.scale_amount_min = 1.5
 	f.scale_amount_max = 2.8
-	f.scale_amount_curve = _shrink_curve()
-	f.color_ramp = _gradient([Color(1, 0.95, 0.55, 0.95), Color(1, 0.55, 0.15, 0.8), Color(0.85, 0.12, 0.05, 0.0)])
-	f.mesh = _drop(Color(1, 0.62, 0.2), 1.9)
+	f.scale_amount_curve = Fx.shrink_curve()
+	f.color_ramp = Fx.gradient([Color(1, 0.95, 0.55, 0.95), Color(1, 0.55, 0.15, 0.8), Color(0.85, 0.12, 0.05, 0.0)])
+	f.mesh = Fx.drop(Color(1, 0.62, 0.2), 1.9)
 	f.emitting = true
 
 # 疾风：绿色树叶侧向卷落
@@ -237,8 +177,8 @@ func _attach_leaf_trail():
 	w.angle_max = 360.0
 	w.scale_amount_min = 0.7
 	w.scale_amount_max = 1.2
-	w.color_ramp = _gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.35, 0.72, 0.25, 0.75), Color(0.25, 0.6, 0.2, 0.0)])
-	w.mesh = _leaf()
+	w.color_ramp = Fx.gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.35, 0.72, 0.25, 0.75), Color(0.25, 0.6, 0.2, 0.0)])
+	w.mesh = Fx.leaf()
 	w.emitting = true
 
 # 疾风：白绿风痕向后高速拉出，表现风的流向
@@ -251,8 +191,8 @@ func _attach_gust_trail():
 	s.initial_velocity_max = 340.0
 	s.scale_amount_min = 0.8
 	s.scale_amount_max = 1.3
-	s.color_ramp = _gradient([Color(0.8, 1.0, 0.75, 0.8), Color(0.7, 0.95, 0.65, 0.0)])
-	s.mesh = _streak()
+	s.color_ramp = Fx.gradient([Color(0.8, 1.0, 0.75, 0.8), Color(0.7, 0.95, 0.65, 0.0)])
+	s.mesh = Fx.streak()
 	s.emitting = true
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
@@ -265,14 +205,14 @@ func _attach_crackle_trail():
 	k.initial_velocity_max = 210.0
 	k.scale_amount_min = 0.5
 	k.scale_amount_max = 1.0
-	k.color_ramp = _gradient([Color(1, 1, 1, 1), Color(0.82, 0.62, 1.0, 0.0)])
-	k.mesh = _drop(Color(0.88, 0.78, 1.0), 1.2)
+	k.color_ramp = Fx.gradient([Color(1, 1, 1, 1), Color(0.82, 0.62, 1.0, 0.0)])
+	k.mesh = Fx.drop(Color(0.88, 0.78, 1.0), 1.2)
 	k.emitting = true
 
 # 波浪：定向喷溅水花 + 向后拖出的白色水痕尾流
 func _attach_water_trail():
-	$Splash.mesh = _drop(Color(0.75, 0.95, 1.0), 1.1)
-	$Splash.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
+	$Splash.mesh = Fx.drop(Color(0.75, 0.95, 1.0), 1.1)
+	$Splash.color_ramp = Fx.gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
 	$Splash.amount = 10
 	$Splash.lifetime = 0.6
 	$Splash.emitting = true
@@ -285,8 +225,8 @@ func _attach_water_trail():
 	wk.initial_velocity_max = 310.0
 	wk.scale_amount_min = 0.7
 	wk.scale_amount_max = 1.3
-	wk.color_ramp = _gradient([Color(0.92, 0.98, 1.0, 0.85), Color(0.6, 0.88, 1.0, 0.0)])
-	wk.mesh = _drop(Color(0.9, 0.97, 1.0), 1.3)
+	wk.color_ramp = Fx.gradient([Color(0.92, 0.98, 1.0, 0.85), Color(0.6, 0.88, 1.0, 0.0)])
+	wk.mesh = Fx.drop(Color(0.9, 0.97, 1.0), 1.3)
 	wk.emitting = true
 
 func _process(delta):
@@ -378,69 +318,6 @@ func _on_body_entered(body):
 		body.take_damage(dmg)
 		_apply_element(body, world)
 		_recycle()
-
-# 波浪弹命中：绽开一圈水花后自毁
-func _splash_burst(world):
-	var p := CPUParticles3D.new()
-	p.amount = 12
-	p.lifetime = 0.5
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, -500, 0)
-	p.initial_velocity_min = 120.0
-	p.initial_velocity_max = 280.0
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.4
-	p.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.7), Color(0.4, 0.7, 1.0, 0.0)])
-	p.mesh = _drop(Color(0.75, 0.95, 1.0), 1.3)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
-
-# 火焰命中：黄→红爆燃火团上腾
-func _fire_burst(world):
-	var p := CPUParticles3D.new()
-	p.amount = 16
-	p.lifetime = 0.55
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, 180, 0)
-	p.initial_velocity_min = 90.0
-	p.initial_velocity_max = 250.0
-	p.scale_amount_min = 1.6
-	p.scale_amount_max = 3.2
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(1, 0.93, 0.5, 0.95), Color(1, 0.45, 0.1, 0.75), Color(0.7, 0.08, 0.02, 0.0)])
-	p.mesh = _drop(Color(1, 0.6, 0.2), 1.9)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
-
-# 疾风命中：树叶四散卷起
-func _leaf_burst(world):
-	var p := CPUParticles3D.new()
-	p.amount = 12
-	p.lifetime = 0.8
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, -110, 0)
-	p.initial_velocity_min = 120.0
-	p.initial_velocity_max = 300.0
-	p.angle_min = 0.0
-	p.angle_max = 360.0
-	p.scale_amount_min = 0.8
-	p.scale_amount_max = 1.4
-	p.color_ramp = _gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.3, 0.68, 0.22, 0.0)])
-	p.mesh = _leaf()
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(1.2).timeout.connect(p.queue_free)
 
 # --- 元素命中特效与元素反应（随元素等级 / 连锁反应 / 元素延续增强） ---
 # 反应矩阵（先手留下标记，后手触发并消耗标记）：
@@ -566,27 +443,44 @@ func _aoe(hit_body, world, radius: float, dmg: int):
 	for m in _nearby_others(hit_body, radius, 6):
 		m.take_damage(maxi(1, dmg))
 
+# --- 元素命中 / 反应特效（统一走 Fx.burst 工厂；ring/flash/sfx 组合留在原位） ---
+
+# 波浪弹命中：绽开一圈水花
+func _splash_burst(world):
+	Fx.burst(world, global_position, {
+		"amount": 12, "lifetime": 0.5, "gravity": Vector3(0, -500, 0),
+		"vel_min": 120.0, "vel_max": 280.0, "scale_min": 0.6, "scale_max": 1.4,
+		"colors": [Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.7), Color(0.4, 0.7, 1.0, 0.0)],
+		"mesh": Fx.drop(Color(0.75, 0.95, 1.0), 1.3),
+	})
+
+# 火焰命中：黄→红爆燃火团上腾
+func _fire_burst(world):
+	Fx.burst(world, global_position, {
+		"amount": 16, "lifetime": 0.55, "gravity": Vector3(0, 180, 0),
+		"vel_min": 90.0, "vel_max": 250.0, "scale_min": 1.6, "scale_max": 3.2, "shrink": true,
+		"colors": [Color(1, 0.93, 0.5, 0.95), Color(1, 0.45, 0.1, 0.75), Color(0.7, 0.08, 0.02, 0.0)],
+		"mesh": Fx.drop(Color(1, 0.6, 0.2), 1.9),
+	})
+
+# 疾风命中：树叶四散卷起
+func _leaf_burst(world):
+	Fx.burst(world, global_position, {
+		"amount": 12, "lifetime": 0.8, "gravity": Vector3(0, -110, 0),
+		"vel_min": 120.0, "vel_max": 300.0, "scale_min": 0.8, "scale_max": 1.4, "angle": 360.0,
+		"colors": [Color(0.6, 0.92, 0.35, 0.95), Color(0.3, 0.68, 0.22, 0.0)],
+		"mesh": Fx.leaf(),
+	})
+
 # 蒸汽反应：白色水雾腾起
 func _steam_burst(world):
-	var p := CPUParticles3D.new()
-	p.amount = 14
-	p.lifetime = 0.7
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 40.0
-	p.direction = Vector3(0, 1, 0)
-	p.gravity = Vector3(0, 120, 0)
-	p.initial_velocity_min = 60.0
-	p.initial_velocity_max = 180.0
-	p.scale_amount_min = 1.6
-	p.scale_amount_max = 3.0
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(1, 1, 1, 0.9), Color(0.82, 0.88, 0.95, 0.5), Color(0.75, 0.82, 0.9, 0.0)])
-	p.mesh = _drop(Color(0.9, 0.94, 1.0), 2.2)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(1.1).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 14, "lifetime": 0.7, "spread": 40.0, "direction": Vector3(0, 1, 0),
+		"gravity": Vector3(0, 120, 0), "vel_min": 60.0, "vel_max": 180.0,
+		"scale_min": 1.6, "scale_max": 3.0, "shrink": true,
+		"colors": [Color(1, 1, 1, 0.9), Color(0.82, 0.88, 0.95, 0.5), Color(0.75, 0.82, 0.9, 0.0)],
+		"mesh": Fx.drop(Color(0.9, 0.94, 1.0), 2.2),
+	})
 
 # 超载反应：橙红大爆炸 + 冲击波
 func _overload(world):
@@ -594,46 +488,23 @@ func _overload(world):
 		world.spawn_ring(global_position, Color(1, 0.55, 0.2), 0.25, 2.4, 0.45)
 	if world.has_method("play_sfx"):
 		world.play_sfx("explode", -6.0, 0.1)
-	var p := CPUParticles3D.new()
-	p.amount = 22
-	p.lifetime = 0.5
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3.ZERO
-	p.initial_velocity_min = 160.0
-	p.initial_velocity_max = 340.0
-	p.scale_amount_min = 1.4
-	p.scale_amount_max = 2.8
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(1, 0.9, 0.6, 0.95), Color(1, 0.45, 0.1, 0.7), Color(0.6, 0.1, 0.05, 0.0)])
-	p.mesh = _drop(Color(1, 0.55, 0.2), 2.0)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 22, "lifetime": 0.5,
+		"vel_min": 160.0, "vel_max": 340.0, "scale_min": 1.4, "scale_max": 2.8, "shrink": true,
+		"colors": [Color(1, 0.9, 0.6, 0.95), Color(1, 0.45, 0.1, 0.7), Color(0.6, 0.1, 0.05, 0.0)],
+		"mesh": Fx.drop(Color(1, 0.55, 0.2), 2.0),
+	})
 
 # 冻结反应：寒冰闪光环 + 冰晶四散
 func _freeze_flash(world):
 	if world.has_method("spawn_ring"):
 		world.spawn_ring(global_position, Color(0.75, 0.93, 1.0), 0.2, 1.6, 0.4)
-	var p := CPUParticles3D.new()
-	p.amount = 8
-	p.lifetime = 0.5
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, -160, 0)
-	p.initial_velocity_min = 60.0
-	p.initial_velocity_max = 160.0
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.2
-	p.color_ramp = _gradient([Color(0.85, 0.96, 1.0, 0.95), Color(0.55, 0.85, 1.0, 0.0)])
-	p.mesh = _drop(Color(0.85, 0.96, 1.0), 1.4)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(0.9).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 8, "lifetime": 0.5, "gravity": Vector3(0, -160, 0),
+		"vel_min": 60.0, "vel_max": 160.0, "scale_min": 0.6, "scale_max": 1.2,
+		"colors": [Color(0.85, 0.96, 1.0, 0.95), Color(0.55, 0.85, 1.0, 0.0)],
+		"mesh": Fx.drop(Color(0.85, 0.96, 1.0), 1.4),
+	})
 
 # 火龙卷：橙红火柱螺旋上腾 + 双层冲击波
 func _firestorm(world):
@@ -644,25 +515,13 @@ func _firestorm(world):
 		world.flash_ui(Color(1, 0.5, 0.2), 0.12)
 	if world.has_method("play_sfx"):
 		world.play_sfx("explode", -5.0, 0.1)
-	var p := CPUParticles3D.new()
-	p.amount = 30
-	p.lifetime = 0.6
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 25.0
-	p.direction = Vector3(0, 1, 0)
-	p.gravity = Vector3(0, 220, 0)
-	p.initial_velocity_min = 120.0
-	p.initial_velocity_max = 300.0
-	p.scale_amount_min = 1.6
-	p.scale_amount_max = 3.2
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(1, 0.95, 0.6, 0.95), Color(1, 0.4, 0.08, 0.75), Color(0.55, 0.08, 0.02, 0.0)])
-	p.mesh = _drop(Color(1, 0.5, 0.15), 2.2)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 30, "lifetime": 0.6, "spread": 25.0, "direction": Vector3(0, 1, 0),
+		"gravity": Vector3(0, 220, 0), "vel_min": 120.0, "vel_max": 300.0,
+		"scale_min": 1.6, "scale_max": 3.2, "shrink": true,
+		"colors": [Color(1, 0.95, 0.6, 0.95), Color(1, 0.4, 0.08, 0.75), Color(0.55, 0.08, 0.02, 0.0)],
+		"mesh": Fx.drop(Color(1, 0.5, 0.15), 2.2),
+	})
 
 # 龙卷：青白漩涡把周围敌机往中心牵引
 func _tornado(world, hit_body):
@@ -670,24 +529,12 @@ func _tornado(world, hit_body):
 		world.spawn_ring(global_position, Color(0.5, 0.85, 1.0), 0.4, 0.2, 0.5)
 	if world.has_method("flash_ui"):
 		world.flash_ui(Color(0.5, 0.85, 1.0), 0.08)
-	var p := CPUParticles3D.new()
-	p.amount = 24
-	p.lifetime = 0.7
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, -80, 0)
-	p.initial_velocity_min = 100.0
-	p.initial_velocity_max = 240.0
-	p.scale_amount_min = 1.2
-	p.scale_amount_max = 2.6
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(0.85, 0.96, 1.0, 0.95), Color(0.45, 0.8, 1.0, 0.6), Color(0.3, 0.6, 1.0, 0.0)])
-	p.mesh = _drop(Color(0.6, 0.85, 1.0), 1.9)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 24, "lifetime": 0.7, "gravity": Vector3(0, -80, 0),
+		"vel_min": 100.0, "vel_max": 240.0, "scale_min": 1.2, "scale_max": 2.6, "shrink": true,
+		"colors": [Color(0.85, 0.96, 1.0, 0.95), Color(0.45, 0.8, 1.0, 0.6), Color(0.3, 0.6, 1.0, 0.0)],
+		"mesh": Fx.drop(Color(0.6, 0.85, 1.0), 1.9),
+	})
 	# 牵引：周围敌机被吸向反应中心
 	for m in _nearby_others(hit_body, 200.0, 5):
 		if m.has_method("knockback"):
@@ -698,24 +545,12 @@ func _tornado(world, hit_body):
 func _melt_flash(world):
 	if world.has_method("spawn_ring"):
 		world.spawn_ring(global_position, Color(1, 0.75, 0.4), 0.15, 1.2, 0.3)
-	var p := CPUParticles3D.new()
-	p.amount = 10
-	p.lifetime = 0.4
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3(0, 100, 0)
-	p.initial_velocity_min = 80.0
-	p.initial_velocity_max = 200.0
-	p.scale_amount_min = 1.2
-	p.scale_amount_max = 2.4
-	p.scale_amount_curve = _shrink_curve()
-	p.color_ramp = _gradient([Color(1, 1, 1, 0.95), Color(1, 0.6, 0.3, 0.6), Color(0.8, 0.3, 0.1, 0.0)])
-	p.mesh = _drop(Color(1, 0.75, 0.4), 1.8)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(0.7).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 10, "lifetime": 0.4, "gravity": Vector3(0, 100, 0),
+		"vel_min": 80.0, "vel_max": 200.0, "scale_min": 1.2, "scale_max": 2.4, "shrink": true,
+		"colors": [Color(1, 1, 1, 0.95), Color(1, 0.6, 0.3, 0.6), Color(0.8, 0.3, 0.1, 0.0)],
+		"mesh": Fx.drop(Color(1, 0.75, 0.4), 1.8),
+	})
 
 # 雷暴：三道落雷劈在目标周围
 func _storm(world):
@@ -730,23 +565,12 @@ func _storm(world):
 
 # 暴击：金色进溅
 func _crit_flash(world):
-	var p := CPUParticles3D.new()
-	p.amount = 12
-	p.lifetime = 0.35
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3.ZERO
-	p.initial_velocity_min = 140.0
-	p.initial_velocity_max = 300.0
-	p.scale_amount_min = 0.8
-	p.scale_amount_max = 1.6
-	p.color_ramp = _gradient([Color(1, 0.9, 0.4, 1.0), Color(1, 0.65, 0.15, 0.0)])
-	p.mesh = _drop(Color(1, 0.85, 0.35), 1.6)
-	p.position = global_position
-	world.add_child(p)
-	p.emitting = true
-	get_tree().create_timer(0.6).timeout.connect(p.queue_free)
+	Fx.burst(world, global_position, {
+		"amount": 12, "lifetime": 0.35,
+		"vel_min": 140.0, "vel_max": 300.0, "scale_min": 0.8, "scale_max": 1.6,
+		"colors": [Color(1, 0.9, 0.4, 1.0), Color(1, 0.65, 0.15, 0.0)],
+		"mesh": Fx.drop(Color(1, 0.85, 0.35), 1.6),
+	})
 
 # 查找命中点附近的其他敌机（按距离排序取前 count 个）
 func _nearby_others(hit_body, radius: float, count: int):

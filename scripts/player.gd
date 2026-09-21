@@ -62,7 +62,9 @@ func _physics_process(delta):
 		# 平衡测试的自动驾驶：与鼠标同速飞向目标点
 		position = position.move_toward(autopilot_target, follow_speed * delta)
 	elif use_touch:
-		position += Vector3(touch_move.x, -touch_move.y, 0.0) * speed * 1.25 * delta
+		# 手机端移速加成 1.9x（≈760px/s）：旧值 1.25x 只有桌面鼠标跟随 1300px/s 的 38%，
+		# 同屏弹幕下实质更难；手感以真机复核为准（评估结论：平台机动性对等化）
+		position += Vector3(touch_move.x, -touch_move.y, 0.0) * speed * 1.9 * delta
 	else:
 		var target := Vector3(m.x - 576.0, 324.0 - m.y, 0.0)
 		position = position.move_toward(target, follow_speed * delta)
