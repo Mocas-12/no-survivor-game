@@ -66,10 +66,10 @@ func setup(type: String):
 	if type == "shooter":
 		fire_cd = randf_range(1.0, 2.2)
 
-# Boss 波数越高，敌机血量越厚（后期曲线成长）
+# Boss 波数越高，敌机血量越厚（复合成长：对冲玩家后期 DPS，维持清场压力）
 func apply_tier(tier: int):
 	if tier > 1:
-		health = ceili(health * (1.0 + 0.12 * (tier - 1)))
+		health = ceili(health * pow(1.15, tier - 1))
 		max_hp = health
 
 func _physics_process(delta):

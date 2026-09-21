@@ -47,12 +47,15 @@ func setup(id, tier_, affix_ := ""):
 	is_omega = id == 6
 	# 血量随波数二次曲线成长；伤害缓慢提升但封顶
 	if is_omega:
-		max_hp = 9000 + 500 * maxi(tier - 10, 0)
+		# 终局战 60-120 秒张力带（balance_test 实测：旧公式 2905 血在后期 DPS 下 10 秒蒸发）
+		max_hp = 60000 + 8000 * maxi(tier - 10, 0)
 		bullet_damage = mini(2 + (tier - 1) / 2, 6)
 		contact_damage = mini(3 + (tier - 1) / 2, 8)
 		scale = Vector3.ONE * 1.35
 	else:
-		max_hp = 140 + 80 * (tier - 1) + 25 * (tier - 1) * (tier - 1) + HP_BONUS.get(id, 0)
+		# 血量曲线前陡后缓（早期 ×2.15/层跟住解锁期火力的爆发，5 层后 ×1.55/层），
+		# 对冲玩家火力的相乘式膨胀；目标 TTK：满配 ~60% 火力下 10-30s
+		max_hp = int(240 * pow(2.15, mini(tier - 1, 4)) * pow(1.55, maxi(tier - 5, 0))) + HP_BONUS.get(id, 0)
 		bullet_damage = mini(1 + (tier - 1) / 2, 4)
 		contact_damage = mini(2 + (tier - 1) / 2, 6)
 		scale = Vector3.ONE * 1.12

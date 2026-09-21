@@ -39,11 +39,15 @@ func _go() -> void:
 	var env_to := OS.get_environment("BAL_TIMEOUT")
 	if env_to != "":
 		_timeout = maxf(float(env_to), 1.0) * 60.0
-	print("== 平衡测试: 1 幽灵轮 + %d bot 轮 + 2 站桩轮, %sx 加速, 单局上限 %.0f 游戏分钟 ==" % [bot_runs, tscale, _timeout / 60.0])
+	var still_runs := 2
+	var env_still := OS.get_environment("BAL_STILL")
+	if env_still != "":
+		still_runs = maxi(0, int(env_still))
+	print("== 平衡测试: 1 幽灵轮 + %d bot 轮 + %d 站桩轮, %sx 加速, 单局上限 %.0f 游戏分钟 ==" % [bot_runs, still_runs, tscale, _timeout / 60.0])
 	await _one_run("ghost", tscale, 0)
 	for i in bot_runs:
 		await _one_run("bot", tscale, i + 1)
-	for i in 2:
+	for i in still_runs:
 		await _one_run("still", tscale, i + 1)
 	_print_report()
 	get_tree().quit(0)
@@ -91,6 +95,10 @@ func _one_run(mode: String, tscale: float, idx: int) -> void:
 		if world.omega_slain:
 			run["result"] = "胜利"
 			run["t_omega"] = run["sim_time"]
+			if boss_start >= 0.0:
+				run["ttk"][boss_tier_at] = float(run["sim_time"]) - boss_start
+				run["bhp"][boss_tier_at] = run["bhp"].get(boss_tier_at, 0.0)
+				boss_start = -1.0
 			break
 		if world.dying or world.game_over_panel.visible:
 			run["result"] = "阵亡"
@@ -111,7 +119,10 @@ func _one_run(mode: String, tscale: float, idx: int) -> void:
 
 		# 自动驾驶（每步都转向）；统计与道具按低频节拍采样
 		if use_bot:
-			_steer(player, STEP)
+			if mode == "ghost":
+				_steer_ghost(player)   # 幽灵=纯节奏参照：满 uptime 对轴输出，不躲弹
+			else:
+				_steer(player, STEP)
 			if world.boss_active and world.homing_charges > 0 and homing_cd <= 0.0:
 				homing_cd = 1.0
 				world._use_homing()
@@ -164,6 +175,32 @@ func _one_run(mode: String, tscale: float, idx: int) -> void:
 
 var _dodge_dir := 0.0   # 织躲方向锁定（0.5s 内不许翻转，防止原地抖动喂弹）
 var _dodge_ttl := 0.0
+
+# 幽灵走位：无敌参照专用——Boss 战贴正下方满 uptime 对轴输出，平时蹲底捡水晶。
+# 不躲弹（反正打不死），让 TTK 数据只反映火力曲线而非走位运气。
+func _steer_ghost(player) -> void:
+	var pos: Vector3 = player.global_position
+	var boss = get_tree().get_first_node_in_group("boss")
+	if boss != null and not boss.dead:
+		player.autopilot_target = Vector3(
+			clampf(boss.global_position.x, -520.0, 520.0),
+			clampf(boss.global_position.y - 260.0, -280.0, 240.0), 0.0)
+		return
+	var target := Vector3(pos.x, -250.0, 0.0)
+	var best_d := 420.0
+	var has_gem := false
+	var gem_pos := Vector3.ZERO
+	for g in get_tree().get_nodes_in_group("gems"):
+		if g.global_position.y > 80.0:
+			continue
+		var d := pos.distance_to(g.global_position)
+		if d < best_d:
+			best_d = d
+			gem_pos = g.global_position
+			has_gem = true
+	if has_gem:
+		target = gem_pos
+	player.autopilot_target = Vector3(clampf(target.x, -520.0, 520.0), clampf(target.y, -280.0, 240.0), 0.0)
 
 # 走位：Boss 战贴在 Boss 正下方对轴输出；平时蹲下缘，横向织躲最近子弹（0.25s 前瞻），
 # 近身敌机推离，无威胁时捡低空水晶。模拟该品类的主流打法。
