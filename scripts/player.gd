@@ -26,6 +26,8 @@ var base_scale = 0.60              # 机体基准尺寸：随形态等级成长�
 var fire_timer = 0.0
 var use_touch = false              # 触屏设备：摇杆专属移动
 var model: Node3D = null           # 当前 3D 机体模型
+var autopilot := false             # 无头平衡测试钩子（tools/balance_test.gd）：接管移动，默认关闭
+var autopilot_target := Vector3.ZERO
 
 var glow_t := 0.0                   # 呼吸灯计时
 var _glow_mat: StandardMaterial3D = null
@@ -56,7 +58,10 @@ func set_form(n: int, prebuilt: Node3D = null):
 func _physics_process(delta):
 	# 移动（游戏平面：x 左右、y 上下、z 恒 0）
 	var m = get_viewport().get_mouse_position()
-	if use_touch:
+	if autopilot:
+		# 平衡测试的自动驾驶：与鼠标同速飞向目标点
+		position = position.move_toward(autopilot_target, follow_speed * delta)
+	elif use_touch:
 		position += Vector3(touch_move.x, -touch_move.y, 0.0) * speed * 1.25 * delta
 	else:
 		var target := Vector3(m.x - 576.0, 324.0 - m.y, 0.0)
@@ -66,7 +71,9 @@ func _physics_process(delta):
 	# 转向时轻微侧倾（3D 姿态细节）
 	if model:
 		var bank := 0.0
-		if use_touch:
+		if autopilot:
+			bank = clampf((autopilot_target.x - position.x) * 0.0015, -0.3, 0.3)
+		elif use_touch:
 			bank = -touch_move.x * 0.3
 		else:
 			bank = clampf((m.x - 576.0 - position.x) * 0.0015, -0.3, 0.3)
