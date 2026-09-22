@@ -1,6 +1,6 @@
 extends Object
 
-# 升级卡池：15 张卡 + 紧急维修兜底（从 world.gd 拆出）
+# 升级卡池：19 张卡 + 紧急维修兜底（从 world.gd 拆出）
 # 每张卡：id（对应 i18n 的 card_<id> / card_<id>_d）、can（能否出现）、apply（选中效果）
 # 可重复选取的卡由 world.card_taken 计数，显示 "Lv.N"
 # 注意：多语句效果一律走静态辅助函数，避免字典内多行 lambda 的解析坑

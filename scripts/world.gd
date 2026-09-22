@@ -359,7 +359,7 @@ func spawn_lightning(from: Vector3, to: Vector3):
 
 func apply_core(form):
 	FormAbility.apply_core(self, form)
-# --- 升级三选一（15 张卡池随机抽 3，可叠加卡显示 Lv.N） ---
+# --- 升级三选一（19 张卡池随机抽 3，可叠加卡显示 Lv.N） ---
 
 func show_level_up():
 	$TouchUI.reset()   # 暂停前复位摇杆，防止恢复后方向残留
