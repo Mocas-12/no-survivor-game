@@ -13,7 +13,6 @@ signal died(pos: Vector3, is_omega: bool)
 const MB := preload("res://scripts/model_builder.gd")
 const I18n := preload("res://scripts/i18n.gd")
 
-const TEX := {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
 const HP_BONUS := {1: 0, 2: 20, 3: 10, 4: 30, 5: 20}
 # 各 Boss 的专属弹形（弹形即身份，见 enemy_bullet.gd）
 const STYLE_OF := {1: "destructor", 2: "interceptor", 3: "fortress", 4: "hunter", 5: "phantom"}
