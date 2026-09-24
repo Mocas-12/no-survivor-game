@@ -244,7 +244,7 @@ godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打�
 
 ## 📄 协议与致谢
 
-- **代码与生成美术 / 音频**：© Mocas-12，保留所有权利
+- **代码与生成美术 / 音频**：[MIT 协议](./LICENSE) — © Mocas-12
 - **飞船模型**：[Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0（公有领域）
 - **字体**：[站酷快乐体](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
 - **引擎**：[Godot Engine](https://godotengine.org/) 4.7 — MIT License

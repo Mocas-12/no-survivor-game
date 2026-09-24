@@ -237,7 +237,7 @@ Nothing is downloaded — the sounds and BGM are synthesized by `tools/gen_sound
 
 ## 📄 License & Credits
 
-- **Code & generated art/audio**: © Mocas-12, all rights reserved
+- **Code & generated art/audio**: [MIT License](./LICENSE) — © Mocas-12
 - **Ship models**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0 (public domain)
 - **Font**: [ZCOOL KuaiLe](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
 - **Engine**: [Godot Engine](https://godotengine.org/) 4.7 — MIT License
