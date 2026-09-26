@@ -28,7 +28,7 @@
 - [Gameplay](#-gameplay)
 - [Enemy Fleet](#-enemy-fleet)
 - [Boss Fleet](#-boss-fleet)
-- [Ship Forms](#-ship-forms)
+- [Ship Forms](#️-ship-forms)
 - [Upgrades: Elements & Patterns](#-upgrades-elements--patterns)
 - [Game Feel](#-game-feel)
 - [Tech Highlights](#-tech-highlights)
