@@ -13,7 +13,7 @@
 
 **[🌐 Play in Browser (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/)**
 
-**English** | [简体中文](./README.zh-CN.md)
+**English** | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
 *Desktop: move the mouse — the fighter follows and fires automatically · Mobile: left-thumb joystick*
 

@@ -13,7 +13,7 @@
 
 **[🌐 在线游玩（GitHub Pages）](https://mocas-12.github.io/no-survivor-game/)**
 
-[English](./README.md) | **简体中文**
+[English](./README.md) | **简体中文** | [日本語](./README.ja-JP.md)
 
 *桌面：移动鼠标驾驶战机，火力全自动 · 手机：左半屏摇杆移动*
 
