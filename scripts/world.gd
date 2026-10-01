@@ -489,7 +489,8 @@ func _start_death():
 	spawn_ring(player.position, Color(1, 0.5, 0.3), 0.3, 3.4, 0.8)
 	for i in 3:
 		get_tree().create_timer(0.12 + i * 0.14, true).timeout.connect(func():
-			if is_instance_valid(player):
+			# 玩家极快速重启时 self（world）也可能先于回调释放，一并守卫
+			if is_instance_valid(self) and is_instance_valid(player):
 				spawn_explosion(player.position + Vector3(randf_range(-40, 40), randf_range(-30, 30), 0.0), Color(1, 0.55, 0.3), i == 2))
 	# 慢动作谢幕（0.5 缩放秒 ≈ 1.25 真实秒）
 	Engine.time_scale = 0.4

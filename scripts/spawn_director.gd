@@ -185,7 +185,11 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 		for i in 6:
 			w.spawn_ring(pos + Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0), Color(1, 0.85, 0.35) if i % 2 == 0 else CYAN, 0.3, 3.0 + i * 0.7, 0.8)
 		# 演出落定后弹出胜利结算（终点弧线的落点：战绩 + 徽章 + 无尽/重开选择）
-		w.get_tree().create_timer(2.6).timeout.connect(w._show_victory)
+		# SceneTreeTimer 归场景树所有，跨 reload_current_scene 存活：玩家在窗口内
+		# 阵亡并快速重开时 w 已释放，直接连方法会访问悬空实例，须包一层有效性守卫
+		w.get_tree().create_timer(2.6).timeout.connect(func():
+			if is_instance_valid(w):
+				w._show_victory())
 	elif w.boss_tier >= 10 and not w.omega_slain:
 		# 五种 Boss 两轮循环完毕：武装终局 OMEGA，短间隔后降临
 		w.omega_armed = true
@@ -215,8 +219,9 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	for i in wave:
 		# 不设 process_always：暂停（暂停菜单/结算）期间不再刷怪
 		w.get_tree().create_timer(0.3 + i * 0.16).timeout.connect(func():
+			# SceneTreeTimer 跨场景重载存活：w 可能已随重开释放，先验有效性再取属性
 			# 主角阵亡、下一 Boss 已入场或面板暂停（升级/胜利结算）期间停止增援
-			if w.health > 0 and not w.boss_active and not w.dying and not w.get_tree().paused:
+			if is_instance_valid(w) and w.health > 0 and not w.boss_active and not w.dying and not w.get_tree().paused:
 				spawn_enemy(w))
 
 	w.update_ui()

@@ -88,7 +88,8 @@ static func apply_core(w, form) -> void:
 	# 连环冲击波
 	for i in 3:
 		w.get_tree().create_timer(0.1 + i * 0.15, true).timeout.connect(func():
-			if is_instance_valid(w.player):
+			# w 本体也可能先于回调释放（场景重开），先验 world 再取 player
+			if is_instance_valid(w) and is_instance_valid(w.player):
 				w.spawn_ring(w.player.position, CYAN if i % 2 == 0 else GOLD, 0.2, 2.0 + i * 0.5, 0.45))
 
 static func _morph_cocoon(w, form, accent: Color) -> void:
@@ -131,7 +132,9 @@ static func _morph_cocoon(w, form, accent: Color) -> void:
 		w.spawn_ring(cocoon.position, accent, 0.3, 2.6, 0.5)
 		cocoon.queue_free()
 		_spawn_reveal(w)
-		w.get_tree().create_timer(0.05, true).timeout.connect(func(): _activate_ability(w, form)))
+		w.get_tree().create_timer(0.05, true).timeout.connect(func():
+			if is_instance_valid(w):
+				_activate_ability(w, form)))
 
 static func _spawn_reveal(w) -> void:
 	_spawn_evolution_beam(w)
