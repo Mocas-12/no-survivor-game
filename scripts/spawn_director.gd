@@ -119,6 +119,10 @@ static func start_boss(w) -> void:
 	tw.tween_property(w.warning_label, "modulate:a", 0.15, 0.22)
 	tw.tween_property(w.warning_label, "modulate:a", 1.0, 0.22)
 	await w.get_tree().create_timer(2.2).timeout
+	# 本类为纯静态函数：协程无实例绑定，SceneTreeTimer 跨 reload_current_scene 存活，
+	# 玩家在警告演出窗口内快速重开会释放 w，恢复后必须先验有效性再取属性
+	if not is_instance_valid(w):
+		return
 	if w.health <= 0 or not w.is_inside_tree():
 		w.boss_active = false
 		return

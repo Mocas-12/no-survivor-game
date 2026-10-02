@@ -9,8 +9,6 @@ extends Node3D
 @export var boss_scene: PackedScene = preload("res://scenes/boss.tscn")
 
 const BGM := preload("res://assets/sounds/bgm.wav")
-const BulletScene := preload("res://scenes/bullet.tscn")
-const BulletScript := preload("res://scripts/bullet.gd")
 const MB := preload("res://scripts/model_builder.gd")
 const I18n := preload("res://scripts/i18n.gd")
 const SaveGame := preload("res://scripts/save.gd")
@@ -19,7 +17,6 @@ const Upgrades := preload("res://scripts/upgrades.gd")
 const SpawnDirector := preload("res://scripts/spawn_director.gd")
 const FormAbility := preload("res://scripts/form_ability.gd")
 const GOLD := Color(1, 0.84, 0.35)
-const CYAN := Color(0.55, 0.9, 1)
 const UI_FONT := preload("res://assets/fonts/ZCOOLKuaiLe-Regular.ttf")
 
 # 音效表（tools/gen_sounds.py 程序化合成）
