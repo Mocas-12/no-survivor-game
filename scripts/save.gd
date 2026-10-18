@@ -27,7 +27,11 @@ static func load_data() -> Dictionary:
 static func save_data(data: Dictionary) -> void:
 	if disabled:
 		return
-	var raw := JSON.stringify(data)
+	# 增量合并写入：调用方只传要改的键（game_over/开关切换不传 omega），
+	# 整体覆盖会把已存的 OMEGA 徽章等键抹掉
+	var cur := load_data()
+	cur.merge(data, true)
+	var raw := JSON.stringify(cur)
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("try{localStorage.setItem('%s','%s');}catch(e){}" % [KEY, raw], true)
 	else:

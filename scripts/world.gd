@@ -242,7 +242,7 @@ func _unhandled_input(event):
 		return
 	# Esc 打开暂停（关闭方向由 pause_menu.gd 在暂停状态下处理）
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible:
+		if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
 			return
 		_open_pause()
 		get_viewport().set_input_as_handled()
@@ -565,7 +565,7 @@ func _continue_endless():
 # --- 暂停菜单 ---
 
 func _open_pause():
-	if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible:
+	if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
 		return
 	$TouchUI.reset()
 	pause_button.hide()
