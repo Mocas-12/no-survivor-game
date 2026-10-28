@@ -1,0 +1,242 @@
+[
+  {
+    "id": "fire_rate",
+    "source": "assets/art-direction/v2/weapons.png",
+    "box": [
+      10,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/fire_rate.webp",
+    "bytes": 32880
+  },
+  {
+    "id": "damage",
+    "source": "assets/art-direction/v2/weapons.png",
+    "box": [
+      552,
+      12,
+      432,
+      488
+    ],
+    "path": "assets/modules/damage.webp",
+    "bytes": 16412
+  },
+  {
+    "id": "multishot",
+    "source": "assets/art-direction/v2/multishot-single.png",
+    "box": null,
+    "path": "assets/modules/multishot.webp",
+    "bytes": 30110,
+    "normalization": "navy trim threshold20, 24px padding, contain400"
+  },
+  {
+    "id": "velocity",
+    "source": "assets/art-direction/v2/velocity-single.png",
+    "box": null,
+    "path": "assets/modules/velocity.webp",
+    "bytes": 22952,
+    "normalization": "navy trim threshold20, 24px padding, contain400"
+  },
+  {
+    "id": "crit",
+    "source": "assets/art-direction/v2/weapons.png",
+    "box": [
+      522,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/crit.webp",
+    "bytes": 31758
+  },
+  {
+    "id": "wide",
+    "source": "assets/art-direction/v2/weapons.png",
+    "box": [
+      1034,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/wide.webp",
+    "bytes": 29238
+  },
+  {
+    "id": "fire",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      10,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/fire.webp",
+    "bytes": 36352
+  },
+  {
+    "id": "water",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      522,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/water.webp",
+    "bytes": 30592
+  },
+  {
+    "id": "ice",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      1034,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/ice.webp",
+    "bytes": 34180
+  },
+  {
+    "id": "lightning",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      10,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/lightning.webp",
+    "bytes": 32738
+  },
+  {
+    "id": "wind",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      522,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/wind.webp",
+    "bytes": 33254
+  },
+  {
+    "id": "wave",
+    "source": "assets/art-direction/v2/elements.png",
+    "box": [
+      1034,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/wave.webp",
+    "bytes": 35232
+  },
+  {
+    "id": "speed",
+    "source": "assets/art-direction/v2/systems.png",
+    "box": [
+      10,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/speed.webp",
+    "bytes": 28684
+  },
+  {
+    "id": "armor",
+    "source": "assets/art-direction/v2/systems.png",
+    "box": [
+      522,
+      10,
+      492,
+      492
+    ],
+    "path": "assets/modules/armor.webp",
+    "bytes": 26568
+  },
+  {
+    "id": "magnet",
+    "source": "assets/art-direction/v2/systems.png",
+    "box": [
+      1034,
+      10,
+      492,
+      464
+    ],
+    "path": "assets/modules/magnet.webp",
+    "bytes": 33166
+  },
+  {
+    "id": "xp",
+    "source": "assets/art-direction/v2/systems.png",
+    "box": [
+      10,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/xp.webp",
+    "bytes": 33998
+  },
+  {
+    "id": "chain_reaction",
+    "source": "assets/art-direction/v2/systems.png",
+    "box": [
+      522,
+      522,
+      492,
+      492
+    ],
+    "path": "assets/modules/chain_reaction.webp",
+    "bytes": 32824
+  },
+  {
+    "id": "element_last",
+    "source": "assets/art-direction/v2/element_last-single.png",
+    "box": null,
+    "path": "assets/modules/element_last.webp",
+    "bytes": 30814,
+    "normalization": "navy trim threshold20, 24px padding, contain400"
+  },
+  {
+    "id": "revive",
+    "source": "assets/art-direction/v2/special.png",
+    "box": [
+      18,
+      18,
+      688,
+      688
+    ],
+    "path": "assets/modules/revive.webp",
+    "bytes": 36766
+  },
+  {
+    "id": "repair",
+    "source": "assets/art-direction/v2/special.png",
+    "box": [
+      742,
+      18,
+      688,
+      688
+    ],
+    "path": "assets/modules/repair.webp",
+    "bytes": 24046
+  },
+  {
+    "id": "card_back",
+    "source": "assets/art-direction/v2/special.png",
+    "box": [
+      1548,
+      18,
+      524,
+      688
+    ],
+    "path": "assets/modules/card_back.webp",
+    "bytes": 38200
+  }
+]

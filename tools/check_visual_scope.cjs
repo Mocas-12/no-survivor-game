@@ -1,0 +1,9 @@
+const fs=require('node:fs'),{execFileSync}=require('node:child_process'),assert=require('node:assert/strict');
+const BASE='90d872670f02e8a3e3ea7893002430225ab3d2f2';
+const unchanged=['scripts/player.gd','scripts/enemy.gd','scripts/upgrades.gd','scripts/spawn_director.gd','scripts/form_ability.gd','scripts/save.gd','scenes/bullet.tscn','scenes/enemy_bullet.tscn','scenes/player.tscn','scenes/enemy.tscn','scenes/boss.tscn'];
+for(const p of unchanged)assert.equal(fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'),execFileSync('git',['show',BASE+':'+p],{encoding:'utf8'}).replace(/\r\n/g,'\n'),p+' must remain unchanged');
+const body=(s,name)=>{const start=s.indexOf('func '+name+'('),end=s.indexOf('\nfunc ',start+1);assert(start>=0);return s.slice(s.indexOf('\n',start)+1,end<0?s.length:end).trim();};
+const oldWorld=execFileSync('git',['show',BASE+':scripts/world.gd'],{encoding:'utf8'}),world=fs.readFileSync('scripts/world.gd','utf8');assert.equal(body(world,'_apply_upgrade_choice'),body(oldWorld,'_on_upgrade_button_pressed'),'the chosen upgrade application remains unchanged');
+const oldBoss=execFileSync('git',['show',BASE+':scripts/boss.gd'],{encoding:'utf8'}),boss=fs.readFileSync('scripts/boss.gd','utf8');for(const fn of ['_physics_process','take_damage','take_damage_silent','_phase_check'])assert.equal(body(boss,fn),body(oldBoss,fn),fn);
+const manifest=JSON.parse(fs.readFileSync('assets/art-direction/v2/module-manifest.json','utf8'));assert.equal(manifest.length,21);assert.equal(new Set(manifest.map(x=>x.id)).size,21);for(const x of manifest)assert(fs.statSync(x.path).size>0);
+console.log(JSON.stringify({passed:true,checks:['core movement, spawn, upgrade definitions and saves unchanged','all collision scenes unchanged','original upgrade application body preserved','boss movement, damage and phase rules unchanged','21 unique runtime art files mapped and present']}));

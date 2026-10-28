@@ -9,6 +9,8 @@ extends Area3D
 #   hunter     猎手：金色猎刺（带微光尾迹）
 #   phantom    幻影：青蓝半透明水晶棱刺
 
+const PG := preload("res://scripts/projectile_geometry.gd")
+
 var dir = Vector3(0, -1, 0)
 var speed = 240.0
 var damage = 1
@@ -17,70 +19,14 @@ var homing = 0.0        # 转向速率（弧度/秒），0 为直线弹
 var homing_time = 0.0   # 追踪持续时间
 
 # 弹形配置：[颜色, 自发光强度, 半径或厚度]
-const STYLE_COLORS := {
-	"shooter": Color(1.0, 0.5, 0.25),
-	"destructor": Color(1.0, 0.2, 0.18),
-	"interceptor": Color(0.8, 0.4, 1.0),
-	"fortress": Color(0.3, 1.0, 0.55),
-	"hunter": Color(1.0, 0.8, 0.3),
-	"phantom": Color(0.55, 0.9, 1.0),
-}
+const STYLE_COLORS := PG.ENEMY
 
-static var _mesh_cache := {}
 
 static func _style_mesh(p_style: String) -> Mesh:
-	var key := p_style
-	if _mesh_cache.has(key):
-		return _mesh_cache[key]
-	var mesh: Mesh
-	match p_style:
-		"destructor":
-			var s := SphereMesh.new()
-			s.radius = 8.5
-			s.height = 17.0
-			mesh = s
-		"interceptor":
-			var c := CapsuleMesh.new()
-			c.radius = 2.6
-			c.height = 18.0
-			mesh = c
-		"fortress":
-			var b := BoxMesh.new()
-			b.size = Vector3(2.6, 26.0, 2.6)   # 长杆沿 +Y，取向后即飞行方向
-			mesh = b
-		"hunter":
-			var h := CapsuleMesh.new()
-			h.radius = 3.4
-			h.height = 15.0
-			mesh = h
-		"phantom":
-			var pr := PrismMesh.new()
-			pr.size = Vector3(7.0, 17.0, 7.0)  # 水晶棱刺
-			mesh = pr
-		_:
-			var sh := CapsuleMesh.new()        # shooter：小型 bolt
-			sh.radius = 3.0
-			sh.height = 11.0
-			mesh = sh
-	_mesh_cache[key] = mesh
-	return mesh
+	return PG.mesh(p_style,true)
 
 static func _style_mat(p_style: String) -> StandardMaterial3D:
-	var key := "mat|" + p_style
-	if _mesh_cache.has(key):
-		return _mesh_cache[key]
-	var c: Color = STYLE_COLORS[p_style]
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = c
-	if p_style == "phantom":
-		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		m.albedo_color = Color(c.r, c.g, c.b, 0.82)
-	m.emission_enabled = true
-	m.emission = c
-	m.emission_energy_multiplier = 2.4 if p_style != "destructor" else 2.8
-	_mesh_cache[key] = m
-	return m
+	return PG.material(p_style,true)
 
 func _ready():
 	$Mesh.mesh = _style_mesh(style)

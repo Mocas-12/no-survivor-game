@@ -44,8 +44,9 @@ func _run() -> void:
 	check(world.levelup_panel.visible, "升级面板弹出")
 	var guard := 0
 	while world.levelup_panel.visible and guard < 10:
+		world.levelup_panel.get_node("ModuleDraft").reveal_all()
 		world._on_upgrade_button_pressed(0)
-		await get_tree().process_frame
+		await get_tree().create_timer(0.55).timeout
 		guard += 1
 	check(world.pending_level_ups == 0 and not world.levelup_panel.visible, "全部升级选择完成")
 

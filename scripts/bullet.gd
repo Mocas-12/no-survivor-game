@@ -5,6 +5,7 @@ extends Area3D
 #       高射速下不再每发新建材质与粒子发射器
 # 元素命中 / 反应特效统一走 fx.gd 的 burst 工厂（一份模板，参数化色带 / 速度 / 收缩曲线）
 
+const PG := preload("res://scripts/projectile_geometry.gd")
 const Fx := preload("res://scripts/fx.gd")
 
 const ELEMENT_COLORS := {
@@ -17,7 +18,6 @@ const ELEMENT_COLORS := {
 }
 
 # --- 静态共享缓存与对象池 ---
-static var _body_mats := {}
 static var _pool: Array = []
 
 # 从池里取一颗可复用的子弹（仍在场景树中）；空池返回 null，由调用方实例化新弹
@@ -29,16 +29,7 @@ static func take() -> Node:
 	return null
 
 static func _body_mat(element: String) -> StandardMaterial3D:
-	if not _body_mats.has(element):
-		var c: Color = ELEMENT_COLORS[element]
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = c
-		m.emission_enabled = true
-		m.emission = c
-		m.emission_energy_multiplier = 2.6
-		_body_mats[element] = m
-	return _body_mats[element]
+	return PG.material(element,false)
 
 # --- 运行时状态 ---
 var speed = 800.0
@@ -74,19 +65,11 @@ func make_homing() -> bool:
 	_retarget = 0.0
 	_target = null
 	$Mesh.material_override = _homing_mat()
+	$Mesh.mesh = PG.mesh("homing",false)
 	return true
 
 static func _homing_mat() -> StandardMaterial3D:
-	if not _body_mats.has("homing"):
-		var c := Color(1.0, 0.85, 0.35)
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = c
-		m.emission_enabled = true
-		m.emission = c
-		m.emission_energy_multiplier = 3.0
-		_body_mats["homing"] = m
-	return _body_mats["homing"]
+	return PG.material("homing",false)
 
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
@@ -105,6 +88,8 @@ func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float,
 	visible = true
 	_active = true
 	set_deferred("monitoring", true)
+	$Mesh.mesh = PG.mesh(element,false)
+	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
 	$Mesh.material_override = _body_mat(element)
 	# 元素 / 弹道没变就只恢复发射，变了才重建拖尾（复用路径零分配）
 	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx:
@@ -123,7 +108,9 @@ func _rebuild_fx():
 	_fx_element = element
 	_has_water_fx = wave_amp > 0.0
 	var c: Color = ELEMENT_COLORS[element]
-	$Trail.mesh = Fx.drop(c, 1.4)
+	$Trail.mesh = Fx.drop(c, 0.85)
+	$Trail.amount = 4
+	$Trail.lifetime = 0.16
 	$Trail.emitting = true
 	match element:
 		"fire":
@@ -152,7 +139,7 @@ func _add_emitter(amount: int, lifetime: float) -> CPUParticles3D:
 
 # 火焰：火舌拖尾（火苗向上飘蹿 + 黄→橙→红渐隐），烧灼感更明显
 func _attach_flame_trail():
-	var f := _add_emitter(8, 0.5)
+	var f := _add_emitter(4, 0.22)
 	f.spread = 14.0
 	f.direction = Vector3(0, -1, 0)
 	f.gravity = Vector3(0, 160, 0)
@@ -197,7 +184,7 @@ func _attach_gust_trail():
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
 func _attach_crackle_trail():
-	var k := _add_emitter(8, 0.16)
+	var k := _add_emitter(4, 0.12)
 	k.spread = 180.0
 	k.direction = Vector3(0, 1, 0)
 	k.gravity = Vector3.ZERO
@@ -249,6 +236,7 @@ func _process(delta):
 		wave_t += delta * 9.0
 		move += Vector3(-dir.y, dir.x, 0.0) * sin(wave_t) * wave_amp * delta
 	position += move
+	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
 	rotation.z = Vector2(dir.x, dir.y).angle() - PI / 2
 	# 飞出游戏区域自动回池
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:

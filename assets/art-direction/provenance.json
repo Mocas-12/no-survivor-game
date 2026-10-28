@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-28",
+  "tool": "image_gen (built-in)",
+  "modelId": "Not exposed by tool",
+  "assets": [
+    {
+      "path": "assets/art-direction/hero-lineage.png",
+      "prompt": "Original production art direction sheet for a real 3D top-down bullet-hell spaceship game No Survivor. Exactly FOUR ships in a clean 2x2 layout against dark navy, each entirely separated. All seen orthographically from directly above, nose points UP. Same lineage: pearl ivory segmented armor, dark gunmetal chassis, deep teal cockpit glass, tiny amber warning accents, cyan engine apertures. First is a compact arrowhead interceptor; second has swept split delta wings and paired cylindrical nacelles; third a heavy carrier with three-tier shoulder armor and parallel weapon pylons; fourth an advanced halo-wing flagship with open crescent wings and a luminous central core. Beautiful premium hard-surface 3D design, sharp layered bevels, functional propulsion, panel seams, restrained emission, sophisticated silver metallic highlights, bold clean silhouettes readable at 80 pixels. NO text, no labels, no UI, no existing franchise design. The silhouettes should feel truly evolved instead of color variations. Each ship has actual substantial volume and layered physical geometry, not a flat icon. This is the concept reference for program-authored 3D meshes, not a fake gameplay render.",
+      "use": "Approved internal shape-language reference for 20 true 3D player forms."
+    },
+    {
+      "path": "assets/art-direction/enemy-fleet.png",
+      "prompt": "Original enemy spaceship art bible for a premium real 3D top-down bullet hell game. A clean 3 by 2 sheet of SIX entirely distinct boss silhouettes, nose DOWN toward player, orthographic dorsal view, against plain dark navy. All share blackened titanium, deep burgundy armor, small saturated threat cores, pale beveled edges, restrained emission, detailed physical turret mounts and layered paneling. Top left red broad hammerhead destroyer with four artillery turrets. Top middle violet forked interceptor with two long curved prongs. Top right emerald hexagonal fortress with six thick armor blocks around a central reactor. Bottom left amber asymmetrical hunter with spear prow and twin long gun rails. Bottom middle ice blue phantom with swept crescent wings and separated-looking engine pods attached by slender bridges. Bottom right huge ivory and charcoal OMEGA mothership with concentric armored ring, six docking arms and a small brilliant white core. Beautiful purposeful mechanical volumes, functional greebles without noisy detail, instantly readable small silhouettes. No words, no labels, no logos, no UI, no other ships, no existing franchise designs. Actual hard-surface spaceship concept renders for 3D mesh construction.",
+      "use": "Six boss concepts; enemy visual family uses the same industrial materials and role silhouettes."
+    },
+    {
+      "path": "assets/art-direction/hangar-source.png",
+      "prompt": "Production background artwork for the MAIN MENU of original premium space shooter No Survivor. Cinematic very wide landscape 16:9 composition. On RIGHT HALF ONLY a magnificent ivory and dark titanium delta-wing interceptor in a cavernous orbital hangar, three-quarter dorsal view, nose pointing toward upper left, realistic stylized hard-surface 3D render, cyan cockpit and engine accents, tiny warm amber maintenance lights. Beautiful beveled layered armor and slender functional wings, no franchise resemblance. Distant crescent planet visible behind far-right hangar opening. LEFT HALF remains very dark midnight navy with barely visible structural ribs and soft atmospheric haze, a clean quiet reading area for game title and native UI buttons. Sophisticated cinematic lighting, brushed metal, subtle fog, sharp focal ship, high contrast without visual noise. No people, no lettering, no text, no logos, no UI, no symbols, no mockup framing. Full bleed.",
+      "use": "Source for assets/hangar.webp, resized to 1920-wide, WebP quality88."
+    }
+  ],
+  "geometry": "scripts/visual_fleet.gd authors actual layered hard-surface triangle meshes from concepts. No generated image is passed off as a 3D mesh. Each vessel uses six material-batched meshes, cached as PackedScenes; each player instance owns its breathing material.",
+  "originalAssets": "Original Quaternius CC0 files remain intact; their license remains at assets/ships/LICENSE."
+}

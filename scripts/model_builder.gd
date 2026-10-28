@@ -1,7 +1,9 @@
 extends Object
-## 模型工厂：飞船模型来自 Quaternius Ultimate Spaceships（CC0 协议，见 assets/ships/LICENSE）
+## 模型工厂：原创舰体由 visual_fleet 构建；旧 Quaternius CC0 文件与装载工具保留。
 ## 坐标约定：屏幕上方为世界 +Y。主角机头朝 +Y（向上迎敌），
 ## 敌机机头朝 -Y（俯冲向下），Boss 机头朝 -Y（面向玩家），原始 OBJ 机头统一朝 +Z
+
+const FLEET := preload("res://scripts/visual_fleet.gd")
 
 const ACCENTS := [Color(0.35, 0.88, 1.0), Color(0.55, 1.0, 0.82), Color(0.43, 1.0, 0.71), Color(1.0, 0.75, 0.31), Color(1.0, 0.47, 0.47), Color(0.51, 0.55, 1.0), Color(1.0, 0.86, 0.43), Color(0.96, 0.96, 1.0)]
 
@@ -29,22 +31,19 @@ const BOSS_SHIPS := {
 # ---------- 主角：20 形态 ----------
 
 static func build_player_form(n: int) -> Node3D:
-	var ship: String = PLAYER_SHIPS[n % PLAYER_SHIPS.size()]
-	var color := "Blue" if n < 10 else "Green"
-	# 呼吸灯机体：返回节点带 glow_mat 元数据，供 player.gd 每帧调制发光强度
-	return _ship_model(ship, color, 115.0 + n * 1.8, false, Color(0.55, 0.7, 0.85), 1.1, true)
+	return FLEET.ship("player", n, 115.0 + n * 1.8, false, Color(0.28, 0.87, 1.0))
 
 # ---------- 敌机（6 种，机头朝玩家俯冲） ----------
 
 static func build_enemy(kind: String) -> Node3D:
 	var cfg: Array = ENEMY_SHIPS[kind]
-	return _ship_model(cfg[0], cfg[1], cfg[2], true, cfg[3], 0.8)
+	return FLEET.ship("enemy", ENEMY_SHIPS.keys().find(kind), cfg[2], true, cfg[3])
 
 # ---------- BOSS（5 种，机头朝下方面对玩家） ----------
 
 static func build_boss(id: int) -> Node3D:
 	var cfg: Array = BOSS_SHIPS[id]
-	return _ship_model(cfg[0], cfg[1], cfg[2], true, cfg[3], 0.6)
+	return FLEET.ship("boss", id, cfg[2], true, cfg[3])
 
 # ---------- 通用飞船装配：涂装 + 归一化 + 朝向 ----------
 
@@ -52,12 +51,13 @@ static var _cache := {}
 
 # 预热全部模型与涂装（开局调用，避免变形瞬间同步加载掉帧）
 static func warm_up() -> void:
-	for s in PLAYER_SHIPS:
-		_load_cached("res://assets/ships/%s/%s.obj" % [s, s])
-		for c in ["Blue", "Green", "Red", "Orange", "Purple"]:
-			var tex := "res://assets/ships/%s/Textures/%s_%s.png" % [s, s, c]
-			if ResourceLoader.exists(tex):
-				_load_cached(tex)
+	# Cache original meshes once; all actors share the immutable surface buffers.
+	for n in 20:
+		build_player_form(n).free()
+	for kind in ENEMY_SHIPS:
+		build_enemy(kind).free()
+	for id in BOSS_SHIPS:
+		build_boss(id).free()
 
 static func _load_cached(path: String) -> Resource:
 	if not _cache.has(path):
