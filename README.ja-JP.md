@@ -4,7 +4,7 @@
 
 # No Survivor Game
 
-**Godot 4 の 3D 縦スクロール アリーナ サバイバー——マウス/タッチで操縦する戦闘機、5 ボス艦隊、属性武器、進化する 20 形態の 3D 戦闘機**
+**Godot 4 の 3D 縦スクロール アリーナ サバイバー——マウス/タッチで操縦する戦闘機、5種の巡回ボスと最終OMEGA、属性武器、進化する 20 形態の 3D 戦闘機**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -17,11 +17,27 @@
 
 *デスクトップ：マウスを動かすだけ——戦闘機が追従して自動で発砲 · モバイル：左親指のジョイスティック*
 
-<img src="./screenshots/gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/boss.png" width="49%" alt="Boss battle" />
+<img src="./screenshots/polish-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/polish-boss.png" width="49%" alt="Boss battle" />
 
 </div>
 
 ---
+
+## 現在のビジュアル版
+
+最新ソースには **プレイヤー20形態、敵6種、OMEGAを含むボス6種**を収録。モデル、マテリアル、戦闘UIを刷新し、戦闘ルール、衝突形状、強化効果、セーブ形式は維持しています。
+
+- **艦隊：**敵とボスごとのシルエット、平坦な装甲と丸みのあるベベル、滑らかなキャノピーとリング。塗装、金属、ガラス、エネルギーを別々の質感に。
+- **戦闘表示：**発射元ごとの弾体、装甲HUD、ボスのフェーズ目盛りと遅延ダメージ表示。
+- **カード：**20枚のモジュールイラスト（通常19枚＋緊急修理）、カード裏面と公開演出、早送り、キーボード／タッチ選択、現在値 → 次の値。枠色は種類を表し、レア度ではありません。
+- **描画：**デスクトップ4× MSAA、タッチ端末2× MSAA、高DPI対応。点滅軽減設定も維持。低性能スマートフォンの実機性能は未検証です。
+
+<img src="./screenshots/polish-fleet.png" width="100%" alt="プレイヤー20形態と敵・ボス各6種" />
+<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="モジュールカードのイラスト" />
+
+**公開状況：**画像は最新ソースのものです。[オンライン版](https://mocas-12.github.io/no-survivor-game/)は別途デプロイするため、旧ビジュアルの場合があります。ソースのマージだけではPagesのゲームファイルは更新されません。
+
+詳細：[全体の改版](./docs/VISUAL-REDESIGN.md)、[カード・HUD・敵艦隊](./docs/VISUAL-V2.md)、[表面の仕上げ](./docs/VISUAL-POLISH.md)。これらは執筆時点の開発記録です。「未アップロード」は当時の状態を示し、現在は [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) でマージ済みです。
 
 ## 📖 目次
 
@@ -106,7 +122,7 @@
 
 ## 🧬 アップグレード：属性 & 弾道
 
-レベルアップのたびにゲームが一時停止し、**19 枚のカード プールからランダム 3 枚**が配られる。全カードは重複可能——基本カード、属性弾頭、弾道パターンは再取得で Lv.3 まで育ち、別の属性/パターンを選べば単純にそちらへ切替。それぞれレベルを保持し、切替取得はカードに表示される：
+レベルアップのたびにゲームが一時停止し、**19 枚のカード プールからランダム 3 枚**が配られる。カードごとに重複ルールと上限があります。属性と波状弾道はLv.3まで成長し、切替後も個別のレベルを保持します。イラスト付きカードに効果と現在値 → 次の値を表示します：
 
 | カード | 効果 |
 | --- | --- |
@@ -161,19 +177,19 @@
 - 🎨 `tools/gen_assets.py`（Python + Pillow）による**生成背景 & タッチ UI**。艦船・ボス・エフェクトは完全 3D
 - 🔈 **全オーディオが手続き合成**（`tools/gen_sounds.py`、純粋な数式 → WAV）——SE もループ BGM も、音声アセットはゼロ
 - 🌐 **ゼロアロケーションの弾**：プレイヤー弾はオブジェクト プールで生存し、属性マテリアル/メッシュを静的共有——最大射撃レートでも低スペック端末のメモリを摩耗させない
-- 🀄 **丸ゴシック系 CJK フォントの埋め込み**（ZCOOL KuaiLe）で中国語 UI がブラウザでも同一に描画
+- 🀄 **埋め込みUIフォント**：現在はNoto Sans SCのサブセット `NoSurvivorUI.ttf`（SIL OFL）を使用。従来のZCOOL KuaiLeも保持しています。
 - 🕸️ **スレッド サポート OFF の Web 書き出し**——SharedArrayBuffer / COOP-COEP ヘッダ不要で、GitHub Pages にそのまま置ける
 - 📱 **タッチ ファーストのモバイル対応**：タッチ端末で仮想ジョイスティックが自動出現。ポーズと設定は親指の届く位置
 - 💾 **小さなセーブ層**：ハイスコアと設定は Web では `localStorage`、デスクトップでは `user://save.json` へ永続化
-- 🧠 **手作りローポリ 3D 艦隊**：プレイヤー 20 形態、敵 6 種、ボス 5 艦は Quaternius の Ultimate Spaceships パック（CC0）を使用し、`model_builder.gd` がランタイムで正規化・塗装——パースペクティブ カメラ、ディレクショナル + アンビエント ライト、WorldEnvironment グロー、`CPUParticles3D` / エミッシブ マテリアルのエフェクトが低スペック端末にもやさしい
+- 🧠 **手続き生成3D艦隊**：`visual_fleet.gd`、`enemy_shapes.gd`、`fleet_motion.gd` が現在の艦隊を構築・アニメーション化し、`polished_geometry.gd` と `fleet_materials.gd` がベベルと質感を担当。プロトタイプをキャッシュします。低性能端末の性能は未検証です。
 
 ## 📁 プロジェクト構成
 
 ```text
 no-survivor-game/
 ├── assets/                # 美術 & オーディオ リソース
-│   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
-│   ├── ships/             # ローポリ艦船モデル & 塗装（Quaternius, CC0）
+│   ├── fonts/             # Noto Sans SC subset + legacy ZCOOL KuaiLe (SIL OFL)
+│   ├── ships/             # retained legacy Quaternius assets (CC0)
 │   ├── sounds/            # 合成 SE + ループ BGM（tools/gen_sounds.py）
 │   └── *.png              # パララックス星空 + タッチ ジョイスティック + 雪片（gen_assets.py）
 ├── scenes/                # 9 シーン：world / player / enemies / bosses / bullets / core / gem
@@ -190,7 +206,7 @@ no-survivor-game/
 │   ├── i18n.gd            # zh/en 文字列テーブル、システム ロケールで自動選択
 │   ├── save.gd            # ハイスコア & 設定（Web は localStorage / デスクトップはファイル）
 │   ├── fx.gd              # 単発 VFX ライブラリ：衝撃波リング、爆発、紙吹雪、落雷
-│   ├── model_builder.gd   # 艦船モデル読み込み + 法線スムージング（Quaternius CC0 艦隊）
+│   ├── model_builder.gd   # fleet entry point → visual_fleet.gd / enemy_shapes.gd
 │   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
 ├── tools/                 # 開発ツール：美術/オーディオ生成 + ヘッドレス スモーク & バランス テスト + キャプチャ
 ├── docs/                  # デプロイ済み Web ビルド（GitHub Pages がこのフォルダを配信）
@@ -217,7 +233,7 @@ godot --headless --path . --export-release "Web" build/web/index.html
 cp -r build/web/* docs/    # その後 commit & push で再デプロイ
 ```
 
-**美術 / オーディオを再生成**（任意）：
+**従来の背景 / 音声の再生成**（任意。新しいイラストは対象外）：
 
 ```bash
 python tools/gen_assets.py
@@ -233,11 +249,28 @@ python tools/gen_sounds.py
 はい——画面左半分をタッチすると移動ジョイスティックが出現し、戦闘機は自動で発砲します。マウスのあるデスクトップが依然として最も精密な遊び方です。
 
 **画像 / オーディオ ファイルはどこから？**
-何もダウンロードしていません——効果音と BGM は `tools/gen_sounds.py` が合成し、星空とジョイスティックのテクスチャは `tools/gen_assets.py` が生成し、艦船は Quaternius の CC0 3D モデルを実行時に再着色したものです。
+現在の艦体は独自の幾何スクリプトで生成します。格納庫とモジュールの画像は内蔵画像ツールで制作し、原画とプロンプトを `assets/art-direction/` に記録しています。音声は `tools/gen_sounds.py`、従来の星空・ジョイスティック画像は `tools/gen_assets.py` で生成します。これらのツールは新しいイラストや艦体を再生成しません。旧Quaternius CC0素材とライセンスも保持しています。
 
 ## 📄 ライセンス & クレジット
 
 - **コード & 生成美術/オーディオ**：[MIT License](./LICENSE) — © Mocas-12
-- **艦船モデル**：[Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0（パブリック ドメイン）
-- **フォント**：[ZCOOL KuaiLe](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
+- **Legacy ship assets**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0; retained alongside the current procedural fleet.
+- **Fonts**: Noto Sans SC subset and ZCOOL KuaiLe — SIL Open Font License; see [Noto license](./assets/fonts/NotoSansSC-OFL.txt).
 - **エンジン**：[Godot Engine](https://godotengine.org/) 4.7 — MIT License
+
+## 検証とローカルプレビュー
+
+リポジトリのルートで実行します。Godot 4.7とWebエクスポートテンプレートが必要です。プレビューにはNode.jsを使用し、`build/web/` をポート8316で配信します。
+
+```sh
+godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script res://tools/polish_geometry_test.gd
+godot --headless --path . --script res://tools/visual_v2_test.gd
+godot --headless --path . res://tools/smoke_test.tscn
+godot --headless --path . --export-release Web build/web/index.html
+node tools/serve_preview.cjs
+```
+
+http://127.0.0.1:8316/
+
+艦体形状、75項目の表示チェック、ゲーム進行のスモークテストを収録。ヘッドレス終了時には既存の音声リソース警告が出る場合があります。実機モバイルGPUの性能は未検証です。公開時は[エクスポートと配布の規約](./EXPORTING.md)を参照してください。

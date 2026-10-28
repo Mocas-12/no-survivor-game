@@ -4,7 +4,7 @@
 
 # No Survivor Game
 
-**Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大 Boss 舰队、元素武器、形态进化**
+**Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大轮换 Boss 与终局 OMEGA、元素武器、形态进化**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-立即游玩-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -17,11 +17,27 @@
 
 *桌面：移动鼠标驾驶战机，火力全自动 · 手机：左半屏摇杆移动*
 
-<img src="./screenshots/gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/boss.png" width="32%" alt="Boss 战" /> <img src="./screenshots/victory.png" width="32%" alt="胜利结算" />
+<img src="./screenshots/polish-gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/polish-boss.png" width="32%" alt="Boss 战" /> <img src="./screenshots/polish-victory.png" width="32%" alt="胜利结算" />
 
 </div>
 
 ---
+
+## 当前视觉版本
+
+最新源码包含 **20 种主角形态、6 类小怪、6 种 Boss（含 OMEGA）**，已重做模型、材质与战斗界面。战斗规则、碰撞形状、升级效果和存档格式保持原样。
+
+- **舰队美术：**小怪和 Boss 使用独立轮廓；装甲采用平整面板、圆润倒角，座舱与圆环平滑处理，区分喷漆、金属、玻璃和能源材质。
+- **战斗辨识：**不同来源的专属弹体、玩家装甲仪表、Boss 阶段刻度与延迟扣血反馈。
+- **插画翻牌：**20 张模块插画（19 张卡池加紧急维修兜底），支持卡背揭示、快速翻开、键盘和触摸选择，以及当前 → 下一属性预览。边框表示模块类别，不表示稀有度。
+- **显示清晰度：**桌面 4× 抗锯齿、触屏设备 2× 抗锯齿、高分屏画布适配，并保留减少闪光设置。低端实体手机性能仍需实测。
+
+<img src="./screenshots/polish-fleet.png" width="100%" alt="20 种主角形态、6 类小怪与 6 种 Boss" />
+<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="模块插画翻牌界面" />
+
+**部署状态：**截图来自当前源码。[在线试玩](https://mocas-12.github.io/no-survivor-game/)独立部署，可能仍显示旧版画面；合并源码不会自动替换 Pages 目录内的游戏包。
+
+详见：[整体视觉改版](./docs/VISUAL-REDESIGN.md)、[翻牌、血条和敌舰](./docs/VISUAL-V2.md)、[模型表面精修](./docs/VISUAL-POLISH.md)。这些是有日期的开发记录，其中“尚未上传”描述的是记录时状态；视觉更新现已通过 [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) 合并。
 
 ## 📖 目录
 
@@ -106,7 +122,7 @@
 
 ## 🧬 升级系统：元素与弹道
 
-每次升级暂停游戏，从 **19 张卡池随机抽 3 张**。所有卡都能叠加——基础强化、元素弹头、波浪弹道再选同卡即升级（最高 Lv.3）；选不同的元素/弹道则随时切换，各元素/弹道的等级独立保留，卡面上会标注"切换"：
+每次升级暂停游戏，从 **19 张卡池随机抽 3 张**。各卡遵循独立的叠加规则和上限；元素与波浪弹道最高 Lv.3，切换后保留各自等级。插画卡面展示效果和当前 → 下一属性预览：
 
 | 卡牌 | 效果 |
 | --- | --- |
@@ -161,19 +177,19 @@
 - 🎨 **背景与触屏 UI 程序化生成**：`tools/gen_assets.py`（Python + Pillow）；飞船、Boss、特效全面 3D 化
 - 🔈 **全部音频程序化合成**：`tools/gen_sounds.py`（纯数学 → WAV）——音效与循环 BGM，零音频素材
 - 🌐 **子弹零分配**：玩家子弹走对象池，元素材质/网格静态共享，极限射速下弱设备不再抖动
-- 🀄 **内嵌圆体中文字体**（站酷快乐体）：浏览器里没有系统字体，不内嵌中文全是方块
+- 🀄 **内嵌 UI 字体**：当前界面使用 Noto Sans SC 子集 `NoSurvivorUI.ttf`（SIL OFL），同时保留原站酷快乐体资源。
 - 🕸️ **Web 导出关闭线程支持**：不需要 SharedArrayBuffer / COOP-COEP 响应头，GitHub Pages 直接可跑
 - 📱 **触屏优先适配**：检测到触屏设备自动显示虚拟摇杆；暂停与设置按钮拇指可达
 - 💾 **轻量存档层**：最高分与设置在网页版存 localStorage、桌面版存 user://save.json
-- 🧠 **精修低模 3D 舰队**：20 主角形态、6 敌机、5 Boss 全部采用 Quaternius《Ultimate Spaceships》CC0 模型，由 `model_builder.gd` 运行时归一化并套涂装——透视镜头、平行光 + 环境光、WorldEnvironment 泛光，特效为 `CPUParticles3D` + 自发光材质，弱设备依旧流畅
+- 🧠 **程序化 3D 舰队**：`visual_fleet.gd`、`enemy_shapes.gd` 和 `fleet_motion.gd` 构建并驱动当前舰队；`polished_geometry.gd` 与 `fleet_materials.gd` 负责倒角表面及材质，模型原型缓存复用。低端设备性能尚未实测。
 
 ## 📁 项目结构
 
 ```text
 no-survivor-game/
 ├── assets/                # 美术与音频资源
-│   ├── fonts/             # 站酷快乐体（SIL OFL 协议）
-│   ├── ships/             # 低模飞船与涂装（Quaternius，CC0 协议）
+│   ├── fonts/             # Noto Sans SC subset + legacy ZCOOL KuaiLe (SIL OFL)
+│   ├── ships/             # retained legacy Quaternius assets (CC0)
 │   ├── sounds/            # 合成音效 + 循环 BGM（tools/gen_sounds.py）
 │   └── *.png              # 视差星空层 + 触屏摇杆 + 雪花贴图（tools/gen_assets.py）
 ├── scenes/                # 9 个场景：主世界 / 玩家 / 敌机 / Boss / 双方子弹 / 核心 / 水晶
@@ -190,7 +206,7 @@ no-survivor-game/
 │   ├── i18n.gd            # 中英字符串表，按系统语言自动选择
 │   ├── save.gd            # 最高分与设置（网页 localStorage / 桌面文件）
 │   ├── fx.gd              # 一次性特效库：冲击波环、爆炸、彩带、闪电
-│   ├── model_builder.gd   # 飞船模型加载 + 法线平滑（Quaternius CC0 舰队）
+│   ├── model_builder.gd   # fleet entry point → visual_fleet.gd / enemy_shapes.gd
 │   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
 ├── tools/                 # 开发工具：贴图/音效生成器 + 无头冒烟测试 + 无头平衡测试 + 截图与模型预览
 ├── docs/                  # 已部署的网页版（GitHub Pages 指向这里）
@@ -217,7 +233,7 @@ godot --headless --path . --export-release "Web" build/web/index.html
 cp -r build/web/* docs/    # 提交推送后自动重新部署
 ```
 
-**重新生成美术 / 音频**（可选）：
+**重新生成旧背景 / 音频**（可选，不会重做新版插画）：
 
 ```bash
 python tools/gen_assets.py
@@ -240,11 +256,28 @@ godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打�
 能——触摸屏幕左半边呼出移动摇杆，战机自动开火。桌面端鼠标操作依然最精准。
 
 **图片 / 音频是哪来的？**
-没有任何下载素材——音效与 BGM 由 `tools/gen_sounds.py` 合成，星空与摇杆贴图由 `tools/gen_assets.py` 生成，飞船则是 Quaternius 的 CC0 3D 模型在运行时套涂装。
+当前舰体由项目自己的几何脚本生成。机库和模块插画使用内置图像工具制作，源图及提示词保存在 `assets/art-direction/`。音效与 BGM 由 `tools/gen_sounds.py` 合成，原星空和摇杆贴图由 `tools/gen_assets.py` 生成；这两个脚本不会重新生成新版插画或舰体。原 Quaternius CC0 资源及许可证另行保留。
 
 ## 📄 协议与致谢
 
 - **代码与生成美术 / 音频**：[MIT 协议](./LICENSE) — © Mocas-12
-- **飞船模型**：[Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0（公有领域）
-- **字体**：[站酷快乐体](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
+- **Legacy ship assets**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0; retained alongside the current procedural fleet.
+- **Fonts**: Noto Sans SC subset and ZCOOL KuaiLe — SIL Open Font License; see [Noto license](./assets/fonts/NotoSansSC-OFL.txt).
 - **引擎**：[Godot Engine](https://godotengine.org/) 4.7 — MIT License
+
+## 验证与本地预览
+
+在仓库根目录执行，需要 Godot 4.7 及对应 Web 导出模板。预览服务器需要 Node.js，从 `build/web/` 提供文件，端口为 8316。
+
+```sh
+godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script res://tools/polish_geometry_test.gd
+godot --headless --path . --script res://tools/visual_v2_test.gd
+godot --headless --path . res://tools/smoke_test.tscn
+godot --headless --path . --export-release Web build/web/index.html
+node tools/serve_preview.cjs
+```
+
+http://127.0.0.1:8316/
+
+测试覆盖舰体几何、75 项表现层检查和完整冒烟流程。无头测试退出时仍可能出现已有的音频资源引用提示；实体手机 GPU 性能尚未验证。发布请参阅[导出与分发约定](./EXPORTING.md)。

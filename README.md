@@ -4,7 +4,7 @@
 
 # No Survivor Game
 
-**A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5-boss fleet, elemental weapons, 20 evolving 3D ship forms**
+**A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5 rotating bosses + final OMEGA, elemental weapons, 20 evolving 3D ship forms**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
@@ -17,11 +17,27 @@
 
 *Desktop: move the mouse — the fighter follows and fires automatically · Mobile: left-thumb joystick*
 
-<img src="./screenshots/gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/boss.png" width="49%" alt="Boss battle" />
+<img src="./screenshots/polish-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/polish-boss.png" width="49%" alt="Boss battle" />
 
 </div>
 
 ---
+
+## Current visual edition
+
+The latest source includes **20 player forms, 6 enemy types and 6 bosses including OMEGA**, with a rebuilt presentation layer. Combat rules, collision shapes, upgrade effects and save format are preserved.
+
+- **Fleet:** distinct enemy and boss silhouettes, flat armor panels, rounded bevels, smooth canopies and rings; separate paint, metal, glass and energy finishes.
+- **Combat readability:** source-specific projectile meshes, segmented player armor HUD, boss phase markers and delayed damage feedback.
+- **Illustrated upgrades:** 20 module illustrations (19 pool cards plus emergency repair), animated card backs, quick reveal, keyboard/touch selection and current → next attribute previews. Frames indicate module category, not rarity.
+- **Rendering:** desktop 4× MSAA, touch-device 2× MSAA, high-DPI canvas sizing and reduced-flash support. Physical low-end mobile performance still needs testing.
+
+<img src="./screenshots/polish-fleet.png" width="100%" alt="20 player forms, six enemy types and six bosses" />
+<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="Illustrated module upgrade cards" />
+
+**Deployment status:** these screenshots show the current source. The existing [online build](https://mocas-12.github.io/no-survivor-game/) is deployed separately and may show the previous visuals; merging source does not replace the files served by Pages.
+
+Details: [visual redesign](./docs/VISUAL-REDESIGN.md), [cards, HUD and enemy fleet](./docs/VISUAL-V2.md), [surface polish](./docs/VISUAL-POLISH.md). These are dated development notes; their local-only status describes the time they were written. The visual work was merged in [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3).
 
 ## 📖 Table of Contents
 
@@ -106,7 +122,7 @@ Each core also grants a permanent stat bump (extra volley guns, damage, fire rat
 
 ## 🧬 Upgrades: Elements & Patterns
 
-Each level-up pauses the game and deals **3 random cards out of a 19-card pool**. Every card stacks — basics, elemental warheads and the wave pattern all level up to Lv.3 when re-picked, and picking a different element/pattern simply switches to it; each keeps its own level, and switch picks are labeled on the card:
+Each level-up pauses the game and deals **3 random cards out of a 19-card pool**. Cards follow their individual stacking rules and caps. Elements and the wave pattern reach Lv.3; switching preserves their individual levels. The illustrated cards show the effect and a current → next attribute preview:
 
 | Card | Effect |
 | --- | --- |
@@ -159,25 +175,25 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 
 - 🎮 **Godot 4 / GDScript**, GL Compatibility renderer for maximum browser reach
 - 🎨 **Generated backgrounds & touch UI** by `tools/gen_assets.py` (Python + Pillow); ships, bosses and effects are fully 3D
-- 🔈 **All audio is procedurally synthesized** by `tools/gen_sounds.py` (pure math → WAV) — SFX and the looping BGM, zero audio assets shipped
-- 🌐 **Zero-allocation bullets**: player bullets live in an object pool with element materials/meshes shared statically, so max-fire-rate spraying doesn't churn memory on weak devices
-- 🀄 **Embedded rounded CJK font** (ZCOOL KuaiLe) so the Chinese UI renders identically in the browser
+- 🔈 **All audio is procedurally synthesized** by `tools/gen_sounds.py` (pure math → WAV) — SFX and the looping BGM, WAV resources bundled with the game
+- 🌐 **Pooled bullets**: player bullets live in an object pool with element materials/meshes shared statically, reducing repeated mesh and projectile construction
+- 🀄 **Embedded UI font**: the current UI uses a subset of Noto Sans SC (`NoSurvivorUI.ttf`, SIL OFL); the original ZCOOL KuaiLe font is also retained.
 - 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, runs on GitHub Pages as-is
 - 📱 **Touch-first mobile support**: a virtual joystick appears automatically on touch devices; pause and settings are thumb-reachable
 - 💾 **Tiny save layer**: best score and settings persist to `localStorage` on the web or `user://save.json` on desktop
-- 🧠 **Handcrafted low-poly 3D fleet**: 20 player forms, 6 enemies and 5 bosses use CC0 models from Quaternius' Ultimate Spaceships pack, normalized and liveried at runtime by `model_builder.gd` — perspective camera, directional + ambient lighting, WorldEnvironment glow, and `CPUParticles3D` / emissive-material effects stay friendly to weak devices
+- 🧠 **Procedural 3D fleet**: `visual_fleet.gd`, `enemy_shapes.gd` and `fleet_motion.gd` build and animate the current fleet; `polished_geometry.gd` and `fleet_materials.gd` provide beveled surfaces and material finishes. Mesh prototypes are cached. Low-end device performance is not yet verified.
 
 ## 📁 Project Structure
 
 ```text
 no-survivor-game/
 ├── assets/                # art & audio resources
-│   ├── fonts/             # ZCOOL KuaiLe (SIL OFL)
-│   ├── ships/             # low-poly ship models & liveries (Quaternius, CC0)
+│   ├── fonts/             # Noto Sans SC subset + legacy ZCOOL KuaiLe (SIL OFL)
+│   ├── ships/             # retained legacy Quaternius assets (CC0)
 │   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
 │   └── *.png              # parallax starfield + touch joystick + snowflake (gen_assets.py)
 ├── scenes/                # 9 scenes: world / player / enemies / bosses / bullets / core / gem
-├── scripts/               # all game logic (20 scripts)
+├── scripts/               # all game logic
 │   ├── world.gd           # state hub: UI / audio / save / pause / settlement
 │   ├── spawn_director.gd  # spawning / formations / boss scheduling (static module)
 │   ├── form_ability.gd    # morph cinematic / form powers / auras (static module)
@@ -190,7 +206,7 @@ no-survivor-game/
 │   ├── i18n.gd            # zh/en string table, auto-picked by system locale
 │   ├── save.gd            # best score & settings (web localStorage / desktop file)
 │   ├── fx.gd              # one-shot VFX library: shockwave rings, explosions, confetti, lightning
-│   ├── model_builder.gd   # ship model loading + normal smoothing (Quaternius CC0 fleet)
+│   ├── model_builder.gd   # fleet entry point → visual_fleet.gd / enemy_shapes.gd
 │   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
 ├── tools/                 # dev tools: art/audio generators + headless smoke & balance tests + capture
 ├── docs/                  # deployed web build (GitHub Pages serves this folder)
@@ -217,7 +233,7 @@ godot --headless --path . --export-release "Web" build/web/index.html
 cp -r build/web/* docs/    # then commit & push to redeploy
 ```
 
-**Regenerate all art / audio** (optional):
+**Regenerate legacy background / audio** (optional; does not recreate current illustrations):
 
 ```bash
 python tools/gen_assets.py
@@ -233,11 +249,28 @@ The 39 MB WebAssembly engine is downloaded once; the browser caches it and later
 Yes — touch the left half of the screen to summon the movement joystick; the fighter fires automatically. Desktop with a mouse is still the most precise way to play.
 
 **Where are the image / audio files from?**
-Nothing is downloaded — the sounds and BGM are synthesized by `tools/gen_sounds.py`, the starfield and joystick textures by `tools/gen_assets.py`, and the ships are CC0 3D models from Quaternius recolored at runtime.
+Current fleet meshes are generated by the project’s own geometry scripts. Hangar and module artwork was generated with the built-in image tool; source images and prompts are recorded under `assets/art-direction/`. Sounds/BGM come from `tools/gen_sounds.py`; legacy starfield/joystick textures come from `tools/gen_assets.py`. Those generators do not recreate the new illustrations or fleet meshes. The original Quaternius CC0 assets and licenses are retained separately.
 
 ## 📄 License & Credits
 
 - **Code & generated art/audio**: [MIT License](./LICENSE) — © Mocas-12
-- **Ship models**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0 (public domain)
-- **Font**: [ZCOOL KuaiLe](https://fonts.google.com/specimen/ZCOOL+KuaiLe) — SIL Open Font License 1.1
+- **Legacy ship assets**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0; retained alongside the current procedural fleet.
+- **Fonts**: Noto Sans SC subset and ZCOOL KuaiLe — SIL Open Font License; see [Noto license](./assets/fonts/NotoSansSC-OFL.txt).
 - **Engine**: [Godot Engine](https://godotengine.org/) 4.7 — MIT License
+
+## Verification and local preview
+
+Run from the repository root with Godot 4.7 and its Web export templates installed. The preview server needs Node.js and serves `build/web/` on port 8316.
+
+```sh
+godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script res://tools/polish_geometry_test.gd
+godot --headless --path . --script res://tools/visual_v2_test.gd
+godot --headless --path . res://tools/smoke_test.tscn
+godot --headless --path . --export-release Web build/web/index.html
+node tools/serve_preview.cjs
+```
+
+http://127.0.0.1:8316/
+
+Tests cover fleet geometry, 75 presentation checks and the full smoke flow. An existing audio-resource warning can appear on headless shutdown; physical mobile GPU performance remains unverified. See [export and release conventions](./EXPORTING.md) before publishing.
