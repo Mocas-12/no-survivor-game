@@ -7,3 +7,12 @@ build/
 # Godot 导出时生成的图标元数据，部署目录不需要（拷贝 build/web 后会被带回，忽略即可）
 docs/*.import
 __pycache__/
+
+# Local visual verification state
+.local-appdata/
+tools/*.log
+
+.local-tools/
+.visual-backup-v1/
+.visual-backup-v2/
+tools/*.err

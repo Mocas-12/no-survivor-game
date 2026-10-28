@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-28",
+  "tool": "Built-in image_gen",
+  "modelId": "Not exposed by tool",
+  "records": [
+    {
+      "id": "weapons",
+      "source": "assets/art-direction/v2/weapons.png",
+      "prompt": "Production UI illustration ATLAS, exactly 6 square cells in an evenly spaced 3 columns by 2 rows grid. Navy backgrounds in every cell, generous margins, NO borders, NO text. For original premium sci-fi spaceship module cards. Consistent isometric product renders, real mechanical detail, teal/ivory/gunmetal materials, strong focal object, readable at 150 pixels. In strict reading order: 1 rotary multi-barrel autocannon with amber feed drum (fire rate), 2 heavy red-tipped penetrator shell in a silver power sleeve (damage), 3 three parallel cannon barrels on an unfolding mount (multishot), 4 blue rail accelerator with a bright forward energy streak (projectile speed), 5 golden precision scope with cross-shaped mechanical aperture (critical), 6 fan-shaped spread of five slim cannon tubes on a hinged rack (wide spread). Each isolated complete object centered in its own cell, identical lighting from upper left, cinematic high quality 3D render, no humans, no scene, no logos, no labels. Shape silhouettes must be distinct.",
+      "returnedFile": "exec-6b7ef511-0e30-494c-81e0-771992e66df3.png"
+    },
+    {
+      "id": "elements",
+      "source": "assets/art-direction/v2/elements.png",
+      "prompt": "Production UI illustration ATLAS, exactly 6 square cells evenly spaced 3 columns by 2 rows, navy backdrop per cell, generous margins, no text or grid lines. Six ORIGINAL spaceship elemental modules in matching gunmetal mechanical containment mounts with ivory brackets. Isometric premium detailed 3D product renders readable small. Strict reading order: 1 orange molten furnace core with charred metal casing (fire), 2 smooth blue fluid droplet suspended in an open circular silver tank (water), 3 sharp pale cyan crystalline core in a cold mechanical cage (ice), 4 violet electrical coil with a short forked arc between brass electrodes (lightning), 5 mint green crescent turbine rotor with airy flowing ribbons (wind), 6 two braided blue sine-wave energy ribbons passing through three metal guide rings (wave pattern). Entire module centered within each cell, no overlap, no scenery, no humans, no lettering, no UI chrome. Same navy/ivory/gunmetal style, crisp beautiful hard-surface details, upper-left key light.",
+      "returnedFile": "exec-618fdd0b-e43c-4373-9653-9b901fb65935.png"
+    },
+    {
+      "id": "systems",
+      "source": "assets/art-direction/v2/systems.png",
+      "prompt": "Production UI illustration ATLAS for spaceship module cards, exactly SIX cells arranged evenly in 3 columns and 2 rows, each cell square with plain dark navy background, generous empty margin. Original premium 3D mechanical objects, isometric three quarter product view, ivory brushed metal plus gunmetal and small amber/teal accents. Strict reading order: 1 compact twin cyan plasma engine booster (movement speed), 2 stack of interlocking ivory hexagonal armor plates showing a honeycomb underlayer (armor), 3 large horseshoe electromagnet with copper coils and cyan arcs (magnet), 4 three luminous turquoise data crystals held by a miniature scanning fixture (experience), 5 two different energy cores linked by a small golden chain of capacitors (chain reaction), 6 beautiful violet hourglass-like containment capsule with nested magnetic rings (element duration). Distinct strong silhouettes, beautiful tactile bevels and crisp details readable at small UI scale. Same upper-left lighting, isolated objects, no text, no numbers, no logos, no grid lines, no characters.",
+      "returnedFile": "exec-e478d7c1-cf78-49ce-99c3-90dce9d7015f.png"
+    },
+    {
+      "id": "special",
+      "source": "assets/art-direction/v2/special.png",
+      "prompt": "Production UI art sheet with THREE equally sized panels in ONE horizontal row on dark navy, wide landscape. First panel: original golden phoenix-shaped mechanical resurrection module, wings folded around a glowing teal heart core, gunmetal base, ivory armor, beautiful premium 3D product render isometric. Second panel: original emergency nanobot repair module, compact ivory medical drone with emerald lens and two small tool arms, warm mechanical detail, no crosses or lettering. Third panel: FRONT-ON rectangular sealed spaceship upgrade cartridge CARD BACK, portrait ratio 0.7, dark blue layered metal armor, cut corners, central iris-like mechanical lock with a dim cyan light, restrained fine technical texture, no text. Generous gaps, all objects entirely inside own panel, uniform cinematic upper-left light. No words, labels, UI buttons, logos, humans.",
+      "returnedFile": "exec-f8a2f678-5a06-466e-a4ce-21f034c8dde8.png"
+    },
+    {
+      "id": "fleet",
+      "source": "assets/art-direction/v2/fleet.png",
+      "prompt": "Original art direction contact sheet for a premium real-3D top-down bullet hell game, exactly TWELVE ship designs in a 4 columns by 3 rows evenly spaced grid. Orthographic dorsal view, every ship nose DOWN, full silhouette contained in its own dark navy cell, no text, no labels. EACH silhouette AND dominant material must be radically distinct. Reading order FIRST SIX small enemies: crimson batwing attack drone with broad swept wings; orange needle interceptor with a very thin long fuselage; yellow-green three-fin turbine drone with three separate blades around an eye; slate blue broad twin-gun armored boat; pearl silver semicircular shield drone with tiny body behind shield; black-purple rectangular siege craft with four engine blocks. Reading order LAST SIX bosses: enormous horizontal red hammerhead artillery fortress with four heavy circular turret sockets; deep violet long split-prong blade ship with open empty center; emerald six-segment hexagonal floating bastion around an exposed reactor, NO fuselage; asymmetric bronze hunter, enormous spear cannon on LEFT and short sensor wing on RIGHT; icy translucent blue crescent ghost craft with separate side pods linked by narrow bridges; ivory obsidian annular OMEGA mothership, complete huge concentric ring and six docking arms, NO conventional fighter fuselage. Beautiful hard-surface geometry, layered armor, visible structural cavities, restrained glowing cores and functional engines, tiny warm metal details. Distinct shape architecture over decorative detail. No repeated central arrow body, no shared red paint on every ship, no wings on fortress or ring mothership, no text or UI.",
+      "returnedFile": "exec-8da97fab-94db-40cf-b7f7-a2e2d993ba5f.png"
+    }
+  ],
+  "processing": "tools/prepare_modules.cjs records reviewed crop boxes. Original 3D silhouettes are authored from the fleet concept using enemy_shapes.gd and fleet_motion.gd; generated pixels are not misrepresented as mesh data.",
+  "runtime": "20 illustrated module faces and one sealed card back, 21 WebP files; names map directly to existing upgrade IDs. Native text, gameplay data and controls remain code-driven."
+}

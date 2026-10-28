@@ -17,7 +17,7 @@ const Upgrades := preload("res://scripts/upgrades.gd")
 const SpawnDirector := preload("res://scripts/spawn_director.gd")
 const FormAbility := preload("res://scripts/form_ability.gd")
 const GOLD := Color(1, 0.84, 0.35)
-const UI_FONT := preload("res://assets/fonts/ZCOOLKuaiLe-Regular.ttf")
+const UI_FONT := preload("res://assets/fonts/NoSurvivorUI.ttf")
 
 # 音效表（tools/gen_sounds.py 程序化合成）
 const SFX := {
@@ -213,6 +213,8 @@ func _ready():
 	$TouchUI.reset()
 	get_tree().paused = true
 	start_panel.show()
+	preload("res://scripts/visual_finish.gd").apply(self)
+	preload("res://scripts/visual_ui.gd").apply($UI)
 
 func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
@@ -367,7 +369,7 @@ func show_level_up():
 		levelup_panel.animate_in()
 
 	play_sfx("levelup", -4.0)
-	flash_ui(GOLD, 0.5)
+	flash_ui(GOLD, 0.12)
 	spawn_ring(player.position, GOLD, 0.3, 3.2, 0.6)
 	confetti_burst(player.position, 34, GOLD)
 	_shake(9.0)
@@ -392,8 +394,12 @@ func show_level_up():
 				title += " · " + I18n.T(hint)
 		upgrade_buttons[i].text = title + "\n" + I18n.T("card_" + String(up["id"]) + "_d")
 		upgrade_buttons[i].set_meta("upgrade", up)
+	$UI/LevelUpPanel/ModuleDraft.present()
 
 func _on_upgrade_button_pressed(index):
+	$UI/LevelUpPanel/ModuleDraft.choose(index,_apply_upgrade_choice.bind(index))
+
+func _apply_upgrade_choice(index):
 	var up = upgrade_buttons[index].get_meta("upgrade")
 	up["apply"].call()
 	card_taken[up["id"]] = int(card_taken.get(up["id"], 0)) + 1

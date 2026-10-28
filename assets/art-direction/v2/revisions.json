@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-28",
+  "tool": "Built-in image_gen; model ID not exposed",
+  "reason": "Individual modules were regenerated after native-scale QA found atlas clipping. The magnet crop was tightened to remove a neighboring sliver. Armor material adds panel definition to original 3D geometry.",
+  "records": [
+    {
+      "id": "armor",
+      "source": "assets/art-direction/v2/armor-source.png",
+      "prompt": "A seamless tileable grayscale sci-fi spaceship armor ALBEDO MATERIAL texture, orthographic flat surface scan, square full bleed. Fine precision-machined titanium alloy panels, restrained brushed grain, subtle hairline seams, a few tiny recessed screws, narrow inset vent slits, crisp bevel-edge wear and layered rectangular plate boundaries. Large quiet light-silver metal fields occupying 80 percent, dark detail occupying at most 20 percent, material luminance mostly 0.65 to 0.95 so it can be multiplied by arbitrary colored ship paint. Sophisticated premium hard-surface spacecraft skin, not rusty, not grungy. Texture details must read on a 200-pixel game spaceship without becoming noise. NO spaceship, no object silhouette, no perspective, no cast shadows, no environment, no lettering, no numbers, no emissive lights, no logos, no borders. Even diffuse lighting, perfect edge-to-edge tileability.",
+      "returnedFile": "exec-cdae6786-5a98-4f7b-b785-12039eb367f6.png"
+    },
+    {
+      "id": "multishot-single",
+      "source": "assets/art-direction/v2/multishot-single.png",
+      "prompt": "Square production UI illustration for an original premium sci-fi spaceship module card. ONE complete triple-barrel cannon assembly only, three parallel long tubes mounted on a compact ivory and gunmetal hinged weapon rack with small teal joints and amber details. Three-quarter isometric product render; barrels point toward upper LEFT. All three muzzle ends and the entire rear mounting base must be fully visible. Center the complete assembly within the central 65 percent of a SQUARE canvas, at least 15 percent empty margin on EVERY edge. Plain dark navy background #0b1626. Premium tactile brushed metal, crisp layered bevels, beautifully machined details, upper-left light, matching a sophisticated mechanical spaceship upgrade illustration family. No beam extending outside frame, no bullet trails, no other objects, no floor, no text, no labels or logo. Priority: complete uncropped strong silhouette readable at 160px.",
+      "returnedFile": "exec-689c3a8d-a4a0-48fa-b72c-a2fecff83bd5.png"
+    },
+    {
+      "id": "velocity-single",
+      "source": "assets/art-direction/v2/velocity-single.png",
+      "prompt": "Square production UI illustration for an original premium sci-fi spaceship module card. ONE complete compact rail accelerator cannon only. Ivory side armor, dark gunmetal central barrel rails, teal glass energy channel and a tiny amber capacitor at the rear. Three-quarter isometric product render, muzzle points upper LEFT. A SHORT cyan energy glow stays at the muzzle, no extended beam. The entire muzzle, rear capacitors, support mount and base must fit entirely in the central 65 percent of a SQUARE canvas with generous 15 percent empty margin on every edge. Plain dark navy background #0b1626. Premium realistic stylized 3D product art, rich machined bevels, polished silver rims, upper-left light. Cohesive gunmetal/ivory/teal spaceship module style. No other objects, no scene, no lettering, no labels or logo, no cut edges.",
+      "returnedFile": "exec-6b3893ab-11b7-4f2b-b8e1-43a5286a33b8.png"
+    },
+    {
+      "id": "element_last-single",
+      "source": "assets/art-direction/v2/element_last-single.png",
+      "prompt": "Square production UI illustration for an original premium sci-fi spaceship module card. ONE complete element-duration module: a beautiful translucent violet hourglass-like containment capsule, silver-and-ivory upper and lower circular caps, two dark titanium support hoops and small amber mechanical hinges, subtle violet energy flowing through the hourglass. Three-quarter isometric product render. Entire upper cap, complete lower base and every support hoop fully visible. Center it within central 65 percent of a SQUARE canvas, at least 15 percent empty space on all four edges. Plain dark navy #0b1626 background, no scene or neighboring objects. Premium tactile detailed 3D render, crisp bevels, restrained inner light, upper-left lighting, same sophisticated ivory/gunmetal/teal mechanical module family. No words, labels, logo or cropped edges.",
+      "returnedFile": "exec-4bd2be53-e34a-4388-91f8-132b7976f9d1.png"
+    }
+  ],
+  "runtime": "prepare_modules.cjs prefers the three complete single-object sources. The final 21 module images total 650764 bytes; armor.webp is 200724 bytes and uses mipmaps.",
+  "normalization": "Original generation files retained. Module normalization uses reviewed atlas boxes or navy trim (threshold20), 24px padding, fit-contain 400x400 WebP quality88. Sealed back is 400x550. Armor is 1024x1024 WebP quality90, projected with geometry UVs. No claim that generated art is prebuilt 3D geometry."
+}

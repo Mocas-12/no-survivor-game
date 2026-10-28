@@ -83,6 +83,8 @@ func full_name() -> String:
 
 # 以本 Boss 的专属弹形发射（OMEGA 轮转全舰队弹形，见 _cur_style）
 func spawn(pos: Vector3, dir: Vector3, spd, dmg, homing := 0.0, ht := 0.0):
+	if model and model.has_method("shot"):
+		model.shot()
 	var world = get_tree().current_scene
 	if world.has_method("spawn_enemy_bullet"):
 		var style: String = _cur_style if _cur_style != "" else STYLE_OF.get(boss_id, "shooter")

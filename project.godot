@@ -21,7 +21,7 @@ window/stretch/mode="canvas_items"
 
 [gui]
 
-theme/custom_font="res://assets/fonts/ZCOOLKuaiLe-Regular.ttf"
+theme/custom_font="res://assets/fonts/NoSurvivorUI.ttf"
 
 [input]
 
@@ -36,6 +36,9 @@ shoot={
 pointing/emulate_mouse_from_touch=false
 
 [rendering]
+
+anti_aliasing/quality/msaa_3d=2
+anti_aliasing/quality/msaa_3d.mobile=1
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
