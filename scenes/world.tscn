@@ -98,55 +98,79 @@ content_margin_left = 14.0
 content_margin_top = 10.0
 content_margin_right = 14.0
 content_margin_bottom = 10.0
-bg_color = Color(0.95, 0.97, 1, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.16, 0.22, 0.42, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+bg_color = Color(0.085, 0.12, 0.17, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.41, 0.5, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="sb_btn_h"]
 content_margin_left = 14.0
 content_margin_top = 10.0
 content_margin_right = 14.0
 content_margin_bottom = 10.0
-bg_color = Color(1, 0.88, 0.52, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.45, 0.3, 0.05, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+bg_color = Color(0.13, 0.18, 0.24, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.91, 0.74, 0.36, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="sb_btn_p"]
 content_margin_left = 14.0
 content_margin_top = 10.0
 content_margin_right = 14.0
 content_margin_bottom = 10.0
-bg_color = Color(0.78, 0.84, 0.95, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.16, 0.22, 0.42, 1)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
+bg_color = Color(0.055, 0.08, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.41, 0.5, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.91, 0.74, 0.36, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="sb_primary"]
+bg_color = Color(0.91, 0.74, 0.36, 1)
+content_margin_left = 24.0
+content_margin_right = 24.0
+content_margin_top = 14.0
+content_margin_bottom = 14.0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
 
 [sub_resource type="Theme" id="Theme_ui"]
-Button/colors/font_color = Color(0.1, 0.12, 0.24, 1)
-Button/colors/font_focus_color = Color(0.1, 0.12, 0.24, 1)
-Button/colors/font_hover_color = Color(0.24, 0.15, 0.02, 1)
-Button/colors/font_pressed_color = Color(0.1, 0.12, 0.24, 1)
+Button/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+Button/colors/font_focus_color = Color(0.98, 0.83, 0.53, 1)
+Button/colors/font_hover_color = Color(0.98, 0.83, 0.53, 1)
+Button/colors/font_pressed_color = Color(0.9, 0.93, 0.97, 1)
 Button/font_sizes/font_size = 20
+Button/styles/focus = SubResource("sb_focus")
 Button/styles/hover = SubResource("sb_btn_h")
 Button/styles/normal = SubResource("sb_btn_n")
 Button/styles/pressed = SubResource("sb_btn_p")
@@ -218,7 +242,7 @@ offset_top = 12.0
 offset_right = 300.0
 offset_bottom = 48.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 8
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 26
 text = "积分: 0"
 
@@ -229,7 +253,7 @@ offset_right = 300.0
 offset_bottom = 70.0
 theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 18
 text = "等级 1"
 
@@ -242,6 +266,7 @@ theme_override_styles/background = SubResource("sb_bar_bg")
 theme_override_styles/fill = SubResource("sb_xp_fill")
 max_value = 5.0
 show_percentage = false
+tooltip_text = "经验值 / Experience"
 
 [node name="HealthBar" type="ProgressBar" parent="UI"]
 offset_left = 1000.0
@@ -253,6 +278,7 @@ theme_override_styles/fill = SubResource("sb_hp_fill")
 max_value = 10.0
 value = 10.0
 show_percentage = false
+tooltip_text = "生命值 / Health"
 
 [node name="BossName" type="Label" parent="UI"]
 visible = false
@@ -262,7 +288,7 @@ offset_right = 800.0
 offset_bottom = 62.0
 theme_override_colors/font_color = Color(1, 0.5, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 16
 text = "【 BOSS 】"
 horizontal_alignment = 1
@@ -287,7 +313,7 @@ offset_right = 876.0
 offset_bottom = 142.0
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
-theme_override_constants/outline_size = 8
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 24
 text = "✦ 形态能力 ✦"
 horizontal_alignment = 1
@@ -299,7 +325,7 @@ offset_top = 76.0
 offset_right = 320.0
 offset_bottom = 100.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.7)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 17
 text = "✦ 形态能力"
 
@@ -347,7 +373,7 @@ mouse_filter = 2
 process_mode = 3
 offset_right = 1151.0
 offset_bottom = 642.0
-color = Color(0.05, 0.05, 0.09, 0.85)
+color = Color(0.025, 0.04, 0.065, 0.94)
 script = ExtResource("9_pfx")
 
 [node name="Label" type="Label" parent="UI/GameOverPanel"]
@@ -397,7 +423,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.4, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 22
 text = "最高纪录: 0"
 horizontal_alignment = 1
@@ -456,7 +482,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
-theme_override_constants/outline_size = 10
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 48
 text = "✦ 胜 利 ✦"
 horizontal_alignment = 1
@@ -475,7 +501,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 20
 text = "灭世母舰已被击破"
 horizontal_alignment = 1
@@ -498,7 +524,7 @@ alignment = 1
 [node name="StatsLabel" type="Label" parent="UI/VictoryPanel/Box"]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 22
 text = "最终积分: 0"
 horizontal_alignment = 1
@@ -507,6 +533,8 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
 theme = SubResource("Theme_ui")
+theme_override_styles/normal = SubResource("sb_primary")
+theme_override_colors/font_color = Color(0.04, 0.055, 0.08, 1)
 text = "继续无尽模式"
 
 [node name="RestartButton" type="Button" parent="UI/VictoryPanel/Box"]
@@ -526,7 +554,7 @@ process_mode = 3
 visible = false
 offset_right = 1151.0
 offset_bottom = 642.0
-color = Color(0.03, 0.03, 0.08, 0.82)
+color = Color(0.025, 0.04, 0.065, 0.94)
 script = ExtResource("9_pfx")
 
 [node name="Box" type="VBoxContainer" parent="UI/LevelUpPanel"]
@@ -541,14 +569,14 @@ offset_right = 400.0
 offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 26
+theme_override_constants/separation = 24
 alignment = 1
 
 [node name="Title" type="Label" parent="UI/LevelUpPanel/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
-theme_override_constants/outline_size = 10
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 36
 text = "～ 进化！选择一项强化 ～"
 horizontal_alignment = 1
@@ -559,17 +587,17 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Btn0" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
-custom_minimum_size = Vector2(240, 120)
+custom_minimum_size = Vector2(240, 144)
 layout_mode = 2
 theme = SubResource("Theme_ui")
 
 [node name="Btn1" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
-custom_minimum_size = Vector2(240, 120)
+custom_minimum_size = Vector2(240, 144)
 layout_mode = 2
 theme = SubResource("Theme_ui")
 
 [node name="Btn2" type="Button" parent="UI/LevelUpPanel/Box/Buttons"]
-custom_minimum_size = Vector2(240, 120)
+custom_minimum_size = Vector2(240, 144)
 layout_mode = 2
 theme = SubResource("Theme_ui")
 
@@ -577,7 +605,7 @@ theme = SubResource("Theme_ui")
 process_mode = 3
 offset_right = 1151.0
 offset_bottom = 642.0
-color = Color(0.03, 0.03, 0.08, 0.92)
+color = Color(0.025, 0.04, 0.065, 0.9)
 
 [node name="Title" type="Label" parent="UI/StartPanel"]
 anchors_preset = 8
@@ -593,7 +621,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
-theme_override_constants/outline_size = 10
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 46
 text = "准备战斗"
 horizontal_alignment = 1
@@ -612,7 +640,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(0.65, 0.9, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.65)
-theme_override_constants/outline_size = 6
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 20
 text = "最高纪录: 0"
 horizontal_alignment = 1
@@ -629,7 +657,8 @@ offset_right = 350.0
 offset_bottom = 40.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.7, 0.77, 0.85, 1)
 text = "电脑：移动鼠标驾驶战机（火力全自动）
 手机：左半屏摇杆移动
 建议横屏游玩"
@@ -649,6 +678,8 @@ offset_bottom = 130.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = SubResource("Theme_ui")
+theme_override_styles/normal = SubResource("sb_primary")
+theme_override_colors/font_color = Color(0.04, 0.055, 0.08, 1)
 text = "开始战斗"
 
 [node name="PauseButton" type="Button" parent="UI"]
@@ -665,7 +696,7 @@ process_mode = 3
 visible = false
 offset_right = 1151.0
 offset_bottom = 642.0
-color = Color(0.03, 0.03, 0.08, 0.86)
+color = Color(0.025, 0.04, 0.065, 0.94)
 script = ExtResource("13_pm")
 
 [node name="Title" type="Label" parent="UI/PausePanel"]
@@ -682,7 +713,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_colors/font_color = Color(1, 0.84, 0.35, 1)
 theme_override_colors/font_outline_color = Color(0.25, 0.12, 0, 0.8)
-theme_override_constants/outline_size = 10
+theme_override_constants/outline_size = 2
 theme_override_font_sizes/font_size = 40
 text = "已暂停"
 horizontal_alignment = 1
@@ -706,6 +737,8 @@ alignment = 1
 custom_minimum_size = Vector2(280, 52)
 layout_mode = 2
 theme = SubResource("Theme_ui")
+theme_override_styles/normal = SubResource("sb_primary")
+theme_override_colors/font_color = Color(0.04, 0.055, 0.08, 1)
 text = "继续游戏"
 
 [node name="RestartButton" type="Button" parent="UI/PausePanel/Box"]

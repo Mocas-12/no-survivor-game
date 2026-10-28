@@ -89,11 +89,28 @@ body {
 	text-align: center;
 	z-index: 1;
 }
-		</style>
+
+/* Hallmark · v2.0.0 · scope: app · theme: brand · redesign: full · signature: the real flight game */
+/* Hallmark · critique: loading and failure states use the same calm cockpit material as the menus. */
+:root { --page: #080d15; --surface: #141f2d; --ink: #e7edf4; --muted: #aebdcd; --accent: #e8bd5c; --edge: #64758b; --font: system-ui, "Microsoft YaHei", sans-serif; }
+html, body { overflow-x: clip; }
+body { background: var(--page); color: var(--ink); font-family: var(--font); }
+#status { background: var(--page); padding: 32px; box-sizing: border-box; }
+#status-splash { object-fit: contain; opacity: .2; }
+#status-progress { accent-color: var(--accent); width: min(320px, 80%); height: 8px; }
+#status-notice { background: var(--surface); color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; padding: 24px; max-width: 480px; line-height: 1.7; }
+#status-notice a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important;transition:none!important; } }
+
+</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 <script>window.__requestGameFullscreen=function(){var el=document.documentElement;var fn=el.requestFullscreen||el.webkitRequestFullscreen;if(fn){try{fn.call(el);}catch(e){}}try{if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape')['catch'](function(){});}}catch(e){}};var mv=document.querySelector('meta[name=viewport]');if(mv){mv.setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');}</script><style>@media (orientation: portrait) and (pointer: coarse){body::before{content:'请横屏游玩 ↻';position:fixed;left:0;top:0;right:0;bottom:0;z-index:9999;background:#05060d;color:#ffd75e;display:flex;align-items:center;justify-content:center;font-size:24px;font-family:sans-serif;text-align:center;white-space:pre-line;}}</style>
-	</head>
+	<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>window.__requestGameFullscreen=function(){var el=document.documentElement;var fn=el.requestFullscreen||el.webkitRequestFullscreen;if(fn){try{fn.call(el);}catch(e){}}try{if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape')['catch'](function(){});}}catch(e){}};var mv=document.querySelector('meta[name=viewport]');if(mv){mv.setAttribute('content','width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover');}</script><style>@media (orientation: portrait) and (pointer: coarse){body::before{content:'请横屏游玩 ↻';position:fixed;left:0;top:0;right:0;bottom:0;z-index:9999;background:#05060d;color:#ffd75e;display:flex;align-items:center;justify-content:center;font-size:24px;font-family:sans-serif;text-align:center;white-space:pre-line;}}</style>
+</head>
 	<body>
 		<canvas id="canvas">
 			Your browser does not support the canvas tag.
@@ -111,7 +128,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8206952,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":8183404,"index.wasm":39509339},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -217,4 +234,3 @@ const engine = new Engine(GODOT_CONFIG);
 		</script>
 	</body>
 </html>
-
