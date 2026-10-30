@@ -29,3 +29,11 @@ The old `check_visual_scope.cjs` documents the previous art-only revision and in
 ## Still requiring real playtesting
 
 Three-minute manual runs on desktop and physical touch devices; novice survival, telegraph readability amid effects, boss time-to-kill, later OMEGA/endless balancing and whether players choose to restart. Local run summaries support comparison but do not measure aggregate retention.
+
+## Branch hull art revision
+
+The initial branch appendages have been replaced with complete hull families: swept assault interceptor, wide escort wing with embedded auxiliary mounts, and an armored siege hull with a recessed central gun channel. Each branch supports all 20 form indices with cached mesh prototypes, normalized to the prior display envelope. Energy material instances remain isolated. Combat attributes and collision shapes are unchanged by this art revision.
+
+The built-in image generator produced [the concept sheet](../assets/art-direction/branches/concept.png); its exact prompt and source record are in [provenance.json](../assets/art-direction/branches/provenance.json). The generator does not expose a verifiable model ID. Actual geometry is authored in `scripts/branch_visual.gd`, using the existing beveled surface and material pipeline. The concept is a reference, not an exact texture-to-mesh conversion.
+
+`tools/branch_hulls_test.gd` checks all 60 variants for unique geometry, unit finite normals, original normalized size, replacement of the old hull, repeated-decoration safety, and independent glow materials. `screenshots/branch-hull-sheet.png` shows four stages per branch; `screenshots/run-evolution.png` is the game’s rendered choice screen. The existing 33 run-design checks also pass with these hulls.

@@ -63,6 +63,7 @@ func build(role: String, n: int, accent: Color) -> Node3D:
 		mi.owner = root
 		extent = extent.merge(mesh.get_aabb())
 	root.set_meta("extent", maxf(extent.size.x, extent.size.y))
+	if friendly: root.set_meta("form_variant",n)
 	if role == "boss":
 		preload("res://scripts/fleet_motion.gd").attach(root,n,palette[4])
 	return root
