@@ -126,6 +126,14 @@ var bgm_player: AudioStreamPlayer
 
 func _ready():
 	Engine.time_scale = 1.0
+	if OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('review') === 'assault'",true)):
+		set_process(false)
+		player.set_physics_process(false)
+		$Timer.stop()
+		get_tree().change_scene_to_file.call_deferred("res://scenes/assault_review.tscn")
+		return
+	var hull_preview: bool=OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('hull') === 'blender'",true))
+	preload("res://scripts/branch_visual.gd").use_blender_assault=hull_preview
 	# 预热全部飞船模型与涂装：变形换装零加载卡顿
 	MB.warm_up()
 	# 音效播放器对象池（暂停菜单/开始面板期间音效不中断）
@@ -219,6 +227,12 @@ func _ready():
 	director=preload("res://scripts/run_director.gd").new()
 	director.name="RunDirector"
 	add_child(director)
+	if hull_preview:
+		print("BLENDER_HULL_PREVIEW: assault.glb")
+		# Art preview starts with the prototype skin; weapon rules and the branch choice remain unchanged.
+		preload("res://scripts/branch_visual.gd").decorate(player.model,"assault")
+		player._glow_mat=player.model.get_meta("glow_mat")
+		$UI/StartPanel/Hint.text+="\nBlender · 突击舰原型预览"
 
 func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）

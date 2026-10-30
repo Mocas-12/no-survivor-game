@@ -1,0 +1,23 @@
+{
+  "reference_crop": [
+    0,
+    0,
+    590,
+    887
+  ],
+  "reference_bbox": [
+    17,
+    26,
+    590,
+    804
+  ],
+  "render_bbox": [
+    208,
+    72,
+    892,
+    1035
+  ],
+  "bbox_registered_iou": 0.7321852981702437,
+  "aspect_ratio_relative_error": 0.03560535629821737,
+  "interpretation": "Diagnostic after bounding-box alignment; not a material/depth score or production acceptance claim. Reference mask inferred from luminance and hole filling."
+}

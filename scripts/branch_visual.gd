@@ -4,11 +4,12 @@ const FLEET=preload("res://scripts/visual_fleet.gd")
 const FINISH=preload("res://scripts/fleet_materials.gd")
 const GEO=preload("res://scripts/polished_geometry.gd")
 static var prototypes: Dictionary={}
+static var use_blender_assault := false
 
 static func decorate(ship: Node3D, branch: String) -> void:
 	if branch=="": return
 	var variant: int=ship.get_meta("form_variant",0)
-	var key:=branch+str(variant)
+	var key:=branch+str(variant)+("_blender" if branch=="assault" and use_blender_assault else "")
 	if not prototypes.has(key):
 		var template:=build(branch,variant)
 		var packed:=PackedScene.new()
@@ -25,9 +26,37 @@ static func decorate(ship: Node3D, branch: String) -> void:
 	var extent: float=assembly.get_meta("extent")
 	ship.scale=Vector3.ONE*(length/extent)
 	ship.set_meta("extent",extent)
-	var glow: MeshInstance3D=assembly.get_node("Surface4")
-	glow.material_override=glow.material_override.duplicate()
-	ship.set_meta("glow_mat",glow.material_override)
+	if assembly.has_node("Surface4"):
+		var glow: MeshInstance3D=assembly.get_node("Surface4")
+		glow.material_override=glow.material_override.duplicate()
+		ship.set_meta("glow_mat",glow.material_override)
+	else:
+		for piece in assembly.find_children("*","MeshInstance3D",true,false):
+			for i in piece.mesh.get_surface_count():
+				var mat=piece.get_active_material(i)
+				if mat and mat.resource_name=="MAT_Energy":
+					var own: StandardMaterial3D=mat.duplicate()
+					piece.set_surface_override_material(i,own)
+					ship.set_meta("glow_mat",own)
+
+static func bounds_of(node: Node3D, parent_transform:=Transform3D.IDENTITY) -> AABB:
+	var transform: Transform3D=parent_transform*node.transform
+	var bounds:=AABB()
+	if node is MeshInstance3D: bounds=transform*node.mesh.get_aabb()
+	for child in node.get_children():
+		if child is Node3D: bounds=bounds.merge(bounds_of(child,transform))
+	return bounds
+
+static func blender_assault() -> Node3D:
+	var root:=Node3D.new()
+	var model: Node3D=load("res://assets/ships/blender-assault/assault.glb").instantiate()
+	model.rotation.x=PI/2 # Standard glTF XZ plane → this game's XY flight plane.
+	root.add_child(model)
+	model.owner=root
+	var bounds:=bounds_of(root)
+	model.position-=bounds.get_center()
+	root.set_meta("extent",maxf(bounds.size.x,bounds.size.y))
+	return root
 
 static func panel(m, points: Array, z: float, height: float, slot: int, side:=1.0) -> void:
 	var outline:=PackedVector2Array()
@@ -42,6 +71,7 @@ static func engine(m, x: float, y: float, width: float) -> void:
 	for i in 3: m.box(x,y-3+i*4,width,1,14,0)
 
 static func build(branch: String, variant: int) -> Node3D:
+	if branch=="assault" and use_blender_assault: return blender_assault()
 	var m=FLEET.new()
 	m.curve_segments=40
 	for color in [Color("152536"),Color("e4e6dd"),Color("6a8494"),Color("123f50"),Color("56d4e0"),Color("d7ad65")]:

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "events": [
+    "ASSAULT_REVIEW_READY",
+    "BLENDER_HULL_PREVIEW: assault.glb"
+  ],
+  "checks": [
+    "actual review scene loads",
+    "top and side preset controls",
+    "mouse orbit and wheel zoom",
+    "native button opens GLB flight preview",
+    "game starts and pauses"
+  ],
+  "errors": []
+}
