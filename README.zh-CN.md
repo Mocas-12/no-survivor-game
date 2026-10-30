@@ -35,7 +35,7 @@
 <img src="./screenshots/polish-fleet.png" width="100%" alt="20 种主角形态、6 类小怪与 6 种 Boss" />
 <img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="模块插画翻牌界面" />
 
-**部署状态：**截图来自当前源码。[在线试玩](https://mocas-12.github.io/no-survivor-game/)独立部署，可能仍显示旧版画面；合并源码不会自动替换 Pages 目录内的游戏包。
+**网页发布：**视觉精修版通过 `docs/` 发布到[在线试玩](https://mocas-12.github.io/no-survivor-game/)，版本标识和游戏包校验值见 [build-info.json](./docs/build-info.json)。后续源码改动仍需重新导出网页包才能更新 Pages。
 
 详见：[整体视觉改版](./docs/VISUAL-REDESIGN.md)、[翻牌、血条和敌舰](./docs/VISUAL-V2.md)、[模型表面精修](./docs/VISUAL-POLISH.md)。这些是有日期的开发记录，其中“尚未上传”描述的是记录时状态；视觉更新现已通过 [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) 合并。
 

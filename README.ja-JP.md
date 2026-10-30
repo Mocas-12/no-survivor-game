@@ -35,7 +35,7 @@
 <img src="./screenshots/polish-fleet.png" width="100%" alt="プレイヤー20形態と敵・ボス各6種" />
 <img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="モジュールカードのイラスト" />
 
-**公開状況：**画像は最新ソースのものです。[オンライン版](https://mocas-12.github.io/no-survivor-game/)は別途デプロイするため、旧ビジュアルの場合があります。ソースのマージだけではPagesのゲームファイルは更新されません。
+**Webリリース：**仕上げ済みビジュアル版を `docs/` から[オンライン版](https://mocas-12.github.io/no-survivor-game/)に配信します。ビルド識別子とパッケージのチェックサムは [build-info.json](./docs/build-info.json) を参照。今後もソース更新後にはWeb版の再エクスポートが必要です。
 
 詳細：[全体の改版](./docs/VISUAL-REDESIGN.md)、[カード・HUD・敵艦隊](./docs/VISUAL-V2.md)、[表面の仕上げ](./docs/VISUAL-POLISH.md)。これらは執筆時点の開発記録です。「未アップロード」は当時の状態を示し、現在は [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) でマージ済みです。
 

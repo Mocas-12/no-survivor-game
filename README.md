@@ -35,7 +35,7 @@ The latest source includes **20 player forms, 6 enemy types and 6 bosses includi
 <img src="./screenshots/polish-fleet.png" width="100%" alt="20 player forms, six enemy types and six bosses" />
 <img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="Illustrated module upgrade cards" />
 
-**Deployment status:** these screenshots show the current source. The existing [online build](https://mocas-12.github.io/no-survivor-game/) is deployed separately and may show the previous visuals; merging source does not replace the files served by Pages.
+**Web release:** the visual-polish build is distributed from `docs/` for [online play](https://mocas-12.github.io/no-survivor-game/). Build identity and package checksum are recorded in [build-info.json](./docs/build-info.json). Future source changes still require a new Web export to update Pages.
 
 Details: [visual redesign](./docs/VISUAL-REDESIGN.md), [cards, HUD and enemy fleet](./docs/VISUAL-V2.md), [surface polish](./docs/VISUAL-POLISH.md). These are dated development notes; their local-only status describes the time they were written. The visual work was merged in [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3).
 
