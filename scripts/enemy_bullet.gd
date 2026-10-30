@@ -96,5 +96,5 @@ func _on_body_entered(body):
 	if body.is_in_group("player"):
 		var world = get_tree().current_scene
 		if world.has_method("take_damage"):
-			world.take_damage(damage)
+			world.take_damage(damage,"projectile_"+style)
 		queue_free()

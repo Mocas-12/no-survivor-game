@@ -185,6 +185,8 @@ static func _activate_ability(w, form: int) -> void:
 	end_buff(w)
 	clear_aura(w)   # nova 无常驻光环：清掉旧形态光环，避免残留视觉
 	w.ability = ABILITY_ORDER[form % ABILITY_ORDER.size()]
+	if w.player.branch != "":
+		w.ability = {"assault":"overcharge","escort":"aegis","siege":"nova"}[w.player.branch]
 	var info: Dictionary = ABILITIES[w.ability]
 	var col: Color = info["color"]
 	var ability_name: String = I18n.T("ab_" + w.ability)

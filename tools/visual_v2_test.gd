@@ -36,13 +36,15 @@ func run() -> void:
 	current_scene = world
 	await process_frame
 	var draft = world.levelup_panel.get_node("ModuleDraft")
-	check(draft.textures.size()==20,"Every upgrade has a generated illustration")
+	check(draft.textures.size()==24,"Every upgrade has a generated illustration")
 	var readout := preload("res://scripts/module_readout.gd")
 	var unchanged := [world.health,world.max_health,world.player.damage,world.player.fire_cooldown,world.player.crit_chance,world.player.mark_boost]
 	for module_id in draft.IDS:
 		check(readout.describe(world,module_id,0).length()>0,"Actual-stat readout "+module_id)
 	check(unchanged==[world.health,world.max_health,world.player.damage,world.player.fire_cooldown,world.player.crit_chance,world.player.mark_boost],"Previewing every module changes no stats")
 	check(readout.describe(world,"fire_rate",0).contains("250 → 200"),"Fire-rate preview uses current base interval")
+	world._on_start_pressed()
+	world.run_time=18
 	world.add_xp(20)
 	var pending: int = world.pending_level_ups
 	check(pending>0 and world.levelup_panel.visible,"Actual experience opens the draft")
@@ -66,6 +68,7 @@ func run() -> void:
 	check(world.pending_level_ups==pending-1,"Exactly one pending upgrade consumed")
 	var guard := 0
 	while world.pending_level_ups>0 and guard<8:
+		world.run_time+=13
 		await create_timer(0.75).timeout
 		check(draft.cards.all(func(c):return c.front and not c.disabled),"Automatic flip finishes for queued draft")
 		world._on_upgrade_button_pressed(0)

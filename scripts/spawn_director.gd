@@ -14,6 +14,7 @@ const CYAN := Color(0.55, 0.9, 1)
 
 # 每帧调度：编队波次倒计时（Boss 战期间停用，由 world._process 驱动）
 static func process(w, delta: float) -> void:
+	if w.get("director") != null: return
 	if not w.boss_active and w.health > 0:
 		w.formation_cd -= delta
 		if w.formation_cd <= 0.0:
@@ -23,6 +24,9 @@ static func process(w, delta: float) -> void:
 # --- 抢滩刷怪 ---
 
 static func spawn_enemy(w) -> void:
+	if w.get("director") != null:
+		w.director.make_enemy(pick_enemy_type(w),Vector3(randf_range(-440,440),404,0))
+		return
 	var enemy = w.enemy_scene.instantiate()
 	# 抢滩登陆：敌机从屏幕上方随机位置出现
 	enemy.position = Vector3(randf_range(-576.0, 576.0), 404.0, 0.0)
@@ -80,6 +84,7 @@ static func _formation_pincer(w) -> void:
 			_spawn_formation_enemy(w, type, Vector3(-560.0 * dir, 330.0 + row * 46.0, 0.0), vx * dir)
 
 static func _spawn_formation_enemy(w, type: String, pos: Vector3, vx := 0.0) -> void:
+	if w.get("director") != null and not w.director.may_spawn(): return
 	var enemy = w.enemy_scene.instantiate()
 	enemy.position = pos
 	enemy.setup(type)
@@ -98,7 +103,7 @@ static func spawn_minions(w, n: int) -> void:
 static func maybe_boss(w) -> void:
 	if w.boss_active or w.health <= 0:
 		return
-	if w.kill_count >= w.next_boss_at:
+	if w.director.boss_ready() if w.get("director") != null else w.kill_count >= w.next_boss_at:
 		start_boss(w)
 
 static func start_boss(w) -> void:
@@ -157,6 +162,7 @@ static func _spawn_boss(w) -> void:
 
 static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w.boss_active = false
+	if w.get("director") != null: w.director.boss_defeated(is_omega)
 	w.boss_name_label.hide()
 	w.boss_bar.hide()
 
@@ -211,7 +217,7 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w._update_homing_btn()
 	w._toast(I18n.T("gain_homing"), GOLD)
 	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
-	var wave := mini(10 + w.boss_tier * 2, 22)
+	var wave := mini(4 + w.boss_tier, 10)
 	w.warning_label.text = I18n.T("warning_reinforce")
 	w.warning_label.modulate.a = 1.0
 	w.warning_label.show()

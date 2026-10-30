@@ -46,6 +46,8 @@ var homing = 0.0         # 转向速率（弧度/秒），0 = 无追踪
 var homing_time = 0.0    # 追踪持续时间
 var _retarget := 0.0     # 目标重扫描计时（避免每帧全组扫描）
 var _target: Node3D = null
+var pierce_left := 0
+var struck := {}
 var _active := false             # 池中休眠的子弹不参与逻辑
 var _fx_element := ""            # 当前特效所属元素（判断是否需要重建拖尾）
 var _has_water_fx := false       # 当前是否带波浪水花尾
@@ -74,6 +76,12 @@ static func _homing_mat() -> StandardMaterial3D:
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
 	damage = p_damage
+	pierce_left=0
+	struck.clear()
+	crit=0
+	reaction_boost=1.0
+	mark_boost=1.0
+	$Mesh.scale=Vector3.ONE
 	element = p_element
 	element_lv = maxi(p_element_lv, 1)
 	speed = 800.0 * p_speed_mul
@@ -284,9 +292,10 @@ func _recycle():
 
 # 当有物体进入子弹的检测范围时
 func _on_body_entered(body):
-	if not _active:
+	if not _active or not is_instance_valid(body) or struck.has(body.get_instance_id()):
 		return
 	if body.has_method("take_damage"):
+		struck[body.get_instance_id()]=true
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
 			world.spawn_hit_spark(global_position)
@@ -303,9 +312,19 @@ func _on_body_entered(body):
 			_fire_burst(world)
 		elif element == "wind":
 			_leaf_burst(world)
+		if body.get("kind")=="shield" and global_position.y < body.global_position.y and pierce_left==0:
+			dmg=maxi(1,roundi(dmg*0.45))
+		elif body.get("kind")!=null and pierce_left==0:
+			for guard in get_tree().get_nodes_in_group("mobs"):
+				if guard!=body and guard.get("kind")=="shield" and not guard.dead and guard.position.y<body.position.y and guard.position.distance_to(body.position)<115:
+					dmg=maxi(1,roundi(dmg*0.6))
+					break
 		body.take_damage(dmg)
 		_apply_element(body, world)
-		_recycle()
+		if pierce_left>0:
+			pierce_left-=1
+		else:
+			_recycle()
 
 # --- 元素命中特效与元素反应（随元素等级 / 连锁反应 / 元素延续增强） ---
 # 反应矩阵（先手留下标记，后手触发并消耗标记）：
@@ -378,6 +397,11 @@ func _apply_element(hit_body, world):
 		"lightning":
 			var chains := mini(2 + (lv - 1), 5)
 			var conduct: bool = is_mob and hit_body.wet_timer > 0.0
+			if is_mob and hit_body.slow_timer>0.0:
+				hit_body.slow_timer=0.0
+				chains=mini(chains+1,5)
+				hit_body.take_damage(maxi(1,roundi(damage*0.5)))
+				_reaction(world,"react_shatter",Color("9acbff"))
 			if conduct:
 				chains = mini(chains + 2, 7)   # 雷 + 水 = 感电：链式 +2
 			if is_mob and hit_body.burn_timer > 0.0:
@@ -423,6 +447,7 @@ func _apply_element(hit_body, world):
 
 # 反应提示：命中点浮起反应名
 func _reaction(world, key: String, color: Color):
+	if world.get("director") != null: world.director.reactions+=1
 	if world.has_method("spawn_reaction_text"):
 		world.spawn_reaction_text(global_position, key, color)
 

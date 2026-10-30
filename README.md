@@ -23,6 +23,10 @@
 
 ---
 
+## Gameplay development branch
+
+The local `codex/run-variety` revision adds main + auxiliary builds, paced encounters, selectable evolution frames and a discovery archive. See [implementation and test notes](./docs/RUN-VARIETY.md). This gameplay revision is not included in the current Pages release.
+
 ## Current visual edition
 
 The latest source includes **20 player forms, 6 enemy types and 6 bosses including OMEGA**, with a rebuilt presentation layer. Combat rules, collision shapes, upgrade effects and save format are preserved.

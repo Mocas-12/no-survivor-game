@@ -44,6 +44,10 @@ var fire_cd = 0.0
 var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
 var max_hp = 3           # 满血血量（决定掉落的水晶档位）
 var model: Node3D = null
+var elite := false
+var shot_aim := Vector3.DOWN
+var cue: MeshInstance3D
+var hit_tween: Tween
 
 @onready var player = get_tree().get_first_node_in_group("player")
 
@@ -65,6 +69,41 @@ func setup(type: String):
 	$Sparks.color = Color(1, 0.92, 0.75)
 	if type == "shooter":
 		fire_cd = randf_range(1.0, 2.2)
+	if type in ["shooter","fast","tank"]:
+		cue=MeshInstance3D.new()
+		var beam:=BoxMesh.new()
+		beam.size=Vector3(2,220,0.4)
+		cue.mesh=beam
+		cue.position=Vector3(0,-135,2)
+		var mat:=StandardMaterial3D.new()
+		mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.albedo_color=Color(1,0.45,0.3,0.4)
+		cue.material_override=mat
+		cue.visible=false
+		add_child(cue)
+	if type=="tank": fire_cd=3.0
+
+func make_elite() -> void:
+	elite=true
+	health=24+maxi(0,health-12)
+	max_hp=health
+	score_value=80
+	speed=55
+	var halo:=MeshInstance3D.new()
+	var mesh:=TorusMesh.new()
+	mesh.inner_radius=37
+	mesh.outer_radius=40
+	mesh.rings=32
+	mesh.ring_segments=8
+	halo.mesh=mesh
+	halo.rotation.x=PI/2
+	halo.position.z=8
+	var material:=StandardMaterial3D.new()
+	material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color=Color("e7bf78")
+	halo.material_override=material
+	model.add_child(halo)
 
 # Boss 波数越高，敌机血量越厚（复合成长：对冲玩家后期 DPS，维持清场压力）
 func apply_tier(tier: int):
@@ -93,6 +132,7 @@ func _physics_process(delta):
 			# 快速机：冲刺——滑行 0.8 秒 → 猛冲 0.5 秒循环，速度 ×2.2
 			var burst := 2.2 if fmod(phase_t, 1.3) > 0.8 else 1.0
 			vel *= burst
+			cue.visible=fmod(phase_t,1.3)>0.50 and fmod(phase_t,1.3)<0.8
 		"shooter":
 			# 炮手机：压到上半区悬停开火 4 秒，随后继续俯冲
 			if hover_y < -9000.0:
@@ -112,6 +152,7 @@ func _physics_process(delta):
 			# 重装机：顿挫式推进——走 1 秒停 0.35 秒，压迫感十足
 			if fmod(phase_t, 1.35) > 1.0:
 				vel = Vector3.ZERO
+			if elite and position.y<140: vel.y=0
 	velocity = vel
 	move_and_slide()
 
@@ -121,15 +162,23 @@ func _physics_process(delta):
 		return
 
 	# 炮手机：机身不转向，炮口仍瞄准玩家开火
-	if kind == "shooter" and player:
+	if kind in ["shooter","tank"] and player:
 		fire_cd -= delta
+		if fire_cd>0 and fire_cd<=0.65:
+			if not cue.visible:
+				shot_aim=(player.global_position-global_position).normalized()
+			cue.visible=true
+			cue.rotation.z=Vector2(shot_aim.x,shot_aim.y).angle()+PI/2
+			cue.position=shot_aim*135+Vector3(0,0,2)
 		if fire_cd <= 0.0:
-			fire_cd = randf_range(2.0, 2.8)
-			var to_p = player.global_position - global_position
-			var aim = Vector2(to_p.x, to_p.y).normalized()
+			fire_cd = randf_range(2.8, 3.4)
+			cue.visible=false
 			var world = get_tree().current_scene
 			if world.has_method("spawn_enemy_bullet"):
-				world.spawn_enemy_bullet(global_position + Vector3(aim.x, aim.y, 0.0) * 30.0, Vector3(aim.x, aim.y, 0.0), 210.0)
+				if kind=="tank":
+					for angle in [-0.22,0,0.22]:
+						world.spawn_enemy_bullet(global_position+shot_aim*35,shot_aim.rotated(Vector3.BACK,angle),150,1,0,0,"destructor")
+				else: world.spawn_enemy_bullet(global_position+shot_aim*30,shot_aim,210)
 
 	# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
 	for i in get_slide_collision_count():
@@ -152,10 +201,11 @@ func take_damage(amount):
 		return
 	health -= amount
 	# 受击反馈：轻微膨胀
-	var base = Vector3.ONE * STATS[kind]["scale"]
-	var tw = create_tween()
-	tw.tween_property(self, "scale", base * 1.12, 0.04)
-	tw.tween_property(self, "scale", base, 0.08)
+	if hit_tween: hit_tween.kill()
+	model.scale=Vector3.ONE
+	hit_tween = create_tween()
+	hit_tween.tween_property(model, "scale", Vector3.ONE * 1.1, 0.04)
+	hit_tween.tween_property(model, "scale", Vector3.ONE, 0.08)
 	if health <= 0:
 		die()
 
@@ -177,5 +227,6 @@ func die():
 	$Sparks.emitting = true
 	if model:
 		model.visible = false
+	if cue: cue.hide()
 	await get_tree().create_timer(0.6).timeout
 	queue_free()
