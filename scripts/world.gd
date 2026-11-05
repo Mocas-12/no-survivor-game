@@ -23,6 +23,8 @@ const UI_FONT := preload("res://assets/fonts/NoSurvivorUI.ttf")
 const SFX := {
 	"shoot": preload("res://assets/sounds/shoot.wav"),
 	"hit": preload("res://assets/sounds/hit.wav"),
+	"metal_hit": preload("res://assets/sounds/metal_hit.wav"),
+	"heavy_hit": preload("res://assets/sounds/heavy_hit.wav"),
 	"explode": preload("res://assets/sounds/explode.wav"),
 	"pickup": preload("res://assets/sounds/pickup.wav"),
 	"levelup": preload("res://assets/sounds/levelup.wav"),
@@ -33,6 +35,7 @@ const SFX := {
 }
 
 # 2. 核心变量
+var director: Node
 var score = 0
 var health = 10
 var max_health = 10
@@ -125,8 +128,23 @@ var bgm_player: AudioStreamPlayer
 
 func _ready():
 	Engine.time_scale = 1.0
-	# 预热全部飞船模型与涂装：变形换装零加载卡顿
+	if OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('review') === 'fleet'",true)):
+		set_process(false)
+		player.set_physics_process(false)
+		$Timer.stop()
+		get_tree().change_scene_to_file.call_deferred("res://scenes/fleet_review.tscn")
+		return
+	if OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('review') === 'assault'",true)):
+		set_process(false)
+		player.set_physics_process(false)
+		$Timer.stop()
+		get_tree().change_scene_to_file.call_deferred("res://scenes/assault_review.tscn")
+		return
+	var hull_preview: bool=OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('hull') === 'blender'",true))
+	preload("res://scripts/branch_visual.gd").use_blender_assault=hull_preview
+	# 预热基础舰与敌人资源；分支舰体按需共享加载。
 	MB.warm_up()
+	if preload("res://scripts/blender_fleet.gd").enabled: print("BLENDER_FLEET_ACTIVE")
 	# 音效播放器对象池（暂停菜单/开始面板期间音效不中断）
 	for i in 14:
 		var p := AudioStreamPlayer.new()
@@ -215,6 +233,15 @@ func _ready():
 	start_panel.show()
 	preload("res://scripts/visual_finish.gd").apply(self)
 	preload("res://scripts/visual_ui.gd").apply($UI)
+	director=preload("res://scripts/run_director.gd").new()
+	director.name="RunDirector"
+	add_child(director)
+	if hull_preview:
+		print("BLENDER_HULL_PREVIEW: assault.glb")
+		# Art preview starts with the prototype skin; weapon rules and the branch choice remain unchanged.
+		preload("res://scripts/branch_visual.gd").decorate(player.model,"assault")
+		player._glow_mat=player.model.get_meta("glow_mat")
+		$UI/StartPanel/Hint.text+="\nBlender · 突击舰原型预览"
 
 func _process(delta):
 	# 多层星空向下滚动（UV 偏移驱动）
@@ -244,7 +271,7 @@ func _unhandled_input(event):
 		return
 	# Esc 打开暂停（关闭方向由 pause_menu.gd 在暂停状态下处理）
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
+		if dying or (director and director.choosing) or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
 			return
 		_open_pause()
 		get_viewport().set_input_as_handled()
@@ -285,6 +312,7 @@ func spawn_minions(n: int):
 func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 	score += value
 	kill_count += 1
+	if director: director.killed()
 
 	# 纳米修复：击杀有概率回复 1 点生命
 	if ability == "leech" and health > 0 and health < max_health and randf() < 0.1:
@@ -292,9 +320,8 @@ func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 
 	# 击杀演出：3D 爆炸粒子 + 冲击波环 + 音效 + 震屏
 	spawn_explosion(pos, fx_color, value >= 30)
-	spawn_ring(pos, fx_color, 0.35, 2.0, 0.35)
 	play_sfx("explode", -8.0, 0.12)
-	_shake(6.0 if value >= 30 else 2.5)
+	_shake(6.0 if value >= 30 else 0.7)
 
 	# 掉落经验水晶：按敌机血量分三档（白 1 / 绿 3 / 紫 8）
 	var tier := 1
@@ -320,7 +347,7 @@ func add_xp(amount):
 		xp_to_next = 5 + level * 3
 		pending_level_ups += 1
 	update_ui()
-	if pending_level_ups > 0 and not levelup_panel.visible:
+	if pending_level_ups > 0 and director.can_draft():
 		show_level_up()
 
 # --- Boss 战（实现在 spawn_director.gd，这里保留外部调用面：smoke_test / capture.gd / 信号连接） ---
@@ -358,7 +385,7 @@ func spawn_lightning(from: Vector3, to: Vector3):
 
 func apply_core(form):
 	FormAbility.apply_core(self, form)
-# --- 升级三选一（19 张卡池随机抽 3，可叠加卡显示 Lv.N） ---
+# --- 升级三选一（23 张卡池随机抽 3，可叠加卡显示 Lv.N） ---
 
 func show_level_up():
 	$TouchUI.reset()   # 暂停前复位摇杆，防止恢复后方向残留
@@ -376,8 +403,7 @@ func show_level_up():
 	pulse_player()
 
 	var available = upgrade_pool.filter(func(u): return u["can"].call())
-	available.shuffle()
-	var choices = available.slice(0, 3)
+	var choices = director.offer(available).slice(0, 3)
 	# 超后期卡池枯竭时用紧急维修补位
 	while choices.size() < 3:
 		choices.append(Upgrades.repair_card(self))
@@ -401,10 +427,16 @@ func _on_upgrade_button_pressed(index):
 
 func _apply_upgrade_choice(index):
 	var up = upgrade_buttons[index].get_meta("upgrade")
+	# Apply permanent upgrades to unbuffed stats so the timed buff cannot erase them on expiry.
+	var active_buff: String=buff_kind
+	var remaining: float=buff_left
+	if active_buff!="": FormAbility.end_buff(self)
 	up["apply"].call()
+	if active_buff!="" and remaining>0: FormAbility._start_buff(self,active_buff,remaining)
 	card_taken[up["id"]] = int(card_taken.get(up["id"], 0)) + 1
 	pending_level_ups -= 1
-	if pending_level_ups > 0:
+	director.upgrade_applied(up["id"])
+	if pending_level_ups > 0 and director.can_draft():
 		show_level_up()
 	else:
 		levelup_panel.hide()
@@ -419,6 +451,8 @@ func _apply_upgrade_choice(index):
 
 # 元素弹头：切换 / 升级（各元素等级独立保留，随时切回来继续）
 func pick_element(id: String):
+	if player.element_levels.values().all(func(lv): return int(lv)==0):
+		player.damage+=1
 	player.element = id
 	player.element_levels[id] = int(player.element_levels.get(id, 0)) + 1
 
@@ -429,7 +463,7 @@ func pick_pattern(id: String):
 
 # --- 受伤 / 复活 / 阵亡结算 ---
 
-func take_damage(amount):
+func take_damage(amount, source := "collision"):
 	if dying:
 		return
 	# 0.35 秒受伤无敌帧，避免被弹幕一帧多连击穿
@@ -442,6 +476,9 @@ func take_damage(amount):
 	if ability == "aegis":
 		amount = maxi(1, amount - 1)
 	health -= amount
+	if director:
+		director.metrics.damage_taken += amount
+		director.metrics["last_damage_source"]=source
 	play_sfx("hit", -2.0, 0.15)
 	update_ui()
 	if health <= 0:
@@ -516,9 +553,10 @@ func update_ui():
 	if boss_active:
 		$Timer.wait_time = 1.7
 	else:
-		$Timer.wait_time = max(0.3, 0.9 - score * 0.002)
+		$Timer.wait_time = director.spawn_interval() if director else 1.05
 
 func game_over():
+	director.record_run()
 	# 结算 + 存档（新纪录才覆盖最高分）
 	is_new_record = score > high_score
 	if is_new_record:
@@ -541,6 +579,7 @@ func _show_victory():
 	# 若延迟期间玩家已阵亡，让位于败北结算
 	if dying or game_over_panel.visible or not omega_slain:
 		return
+	director.record_run()
 	var mins := int(run_time) / 60
 	var secs := int(run_time) % 60
 	victory_stats_label.text = "%s\n%s · %s\n%s" % [
@@ -571,7 +610,7 @@ func _continue_endless():
 # --- 暂停菜单 ---
 
 func _open_pause():
-	if dying or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
+	if dying or (director and director.choosing) or levelup_panel.visible or start_panel.visible or game_over_panel.visible or victory_panel.visible:
 		return
 	$TouchUI.reset()
 	pause_button.hide()
@@ -633,10 +672,10 @@ func spawn_reaction_text(pos: Vector3, key: String, color: Color):
 	var lbl := Label3D.new()
 	lbl.text = I18n.T(key)
 	lbl.font = UI_FONT
-	lbl.font_size = 64
-	lbl.pixel_size = 1.1
+	lbl.font_size = 38
+	lbl.pixel_size = .65
 	lbl.modulate = color
-	lbl.outline_size = 20
+	lbl.outline_size = 8
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true
 	lbl.position = pos
@@ -670,11 +709,12 @@ func spawn_explosion(pos: Vector3, color: Color, big := false):
 func confetti_burst(pos: Vector3, amount: int, color: Color = GOLD):
 	Fx.confetti(self, pos, amount, color)
 
-func spawn_hit_spark(pos: Vector3):
-	play_sfx("hit", -10.0, 0.15)
-	var s := hit_spark_scene.instantiate()
-	s.position = pos
-	add_child(s)
+func spawn_hit_spark(pos: Vector3,element: String="normal",amount:=1,direction:=Vector3.UP):
+	var now=Time.get_ticks_msec()
+	if now-int(get_meta("impact_audio",-1000))>45:
+		set_meta("impact_audio",now)
+		play_sfx("heavy_hit" if amount>=8 else "metal_hit",-13,.12)
+	preload("res://scripts/layered_fx.gd").burst(self,pos,"hit",.7 if amount<8 else 1.0)
 
 func flash_ui(color: Color, peak: float):
 	if reduce_fx:
@@ -694,6 +734,7 @@ func pulse_player():
 # --- 开始面板 ---
 
 func _on_start_pressed():
+	if director and director.archive_panel.visible: return
 	start_panel.hide()
 	pause_button.show()
 	get_tree().paused = false
@@ -711,6 +752,8 @@ func _request_web_fullscreen():
 # --- 结算栏按钮的功能代码 ---
 
 func _on_restart_button_pressed():
+	var data=SaveGame.load_data()
+	SaveGame.save_data({"restart_count":int(data.get("restart_count",0))+1})
 	Engine.time_scale = 1.0
 	get_tree().paused = false
 	get_tree().reload_current_scene()

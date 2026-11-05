@@ -31,18 +31,24 @@ const BOSS_SHIPS := {
 # ---------- 主角：20 形态 ----------
 
 static func build_player_form(n: int) -> Node3D:
+	if preload("res://scripts/blender_fleet.gd").enabled:
+		return preload("res://scripts/blender_fleet.gd").player(n)
 	return FLEET.ship("player", n, 115.0 + n * 1.8, false, Color(0.28, 0.87, 1.0))
 
 # ---------- 敌机（6 种，机头朝玩家俯冲） ----------
 
 static func build_enemy(kind: String) -> Node3D:
 	var cfg: Array = ENEMY_SHIPS[kind]
+	if preload("res://scripts/blender_hostiles.gd").enabled:
+		return preload("res://scripts/blender_hostiles.gd").build("enemy",ENEMY_SHIPS.keys().find(kind),cfg[2])
 	return FLEET.ship("enemy", ENEMY_SHIPS.keys().find(kind), cfg[2], true, cfg[3])
 
 # ---------- BOSS（5 种，机头朝下方面对玩家） ----------
 
 static func build_boss(id: int) -> Node3D:
 	var cfg: Array = BOSS_SHIPS[id]
+	if preload("res://scripts/blender_hostiles.gd").enabled:
+		return preload("res://scripts/blender_hostiles.gd").build("boss",id,cfg[2])
 	return FLEET.ship("boss", id, cfg[2], true, cfg[3])
 
 # ---------- 通用飞船装配：涂装 + 归一化 + 朝向 ----------
@@ -52,8 +58,8 @@ static var _cache := {}
 # 预热全部模型与涂装（开局调用，避免变形瞬间同步加载掉帧）
 static func warm_up() -> void:
 	# Cache original meshes once; all actors share the immutable surface buffers.
-	for n in 20:
-		build_player_form(n).free()
+	# New hull tiers are requested on demand rather than preloading every family.
+	build_player_form(0).free()
 	for kind in ENEMY_SHIPS:
 		build_enemy(kind).free()
 	for id in BOSS_SHIPS:

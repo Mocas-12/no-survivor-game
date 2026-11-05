@@ -1,0 +1,488 @@
+[
+  {
+    "family": "escort",
+    "tier": 0,
+    "triangles": 18000,
+    "high_triangles": 39608,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 836,
+      "2": 386,
+      "3": 768,
+      "4": 2346
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Shield_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Shield_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04",
+      "SM_Bay_Left",
+      "SM_Bay_Right"
+    ],
+    "editable_parts": 78,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\escort-0"
+  },
+  {
+    "family": "escort",
+    "tier": 1,
+    "triangles": 18000,
+    "high_triangles": 43072,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 742,
+      "2": 350,
+      "3": 768,
+      "4": 2294
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Shield_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Shield_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04",
+      "SM_Bay_Left",
+      "SM_Bay_Right"
+    ],
+    "editable_parts": 80,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\escort-1"
+  },
+  {
+    "family": "escort",
+    "tier": 2,
+    "triangles": 18000,
+    "high_triangles": 44304,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 732,
+      "2": 326,
+      "3": 768,
+      "4": 2148
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Shield_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Shield_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04",
+      "SM_Bay_Left",
+      "SM_Bay_Right"
+    ],
+    "editable_parts": 84,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\escort-2"
+  },
+  {
+    "family": "escort",
+    "tier": 3,
+    "triangles": 18000,
+    "high_triangles": 47768,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 718,
+      "2": 298,
+      "3": 668,
+      "4": 1960
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Shield_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Shield_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04",
+      "SM_Bay_Left",
+      "SM_Bay_Right"
+    ],
+    "editable_parts": 86,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\escort-3"
+  },
+  {
+    "family": "siege",
+    "tier": 0,
+    "triangles": 18000,
+    "high_triangles": 42680,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 864,
+      "2": 414,
+      "4": 2468,
+      "3": 864
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage04",
+      "SM_Stage03"
+    ],
+    "editable_parts": 77,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\siege-0"
+  },
+  {
+    "family": "siege",
+    "tier": 1,
+    "triangles": 18000,
+    "high_triangles": 45472,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 860,
+      "2": 408,
+      "4": 2422,
+      "3": 864
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage04",
+      "SM_Stage03"
+    ],
+    "editable_parts": 79,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\siege-1"
+  },
+  {
+    "family": "siege",
+    "tier": 2,
+    "triangles": 18000,
+    "high_triangles": 46448,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 832,
+      "2": 394,
+      "3": 768,
+      "4": 2366
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Weapon_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 83,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\siege-2"
+  },
+  {
+    "family": "siege",
+    "tier": 3,
+    "triangles": 18000,
+    "high_triangles": 49912,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 786,
+      "2": 350,
+      "3": 768,
+      "4": 2314
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Weapon_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 85,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\siege-3"
+  },
+  {
+    "family": "assault",
+    "tier": 0,
+    "triangles": 18000,
+    "high_triangles": 57296,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 588,
+      "2": 270,
+      "3": 576,
+      "4": 1316
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Weapon_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Weapon_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 99,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\assault-0"
+  },
+  {
+    "family": "assault",
+    "tier": 1,
+    "triangles": 18000,
+    "high_triangles": 60088,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 588,
+      "2": 264,
+      "3": 576,
+      "4": 1304
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Weapon_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Weapon_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 101,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\assault-1"
+  },
+  {
+    "family": "assault",
+    "tier": 2,
+    "triangles": 18000,
+    "high_triangles": 63768,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 586,
+      "2": 256,
+      "3": 576,
+      "4": 1294
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Weapon_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Weapon_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 105,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\assault-2"
+  },
+  {
+    "family": "assault",
+    "tier": 3,
+    "triangles": 18000,
+    "high_triangles": 67992,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "1": 560,
+      "2": 254,
+      "3": 576,
+      "4": 1258
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Weapon_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Weapon_Right",
+      "SM_Engine_Right",
+      "SM_Stage01",
+      "SM_Stage02",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 109,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\assault-3"
+  },
+  {
+    "family": "common",
+    "tier": 0,
+    "triangles": 18000,
+    "high_triangles": 33352,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "2": 1122,
+      "1": 976,
+      "3": 864,
+      "4": 2920
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage02",
+      "SM_Weapon_Left",
+      "SM_Weapon_Right",
+      "SM_Stage01",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 57,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\common-0"
+  },
+  {
+    "family": "common",
+    "tier": 1,
+    "triangles": 18000,
+    "high_triangles": 33520,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "2": 1110,
+      "1": 976,
+      "3": 864,
+      "4": 2920
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Stage02",
+      "SM_Weapon_Left",
+      "SM_Weapon_Right",
+      "SM_Stage01",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 59,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\common-1"
+  },
+  {
+    "family": "common",
+    "tier": 2,
+    "triangles": 18000,
+    "high_triangles": 36984,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "2": 978,
+      "1": 976,
+      "3": 864,
+      "4": 2920
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Weapon_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Weapon_Right",
+      "SM_Stage02",
+      "SM_Stage01",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 61,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\common-2"
+  },
+  {
+    "family": "common",
+    "tier": 3,
+    "triangles": 18000,
+    "high_triangles": 37200,
+    "non_manifold_edges": 0,
+    "material_roles": 6,
+    "stage_triangles": {
+      "2": 950,
+      "1": 976,
+      "3": 864,
+      "4": 2920
+    },
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Engine_Left",
+      "SM_Weapon_Left",
+      "SM_Wing_Right",
+      "SM_Engine_Right",
+      "SM_Weapon_Right",
+      "SM_Stage02",
+      "SM_Stage01",
+      "SM_Stage03",
+      "SM_Stage04"
+    ],
+    "editable_parts": 63,
+    "normal_ao": 1024,
+    "source": "assets\\art-direction\\branches\\blender-fleet\\common-3"
+  }
+]

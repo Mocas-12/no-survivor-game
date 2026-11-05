@@ -36,6 +36,8 @@ func _physics_process(delta):
 func _on_body_entered(body):
 	if body.is_in_group("player"):
 		var world = get_tree().current_scene
-		if world.has_method("apply_core"):
+		if world.get("director") != null:
+			world.director.request_evolution(form_target)
+		elif world.has_method("apply_core"):
 			world.apply_core(form_target)
 		queue_free()

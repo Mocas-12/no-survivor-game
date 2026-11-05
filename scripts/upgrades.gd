@@ -1,6 +1,6 @@
 extends Object
 
-# 升级卡池：19 张卡 + 紧急维修兜底（从 world.gd 拆出）
+# 升级卡池：23 张卡 + 紧急维修兜底（从 world.gd 拆出）
 # 每张卡：id（对应 i18n 的 card_<id> / card_<id>_d）、can（能否出现）、apply（选中效果）
 # 可重复选取的卡由 world.card_taken 计数，显示 "Lv.N"
 # 注意：多语句效果一律走静态辅助函数，避免字典内多行 lambda 的解析坑
@@ -18,8 +18,6 @@ static func _armor(w) -> void:
 
 static func _fire(w) -> void:
 	w.pick_element("fire")
-	if int(w.player.element_levels.get("fire", 0)) == 1:
-		w.player.damage += 1   # 首次选择火焰弹头保留原有的 +1 伤害
 
 static func _wide(w) -> void:
 	w.player.spacing_scale = 1.6
@@ -46,6 +44,10 @@ static func _element_last(w) -> void:
 static func build(w) -> Array:
 	var player = w.player
 	return [
+		{"id":"pierce", "can":func(): return player.pierce_level<2, "apply":func(): player.pierce_level+=1},
+		{"id":"aux_water", "can":func(): return player.auxiliary!="water" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"water")},
+		{"id":"aux_ice", "can":func(): return player.auxiliary!="ice" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"ice")},
+		{"id":"aux_homing", "can":func(): return player.auxiliary!="homing" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"homing")},
 		{"id": "fire_rate", "can": func(): return player.fire_cooldown > 0.06,
 			"apply": func(): player.fire_cooldown = maxf(0.055, player.fire_cooldown * 0.8)},
 		{"id": "damage", "can": func(): return true,
@@ -87,9 +89,9 @@ static func build(w) -> Array:
 			"apply": func(): _crit(w)},
 		{"id": "velocity", "can": func(): return int(w.card_taken.get("velocity", 0)) < 3,
 			"apply": func(): _velocity(w)},
-		{"id": "chain_reaction", "can": func(): return int(w.card_taken.get("chain_reaction", 0)) < 2,
+		{"id": "chain_reaction", "can": func(): return player.auxiliary in ["water","ice"] and player.element != "normal" and int(w.card_taken.get("chain_reaction", 0)) < 2,
 			"apply": func(): _chain_reaction(w)},
-		{"id": "element_last", "can": func(): return int(w.card_taken.get("element_last", 0)) < 2,
+		{"id": "element_last", "can": func(): return player.auxiliary in ["water","ice"] and int(w.card_taken.get("element_last", 0)) < 2,
 			"apply": func(): _element_last(w)},
 		{"id": "wide", "can": func(): return player.spacing_scale < 1.6 and player.pattern != "homing",
 			"apply": func(): _wide(w)},
@@ -101,3 +103,8 @@ static func build(w) -> Array:
 		{"id": "revive", "can": func(): return w.revive_charges == 0,
 			"apply": func(): w.revive_charges += 1},
 	]
+
+static func auxiliary(w, id: String) -> void:
+	w.player.auxiliary_level = mini(w.player.auxiliary_level+1,3) if w.player.auxiliary==id else 1
+	w.player.auxiliary=id
+	w.player.auxiliary_timer=0.1

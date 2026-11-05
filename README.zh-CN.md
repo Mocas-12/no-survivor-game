@@ -6,38 +6,40 @@
 
 **Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大轮换 Boss 与终局 OMEGA、元素武器、形态进化**
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-立即游玩-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-立即游玩-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
-[![Web](https://img.shields.io/badge/Platform-浏览器%20%7C%20手机-525252)](https://mocas-12.github.io/no-survivor-game/)
+[![Web](https://img.shields.io/badge/Platform-浏览器%20%7C%20手机-525252)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 
-**[🌐 在线游玩（GitHub Pages）](https://mocas-12.github.io/no-survivor-game/)**
+**[🌐 在线游玩（GitHub Pages）](https://mocas-12.github.io/no-survivor-game/?v=266eae6)**
 
 [English](./README.md) | **简体中文** | [日本語](./README.ja-JP.md)
 
 *桌面：移动鼠标驾驶战机，火力全自动 · 手机：左半屏摇杆移动*
 
-<img src="./screenshots/polish-gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/polish-boss.png" width="32%" alt="Boss 战" /> <img src="./screenshots/polish-victory.png" width="32%" alt="胜利结算" />
+<img src="./screenshots/combat-web-gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/combat-web-omega-p3.png" width="32%" alt="Boss 战" /> <img src="./screenshots/polish-victory.png" width="32%" alt="胜利结算" />
 
 </div>
 
 ---
 
-## 当前视觉版本
+## 当前版本 · Blender 舰队与分层战斗特效
 
-最新源码包含 **20 种主角形态、6 类小怪、6 种 Boss（含 OMEGA）**，已重做模型、材质与战斗界面。战斗规则、碰撞形状、升级效果和存档格式保持原样。
+[立即试玩新版](https://mocas-12.github.io/no-survivor-game/?v=266eae6) · [舰队机库](https://mocas-12.github.io/no-survivor-game/?review=fleet&v=266eae6) · [六种反应特效台](https://mocas-12.github.io/no-survivor-game/?review=fleet&fx=1&v=266eae6)
 
-- **舰队美术：**小怪和 Boss 使用独立轮廓；装甲采用平整面板、圆润倒角，座舱与圆环平滑处理，区分喷漆、金属、玻璃和能源材质。
-- **战斗辨识：**不同来源的专属弹体、玩家装甲仪表、Boss 阶段刻度与延迟扣血反馈。
-- **插画翻牌：**20 张模块插画（19 张卡池加紧急维修兜底），支持卡背揭示、快速翻开、键盘和触摸选择，以及当前 → 下一属性预览。边框表示模块类别，不表示稀有度。
-- **显示清晰度：**桌面 4× 抗锯齿、触屏设备 2× 抗锯齿、高分屏画布适配，并保留减少闪光设置。低端实体手机性能仍需实测。
+- **舰队模型：**基础、突击、护航、攻坚四个系列，共16个 Blender 主舰体阶段，每阶段5种累积装备配置，共80种配置；另有6类小怪、6种 Boss 的独立舰体及材质。
+- **Boss 暴走：**六种 P2 展开舰体与独立攻击方式，OMEGA 增加 P3 核心展开。切换期间短暂停止新攻击，玩家仍可移动射击。
+- **构筑与探索：**独立主炮和辅助武器、分支进化、编队节奏与探索档案。
+- **元素反应：**六组双向组合，普通减速与冰霜状态分开；Boss 具有控制抗性。
+- **战斗特效：**湍流烟雾、侵蚀火焰、不规则冰晶和分支电弧，按闪光、爆发、碎屑与余烟、消散分层播放；支持低特效档与对象复用。
+- **界面与辨识：**插画翻牌、装甲仪表、Boss 阶段刻度；小怪使用局部蓄光提示开火。
 
-<img src="./screenshots/polish-fleet.png" width="100%" alt="20 种主角形态、6 类小怪与 6 种 Boss" />
-<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="模块插画翻牌界面" />
+<img src="./screenshots/fleet-effects-combat.png" width="100%" alt="使用实际模型与特效的受控战斗演示" />
+<img src="./screenshots/vfx-timeline/0200ms.png" width="100%" alt="六组元素反应在0.2秒时的实际渲染" />
 
-**网页发布：**视觉精修版通过 `docs/` 发布到[在线试玩](https://mocas-12.github.io/no-survivor-game/)，版本标识和游戏包校验值见 [build-info.json](./docs/build-info.json)。后续源码改动仍需重新导出网页包才能更新 Pages。
+网页版由 `main/docs` 发布，加载器、WASM 和游戏包均使用带版本号的文件名，避免读取旧缓存。[版本与 SHA-256 校验](./docs/build-info.json)。首次加载约62MB游戏数据及引擎文件；实体手机性能与完整通关平衡仍待验证。
 
-详见：[整体视觉改版](./docs/VISUAL-REDESIGN.md)、[翻牌、血条和敌舰](./docs/VISUAL-V2.md)、[模型表面精修](./docs/VISUAL-POLISH.md)。这些是有日期的开发记录，其中“尚未上传”描述的是记录时状态；视觉更新现已通过 [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) 合并。
+实现与验证：[舰队源文件](./docs/BLENDER-FLEET-QA.md)、[战斗规则](./docs/COMBAT-REVISION.md)、[特效技能与实测](./docs/VFX-REWORK.md)、[构筑与节奏](./docs/RUN-VARIETY.md)。旧文档中的“仅本地”描述属于当时的开发记录，以本次发布为准。
 
 ## 📖 目录
 
@@ -131,9 +133,9 @@
 | 🎇 多重弹道 | 每轮齐射多一发（最多 7 发） |
 | 👟 疾跑强化 | 移动速度 +12%（最高 Lv.5） |
 | 🛡️ 装甲强化 | 生命上限 +2 并回复 4 点（可叠加） |
-| 🔴 火焰弹头 | 火元素：命中溅射邻近敌机，伤害 +1 |
+| 🔴 火焰弹头 | 火元素：留下灼烧标记与持续伤害，伤害 +1 |
 | 💧 水元素 | 水元素：浸润并击退敌机，可与火/雷/冰触发元素反应 |
-| 🔵 寒冰弹头 | 冰元素：命中减速敌机 45%，持续 1.6 秒 |
+| 🔵 寒冰弹头 | 冰元素：独立冰霜减速，可准备冻结、融化或碎裂 |
 | 🟣 雷电弹头 | 雷元素：链式电击最多 2 个邻近目标 |
 | 🟢 疾风弹头 | 风元素：弹速 +40%，命中把周围敌机聚向一点 |
 | 🌠 扩散弹幕 | 扇形张开，弹道 +1 |
@@ -148,16 +150,17 @@
 
 **元素反应**（先手留下标记，后手触发并消耗标记，命中点会浮出反应名）：
 
-| 反应 | 组合 | 效果 |
+| 反应 | 组合（双向） | 效果 |
 | --- | --- | --- |
-| 蒸汽 | 火 + 水 | 白雾爆发，小范围灼伤 |
-| 超载 | 雷 + 火 | 橙红大爆炸，范围重创 |
-| 冻结 | 冰 + 水 | 目标近乎冻结 1.2 秒 |
-| 感电 | 雷 + 水 | 链式电击 +2 目标 |
-| 火龙卷 | 风 + 火 | 火柱螺旋上腾，双层冲击波 |
-| 龙卷 | 风 + 水 | 青白漩涡牵引周围敌机 |
-| 融化 | 火 + 冰缓 | 单体 200% 重创 |
-| 雷暴 | 雷 + 风 | 三道落雷轰击周围 |
+| 热冲击 | 火 + 水 | 周围伤害与短暂易伤 |
+| 融化 | 火 + 冰 | 单体重击 |
+| 冻结 | 水 + 冰 | 小怪冻结，Boss 转为短暂减速 |
+| 感电 | 水 + 雷 | 优先连锁浸润目标 |
+| 碎裂 | 冰 + 雷 | 冰晶飞散与范围伤害 |
+| 超载 | 火 + 雷 | 范围伤害与短暂打断小怪开火 |
+
+风会扩散已有元素状态并轻微聚拢目标。单次命中最多触发一种反应，二次伤害不会递归触发反应；具体参数见[战斗规则](./docs/COMBAT-REVISION.md)。
+
 
 **追踪导弹是道具不是卡牌**：每击破一个 Boss 获得 1 枚，桌面端点击鼠标、手机按右下角按钮触发——**当前整个屏幕上的主角子弹全部转为追踪弹**（镀金标识），伴金色闪光与变身音效；屏幕上没有子弹时不消耗。元素流派随时可换，等级不丢。卡池全满的超后期，会出现"紧急维修"补位卡，让升级始终有意义。
 
@@ -167,7 +170,7 @@
 - 🎵 程序化合成的 140BPM 燃向循环 BGM：鼓组律动 + 锯齿贝斯 + 力量和弦 + 琶音 + 英雄感主旋律
 - 🔊 全动作合成音效：激光、命中、爆炸、拾取、升级音阶、Boss 警报、变身滑音
 - 💫 子弹按元素变色发光拖尾，命中迸出火花
-- 💥 击杀爆炸：同色光雾 + 火花 + 扩散冲击波圆环；Boss 死亡连环殉爆
+- 💥 击杀爆炸：分层火焰、火花与逐渐消散的烟雾；Boss 死亡连环殉爆
 - 📳 镜头震动按事件分量缩放（Boss 震得更狠）
 - 🩸 受伤后 0.35 秒无敌帧 + 红闪反馈
 
@@ -256,7 +259,7 @@ godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打�
 能——触摸屏幕左半边呼出移动摇杆，战机自动开火。桌面端鼠标操作依然最精准。
 
 **图片 / 音频是哪来的？**
-当前舰体由项目自己的几何脚本生成。机库和模块插画使用内置图像工具制作，源图及提示词保存在 `assets/art-direction/`。音效与 BGM 由 `tools/gen_sounds.py` 合成，原星空和摇杆贴图由 `tools/gen_assets.py` 生成；这两个脚本不会重新生成新版插画或舰体。原 Quaternius CC0 资源及许可证另行保留。
+当前主舰队使用 Blender 舰体与 glTF 模型，原有几何脚本保留用于对比。机库和模块插画使用内置图像工具制作，源图及提示词保存在 `assets/art-direction/`。音效与 BGM 由 `tools/gen_sounds.py` 合成，原星空和摇杆贴图由 `tools/gen_assets.py` 生成；这两个脚本不会重新生成新版插画或舰体。原 Quaternius CC0 资源及许可证另行保留。
 
 ## 📄 协议与致谢
 
@@ -270,7 +273,9 @@ godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打�
 在仓库根目录执行，需要 Godot 4.7 及对应 Web 导出模板。预览服务器需要 Node.js，从 `build/web/` 提供文件，端口为 8316。
 
 ```sh
-godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script tools/blender_fleet_test.gd
+godot --headless --path . --script tools/combat_revision_test.gd
+godot --headless --path . --script tools/vfx_quality_test.gd
 godot --headless --path . --script res://tools/polish_geometry_test.gd
 godot --headless --path . --script res://tools/visual_v2_test.gd
 godot --headless --path . res://tools/smoke_test.tscn

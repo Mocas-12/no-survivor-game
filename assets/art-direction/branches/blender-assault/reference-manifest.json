@@ -1,0 +1,23 @@
+{
+  "source_files": ["../concept.png"],
+  "primary_view": "top",
+  "expected_primary_parts": {
+    "count": 6,
+    "labels": ["MainFuselage", "TealCanopy", "WingShell_Left", "WingShell_Right", "EngineNacelle_Left", "EngineNacelle_Right"]
+  },
+  "structural_parts": ["curved fuselage", "raised canopy", "tapered wings", "nacelles", "recessed cannon wells", "exhaust collars"],
+  "decorative_parts": ["maintenance seams", "small vents", "amber markings", "cyan strips"],
+  "texture_regions": ["shared tangent normal atlas", "shared ambient-occlusion atlas"],
+  "match_goal": "Reference-led single-ship prototype for visual review, not exact production reconstruction",
+  "validation_thresholds": {
+    "part_count_exact": true,
+    "runtime_triangles_max": 16000,
+    "non_manifold_edges_max": 0,
+    "visual_reference_approval_required": true
+  },
+  "uncertainties": [
+    "Only a top view was supplied; side and underside volumes are design estimates.",
+    "Luminance-derived reference masks omit dark hardware and can include an adjacent ship edge. Diagnostic overlap is not accepted as a fidelity score.",
+    "This prototype does not supply 20 distinct authored Blender evolution meshes. The one GLB is normalized to the existing form sizes for inspection."
+  ]
+}

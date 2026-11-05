@@ -14,6 +14,7 @@ const CYAN := Color(0.55, 0.9, 1)
 
 # 每帧调度：编队波次倒计时（Boss 战期间停用，由 world._process 驱动）
 static func process(w, delta: float) -> void:
+	if w.get("director") != null: return
 	if not w.boss_active and w.health > 0:
 		w.formation_cd -= delta
 		if w.formation_cd <= 0.0:
@@ -23,6 +24,9 @@ static func process(w, delta: float) -> void:
 # --- 抢滩刷怪 ---
 
 static func spawn_enemy(w) -> void:
+	if w.get("director") != null:
+		w.director.make_enemy(pick_enemy_type(w),Vector3(randf_range(-440,440),404,0))
+		return
 	var enemy = w.enemy_scene.instantiate()
 	# 抢滩登陆：敌机从屏幕上方随机位置出现
 	enemy.position = Vector3(randf_range(-576.0, 576.0), 404.0, 0.0)
@@ -80,6 +84,7 @@ static func _formation_pincer(w) -> void:
 			_spawn_formation_enemy(w, type, Vector3(-560.0 * dir, 330.0 + row * 46.0, 0.0), vx * dir)
 
 static func _spawn_formation_enemy(w, type: String, pos: Vector3, vx := 0.0) -> void:
+	if w.get("director") != null and not w.director.may_spawn(): return
 	var enemy = w.enemy_scene.instantiate()
 	enemy.position = pos
 	enemy.setup(type)
@@ -98,7 +103,7 @@ static func spawn_minions(w, n: int) -> void:
 static func maybe_boss(w) -> void:
 	if w.boss_active or w.health <= 0:
 		return
-	if w.kill_count >= w.next_boss_at:
+	if w.director.boss_ready() if w.get("director") != null else w.kill_count >= w.next_boss_at:
 		start_boss(w)
 
 static func start_boss(w) -> void:
@@ -157,6 +162,7 @@ static func _spawn_boss(w) -> void:
 
 static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w.boss_active = false
+	if w.get("director") != null: w.director.boss_defeated(is_omega)
 	w.boss_name_label.hide()
 	w.boss_bar.hide()
 
@@ -164,8 +170,7 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w.play_sfx("boss_die")
 	w._shake(18.0)
 	w.flash_ui(Color(1, 0.6, 0.3), 0.45)
-	for i in 3:
-		w.spawn_ring(pos + Vector3(randf_range(-60, 60), randf_range(-40, 40), 0.0), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
+	w.spawn_explosion(pos, Color(1, 0.75, 0.4),true)
 
 	if is_omega and not w.omega_slain:
 		# ✦ 胜利：灭世母舰被击破（记录徽章，随后进入无尽模式）
@@ -186,8 +191,6 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 		w.flash_ui(Color(1, 0.85, 0.35), 0.5)
 		w.play_sfx("levelup", 0.0)
 		w._shake(24.0)
-		for i in 6:
-			w.spawn_ring(pos + Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0), Color(1, 0.85, 0.35) if i % 2 == 0 else CYAN, 0.3, 3.0 + i * 0.7, 0.8)
 		# 演出落定后弹出胜利结算（终点弧线的落点：战绩 + 徽章 + 无尽/重开选择）
 		# SceneTreeTimer 归场景树所有，跨 reload_current_scene 存活：玩家在窗口内
 		# 阵亡并快速重开时 w 已释放，直接连方法会访问悬空实例，须包一层有效性守卫
@@ -211,7 +214,7 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w._update_homing_btn()
 	w._toast(I18n.T("gain_homing"), GOLD)
 	# Boss 破阵：敌主力接踵增援，梯次涌入形成一波数量冲击
-	var wave := mini(10 + w.boss_tier * 2, 22)
+	var wave := mini(4 + w.boss_tier, 10)
 	w.warning_label.text = I18n.T("warning_reinforce")
 	w.warning_label.modulate.a = 1.0
 	w.warning_label.show()

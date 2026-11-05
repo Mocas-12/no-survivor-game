@@ -32,9 +32,6 @@ var dead = false
 var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
 var slow_strength := 0.45   # 减速强度（寒冰弹头等级越高越强）
-var wet_timer = 0.0    # 浸润标记（水元素，元素反应载体）
-var burn_timer = 0.0   # 灼烧标记（火元素，超载/蒸汽/火龙卷反应载体）
-var gust_timer = 0.0   # 气旋标记（风元素，龙卷/火龙卷/雷暴反应载体）
 var sway_t = 0.0
 var phase_t = 0.0           # 行为相位计时（冲刺/顿挫循环用）
 var hover_left := 0.0       # 炮手机悬停剩余时间
@@ -44,6 +41,9 @@ var fire_cd = 0.0
 var vx = 0.0             # 固定横向速度（编队波次的两翼包抄用），0 = 直线下落
 var max_hp = 3           # 满血血量（决定掉落的水晶档位）
 var model: Node3D = null
+var elite := false
+var shot_aim := Vector3.DOWN
+var aim_locked:=false
 
 @onready var player = get_tree().get_first_node_in_group("player")
 
@@ -65,6 +65,28 @@ func setup(type: String):
 	$Sparks.color = Color(1, 0.92, 0.75)
 	if type == "shooter":
 		fire_cd = randf_range(1.0, 2.2)
+	if type=="tank": fire_cd=3.0
+
+func make_elite() -> void:
+	elite=true
+	health=24+maxi(0,health-12)
+	max_hp=health
+	score_value=80
+	speed=55
+	var halo:=MeshInstance3D.new()
+	var mesh:=TorusMesh.new()
+	mesh.inner_radius=37
+	mesh.outer_radius=40
+	mesh.rings=32
+	mesh.ring_segments=8
+	halo.mesh=mesh
+	halo.rotation.x=PI/2
+	halo.position.z=8
+	var material:=StandardMaterial3D.new()
+	material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color=Color("e7bf78")
+	halo.material_override=material
+	model.add_child(halo)
 
 # Boss 波数越高，敌机血量越厚（复合成长：对冲玩家后期 DPS，维持清场压力）
 func apply_tier(tier: int):
@@ -75,12 +97,15 @@ func apply_tier(tier: int):
 func _physics_process(delta):
 	if dead:
 		return
+	preload("res://scripts/element_reactions.gd").tick(self,delta)
+	if dead: return
+	if preload("res://scripts/element_reactions.gd").state(self).has("frozen"):
+		velocity=Vector3.ZERO
+		return
 	slow_timer = maxf(0.0, slow_timer - delta)
-	wet_timer = maxf(0.0, wet_timer - delta)
-	burn_timer = maxf(0.0, burn_timer - delta)
-	gust_timer = maxf(0.0, gust_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
 	var cur_speed = speed * (1.0 - slow_strength) if slow_timer > 0.0 else speed
+	cur_speed=minf(cur_speed,speed*preload("res://scripts/element_reactions.gd").movement(self))
 	var vel := Vector3(vx, -cur_speed, 0.0)
 	phase_t += delta
 	# 各机型专属移动方式（均不追踪主角，只影响各自的进场轨迹）
@@ -93,6 +118,7 @@ func _physics_process(delta):
 			# 快速机：冲刺——滑行 0.8 秒 → 猛冲 0.5 秒循环，速度 ×2.2
 			var burst := 2.2 if fmod(phase_t, 1.3) > 0.8 else 1.0
 			vel *= burst
+			if model.has_method("charge"): model.charge(clampf((fmod(phase_t,1.3)-.5)/.3,0,1) if fmod(phase_t,1.3)<.8 else 0)
 		"shooter":
 			# 炮手机：压到上半区悬停开火 4 秒，随后继续俯冲
 			if hover_y < -9000.0:
@@ -112,6 +138,7 @@ func _physics_process(delta):
 			# 重装机：顿挫式推进——走 1 秒停 0.35 秒，压迫感十足
 			if fmod(phase_t, 1.35) > 1.0:
 				vel = Vector3.ZERO
+			if elite and position.y<140: vel.y=0
 	velocity = vel
 	move_and_slide()
 
@@ -121,15 +148,22 @@ func _physics_process(delta):
 		return
 
 	# 炮手机：机身不转向，炮口仍瞄准玩家开火
-	if kind == "shooter" and player:
+	if kind in ["shooter","tank"] and player:
 		fire_cd -= delta
+		if fire_cd>0 and fire_cd<=0.65 and not aim_locked:
+			shot_aim=(player.global_position-global_position).normalized()
+			aim_locked=true
+		if model.has_method("charge"): model.charge(clampf((.35-fire_cd)/.35,0,1))
 		if fire_cd <= 0.0:
-			fire_cd = randf_range(2.0, 2.8)
-			var to_p = player.global_position - global_position
-			var aim = Vector2(to_p.x, to_p.y).normalized()
+			fire_cd = randf_range(2.8, 3.4)
+			aim_locked=false
+			if model.has_method("shot"): model.shot()
 			var world = get_tree().current_scene
 			if world.has_method("spawn_enemy_bullet"):
-				world.spawn_enemy_bullet(global_position + Vector3(aim.x, aim.y, 0.0) * 30.0, Vector3(aim.x, aim.y, 0.0), 210.0)
+				if kind=="tank":
+					for angle in [-0.22,0,0.22]:
+						world.spawn_enemy_bullet(global_position+shot_aim*35,shot_aim.rotated(Vector3.BACK,angle),150,1,0,0,"destructor")
+				else: world.spawn_enemy_bullet(global_position+shot_aim*30,shot_aim,210)
 
 	# 撞到玩家：造成伤害后自杀（不计分、不掉经验）
 	for i in get_slide_collision_count():
@@ -151,11 +185,7 @@ func take_damage(amount):
 	if dead:
 		return
 	health -= amount
-	# 受击反馈：轻微膨胀
-	var base = Vector3.ONE * STATS[kind]["scale"]
-	var tw = create_tween()
-	tw.tween_property(self, "scale", base * 1.12, 0.04)
-	tw.tween_property(self, "scale", base, 0.08)
+	if model.has_method("impact"): model.impact(amount)
 	if health <= 0:
 		die()
 
@@ -173,8 +203,9 @@ func die():
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
 	died.emit(global_position, score_value, fx_color, max_hp)
-	$ExplosionParticles.emitting = true
-	$Sparks.emitting = true
+	# The shared layered death effect is emitted by the world from this signal.
+	$ExplosionParticles.emitting = false
+	$Sparks.emitting = false
 	if model:
 		model.visible = false
 	await get_tree().create_timer(0.6).timeout

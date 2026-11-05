@@ -1,0 +1,168 @@
+[
+  {
+    "key": "enemy-0",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 49,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "enemy-1",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 32,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "enemy-2",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 26,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "enemy-3",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 43,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "enemy-4",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 31,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "enemy-5",
+    "triangles": 4200,
+    "budget": 4200,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull"
+    ],
+    "editable_parts": 58,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 512
+  },
+  {
+    "key": "boss-1",
+    "triangles": 14000,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Left",
+      "SM_Engine_Left",
+      "SM_Weapon_Right",
+      "SM_Engine_Right"
+    ],
+    "editable_parts": 88,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  },
+  {
+    "key": "boss-2",
+    "triangles": 10568,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Wing_Right"
+    ],
+    "editable_parts": 12,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  },
+  {
+    "key": "boss-3",
+    "triangles": 9492,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Shield_Right"
+    ],
+    "editable_parts": 60,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  },
+  {
+    "key": "boss-4",
+    "triangles": 14000,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Wing_Right"
+    ],
+    "editable_parts": 36,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  },
+  {
+    "key": "boss-5",
+    "triangles": 14000,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Shield_Left",
+      "SM_Engine_Left",
+      "SM_Wing_Right",
+      "SM_Shield_Right",
+      "SM_Engine_Right"
+    ],
+    "editable_parts": 43,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  },
+  {
+    "key": "boss-6",
+    "triangles": 14000,
+    "budget": 14000,
+    "non_manifold_edges": 0,
+    "parts": [
+      "SM_Hull",
+      "SM_Rotor0",
+      "SM_Rotor1",
+      "SM_Weapon_Right",
+      "SM_Engine_Left",
+      "SM_Engine_Right"
+    ],
+    "editable_parts": 110,
+    "reference": "assets/art-direction/v2/fleet.png",
+    "texture_size": 1024
+  }
+]

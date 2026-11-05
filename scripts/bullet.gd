@@ -46,6 +46,8 @@ var homing = 0.0         # 转向速率（弧度/秒），0 = 无追踪
 var homing_time = 0.0    # 追踪持续时间
 var _retarget := 0.0     # 目标重扫描计时（避免每帧全组扫描）
 var _target: Node3D = null
+var pierce_left := 0
+var struck := {}
 var _active := false             # 池中休眠的子弹不参与逻辑
 var _fx_element := ""            # 当前特效所属元素（判断是否需要重建拖尾）
 var _has_water_fx := false       # 当前是否带波浪水花尾
@@ -74,6 +76,12 @@ static func _homing_mat() -> StandardMaterial3D:
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
 	damage = p_damage
+	pierce_left=0
+	struck.clear()
+	crit=0
+	reaction_boost=1.0
+	mark_boost=1.0
+	$Mesh.scale=Vector3.ONE
 	element = p_element
 	element_lv = maxi(p_element_lv, 1)
 	speed = 800.0 * p_speed_mul
@@ -88,9 +96,10 @@ func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float,
 	visible = true
 	_active = true
 	set_deferred("monitoring", true)
-	$Mesh.mesh = PG.mesh(element,false)
-	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
-	$Mesh.material_override = _body_mat(element)
+	$Mesh.mesh = Fx.fire_head() if element=="fire" else PG.mesh(element,false)
+	rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
+	$Mesh.rotation.z = 0
+	$Mesh.material_override = null if element=="fire" else _body_mat(element)
 	# 元素 / 弹道没变就只恢复发射，变了才重建拖尾（复用路径零分配）
 	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx:
 		_rebuild_fx()
@@ -108,7 +117,7 @@ func _rebuild_fx():
 	_fx_element = element
 	_has_water_fx = wave_amp > 0.0
 	var c: Color = ELEMENT_COLORS[element]
-	$Trail.mesh = Fx.drop(c, 0.85)
+	$Trail.mesh = Fx.soft_particle(c, 0.85)
 	$Trail.amount = 4
 	$Trail.lifetime = 0.16
 	$Trail.emitting = true
@@ -149,7 +158,7 @@ func _attach_flame_trail():
 	f.scale_amount_max = 2.8
 	f.scale_amount_curve = Fx.shrink_curve()
 	f.color_ramp = Fx.gradient([Color(1, 0.95, 0.55, 0.95), Color(1, 0.55, 0.15, 0.8), Color(0.85, 0.12, 0.05, 0.0)])
-	f.mesh = Fx.drop(Color(1, 0.62, 0.2), 1.9)
+	f.mesh = Fx.soft_particle(Color(1, 0.62, 0.2), 1.9,true)
 	f.emitting = true
 
 # 疾风：绿色树叶侧向卷落
@@ -165,7 +174,7 @@ func _attach_leaf_trail():
 	w.scale_amount_min = 0.7
 	w.scale_amount_max = 1.2
 	w.color_ramp = Fx.gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.35, 0.72, 0.25, 0.75), Color(0.25, 0.6, 0.2, 0.0)])
-	w.mesh = Fx.leaf()
+	w.mesh = Fx.soft_particle(Color(.5,.85,.7),.8)
 	w.emitting = true
 
 # 疾风：白绿风痕向后高速拉出，表现风的流向
@@ -179,7 +188,7 @@ func _attach_gust_trail():
 	s.scale_amount_min = 0.8
 	s.scale_amount_max = 1.3
 	s.color_ramp = Fx.gradient([Color(0.8, 1.0, 0.75, 0.8), Color(0.7, 0.95, 0.65, 0.0)])
-	s.mesh = Fx.streak()
+	s.mesh = Fx.soft_particle(Color(.7,.95,.8),.7)
 	s.emitting = true
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
@@ -193,12 +202,12 @@ func _attach_crackle_trail():
 	k.scale_amount_min = 0.5
 	k.scale_amount_max = 1.0
 	k.color_ramp = Fx.gradient([Color(1, 1, 1, 1), Color(0.82, 0.62, 1.0, 0.0)])
-	k.mesh = Fx.drop(Color(0.88, 0.78, 1.0), 1.2)
+	k.mesh = Fx.soft_particle(Color(0.88, 0.78, 1.0), 1.2)
 	k.emitting = true
 
 # 波浪：定向喷溅水花 + 向后拖出的白色水痕尾流
 func _attach_water_trail():
-	$Splash.mesh = Fx.drop(Color(0.75, 0.95, 1.0), 1.1)
+	$Splash.mesh = Fx.soft_particle(Color(0.75, 0.95, 1.0), 1.1)
 	$Splash.color_ramp = Fx.gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
 	$Splash.amount = 10
 	$Splash.lifetime = 0.6
@@ -213,7 +222,7 @@ func _attach_water_trail():
 	wk.scale_amount_min = 0.7
 	wk.scale_amount_max = 1.3
 	wk.color_ramp = Fx.gradient([Color(0.92, 0.98, 1.0, 0.85), Color(0.6, 0.88, 1.0, 0.0)])
-	wk.mesh = Fx.drop(Color(0.9, 0.97, 1.0), 1.3)
+	wk.mesh = Fx.soft_particle(Color(0.9, 0.97, 1.0), 1.3)
 	wk.emitting = true
 
 func _process(delta):
@@ -236,7 +245,7 @@ func _process(delta):
 		wave_t += delta * 9.0
 		move += Vector3(-dir.y, dir.x, 0.0) * sin(wave_t) * wave_amp * delta
 	position += move
-	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
+	$Mesh.rotation.z = 0
 	rotation.z = Vector2(dir.x, dir.y).angle() - PI / 2
 	# 飞出游戏区域自动回池
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:
@@ -284,12 +293,13 @@ func _recycle():
 
 # 当有物体进入子弹的检测范围时
 func _on_body_entered(body):
-	if not _active:
+	if not _active or not is_instance_valid(body) or struck.has(body.get_instance_id()):
 		return
 	if body.has_method("take_damage"):
+		struck[body.get_instance_id()]=true
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
-			world.spawn_hit_spark(global_position)
+			world.spawn_hit_spark(global_position,element,damage,dir)
 		# 暴击：双倍伤害 + 金色进溅
 		var dmg: int = damage
 		if crit > 0.0 and randf() < crit:
@@ -299,137 +309,24 @@ func _on_body_entered(body):
 			_splash_burst(world)
 			if world.has_method("spawn_ring"):
 				world.spawn_ring(global_position, Color(0.75, 0.95, 1.0), 0.15, 1.8, 0.3)
-		if element == "fire":
-			_fire_burst(world)
-		elif element == "wind":
-			_leaf_burst(world)
-		body.take_damage(dmg)
+		if body.get("kind")=="shield" and global_position.y < body.global_position.y and pierce_left==0:
+			dmg=maxi(1,roundi(dmg*0.45))
+		elif body.get("kind")!=null and pierce_left==0:
+			for guard in get_tree().get_nodes_in_group("mobs"):
+				if guard!=body and guard.get("kind")=="shield" and not guard.dead and guard.position.y<body.position.y and guard.position.distance_to(body.position)<115:
+					dmg=maxi(1,roundi(dmg*0.6))
+					break
 		_apply_element(body, world)
-		_recycle()
+		var exposed=preload("res://scripts/element_reactions.gd").state(body).has("exposed")
+		body.take_damage(float(dmg)*(1.18 if exposed else 1.0))
+		if pierce_left>0:
+			pierce_left-=1
+		else:
+			_recycle()
 
-# --- 元素命中特效与元素反应（随元素等级 / 连锁反应 / 元素延续增强） ---
-# 反应矩阵（先手留下标记，后手触发并消耗标记）：
-#   火+水=蒸汽        雷+火=超载        冰+水=冻结        雷+水=感电
-#   风+火=火龙卷      风+水=龙卷        火+冰缓=融化      雷+风=雷暴
+# Shared status resolution also applies to Bosses; secondary hits cannot recurse.
 func _apply_element(hit_body, world):
-	var lv := maxi(element_lv, 1)
-	var is_mob: bool = "wet_timer" in hit_body   # Boss 无元素标记，不吃反应但吃基础元素效果
-	match element:
-		"fire":
-			_fire_burst(world)
-			if is_mob:
-				if hit_body.wet_timer > 0.0:
-					# 火 + 水 = 蒸汽
-					hit_body.wet_timer = 0.0
-					_reaction(world, "react_steam", Color(0.95, 1.0, 1.0))
-					_steam_burst(world)
-					_aoe(hit_body, world, (110.0 + 20.0 * lv) * (0.75 + 0.25 * reaction_boost), maxi(2, roundi(damage * reaction_boost)))
-				elif hit_body.slow_timer > 0.0:
-					# 火 + 冰缓 = 融化：单体重创
-					_reaction(world, "react_melt", Color(1, 0.6, 0.3))
-					_melt_flash(world)
-					hit_body.take_damage(roundi(damage * 2.0 * reaction_boost))
-				elif hit_body.gust_timer > 0.0:
-					# 风 + 火 = 火龙卷
-					hit_body.gust_timer = 0.0
-					_reaction(world, "react_firestorm", Color(1, 0.45, 0.15))
-					_firestorm(world)
-					_aoe(hit_body, world, 150.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 1.2 * reaction_boost))
-				hit_body.burn_timer = 2.0 * mark_boost   # 灼烧标记：供超载/蒸汽反应
-			# 溅射：Lv.N 半径 90+30(N-1)，溅射伤害 50%+1/级
-			var radius := 90.0 + 30.0 * (lv - 1)
-			var splash_dmg := maxi(1, roundi(damage * 0.5)) + (lv - 1)
-			for m in _nearby_others(hit_body, radius, 4):
-				m.take_damage(splash_dmg)
-		"water":
-			_splash_burst(world)
-			if is_mob:
-				if hit_body.burn_timer > 0.0:
-					# 水 + 火 = 蒸汽
-					hit_body.burn_timer = 0.0
-					_reaction(world, "react_steam", Color(0.95, 1.0, 1.0))
-					_steam_burst(world)
-					_aoe(hit_body, world, (110.0 + 20.0 * lv) * (0.75 + 0.25 * reaction_boost), maxi(2, roundi(damage * reaction_boost)))
-				elif hit_body.gust_timer > 0.0:
-					# 风 + 水 = 龙卷：牵引周围敌机
-					hit_body.gust_timer = 0.0
-					_reaction(world, "react_tornado", Color(0.5, 0.85, 1.0))
-					_tornado(world, hit_body)
-					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
-				hit_body.wet_timer = (1.6 + 0.5 * (lv - 1)) * mark_boost   # 浸润标记
-				# 水流击退：把命中目标推离主角
-				if hit_body.has_method("knockback"):
-					var pl = get_tree().get_first_node_in_group("player")
-					var away := Vector3(dir.x, dir.y, 0.0)
-					if pl:
-						var to = hit_body.global_position - pl.global_position
-						if to.length() > 1.0:
-							away = to.normalized()
-					hit_body.knockback(away * (60.0 + 20.0 * lv))
-		"ice":
-			if is_mob and hit_body.wet_timer > 0.0:
-				# 冰 + 水 = 冻结
-				hit_body.wet_timer = 0.0
-				hit_body.slow_down(1.2, 0.92)
-				_reaction(world, "react_freeze", Color(0.75, 0.93, 1.0))
-				_freeze_flash(world)
-			elif hit_body.has_method("slow_down"):
-				hit_body.slow_down(1.6 + 0.4 * (lv - 1), minf(0.45 + 0.1 * (lv - 1), 0.85))
-		"lightning":
-			var chains := mini(2 + (lv - 1), 5)
-			var conduct: bool = is_mob and hit_body.wet_timer > 0.0
-			if conduct:
-				chains = mini(chains + 2, 7)   # 雷 + 水 = 感电：链式 +2
-			if is_mob and hit_body.burn_timer > 0.0:
-				# 雷 + 火 = 超载
-				hit_body.burn_timer = 0.0
-				_reaction(world, "react_overload", Color(1, 0.55, 0.2))
-				_overload(world)
-				_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * reaction_boost))
-			elif is_mob and hit_body.gust_timer > 0.0:
-				# 雷 + 风 = 雷暴：三道落雷轰击周围
-				hit_body.gust_timer = 0.0
-				_reaction(world, "react_storm", Color(0.85, 0.7, 1.0))
-				_storm(world)
-				_aoe(hit_body, world, 160.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
-			var chain_dmg := maxi(1, roundi(damage * (0.5 + 0.25 * (lv - 1))))
-			var chain_radius := 200.0 if conduct else 140.0
-			for m in _nearby_others(hit_body, chain_radius, chains):
-				if world.has_method("spawn_lightning"):
-					world.spawn_lightning(global_position, m.global_position)
-				m.take_damage(chain_dmg)
-		"wind":
-			if is_mob:
-				if hit_body.burn_timer > 0.0:
-					# 风 + 火 = 火龙卷
-					hit_body.burn_timer = 0.0
-					_reaction(world, "react_firestorm", Color(1, 0.45, 0.15))
-					_firestorm(world)
-					_aoe(hit_body, world, 150.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 1.2 * reaction_boost))
-				elif hit_body.wet_timer > 0.0:
-					# 风 + 水 = 龙卷
-					hit_body.wet_timer = 0.0
-					_reaction(world, "react_tornado", Color(0.5, 0.85, 1.0))
-					_tornado(world, hit_body)
-					_aoe(hit_body, world, 130.0 * (0.75 + 0.25 * reaction_boost), roundi(damage * 0.8 * reaction_boost))
-				hit_body.gust_timer = 2.0 * mark_boost   # 气旋标记
-			# 疾风聚拢：把命中点周围的敌机吸向一点（风元素的独特功能）
-			var pull := 55.0 + 15.0 * lv
-			for m in _nearby_others(hit_body, 150.0 + 20.0 * lv, 6):
-				if m.has_method("knockback"):
-					var to_center = global_position - m.global_position
-					if to_center.length() > 1.0:
-						m.knockback(to_center.normalized() * pull)
-
-# 反应提示：命中点浮起反应名
-func _reaction(world, key: String, color: Color):
-	if world.has_method("spawn_reaction_text"):
-		world.spawn_reaction_text(global_position, key, color)
-
-# 反应范围伤害
-func _aoe(hit_body, world, radius: float, dmg: int):
-	for m in _nearby_others(hit_body, radius, 6):
-		m.take_damage(maxi(1, dmg))
+	preload("res://scripts/element_reactions.gd").apply(hit_body,element,damage,maxi(element_lv,1),reaction_boost,mark_boost,world)
 
 # --- 元素命中 / 反应特效（统一走 Fx.burst 工厂；ring/flash/sfx 组合留在原位） ---
 
@@ -442,116 +339,6 @@ func _splash_burst(world):
 		"mesh": Fx.drop(Color(0.75, 0.95, 1.0), 1.3),
 	})
 
-# 火焰命中：黄→红爆燃火团上腾
-func _fire_burst(world):
-	Fx.burst(world, global_position, {
-		"amount": 16, "lifetime": 0.55, "gravity": Vector3(0, 180, 0),
-		"vel_min": 90.0, "vel_max": 250.0, "scale_min": 1.6, "scale_max": 3.2, "shrink": true,
-		"colors": [Color(1, 0.93, 0.5, 0.95), Color(1, 0.45, 0.1, 0.75), Color(0.7, 0.08, 0.02, 0.0)],
-		"mesh": Fx.drop(Color(1, 0.6, 0.2), 1.9),
-	})
-
-# 疾风命中：树叶四散卷起
-func _leaf_burst(world):
-	Fx.burst(world, global_position, {
-		"amount": 12, "lifetime": 0.8, "gravity": Vector3(0, -110, 0),
-		"vel_min": 120.0, "vel_max": 300.0, "scale_min": 0.8, "scale_max": 1.4, "angle": 360.0,
-		"colors": [Color(0.6, 0.92, 0.35, 0.95), Color(0.3, 0.68, 0.22, 0.0)],
-		"mesh": Fx.leaf(),
-	})
-
-# 蒸汽反应：白色水雾腾起
-func _steam_burst(world):
-	Fx.burst(world, global_position, {
-		"amount": 14, "lifetime": 0.7, "spread": 40.0, "direction": Vector3(0, 1, 0),
-		"gravity": Vector3(0, 120, 0), "vel_min": 60.0, "vel_max": 180.0,
-		"scale_min": 1.6, "scale_max": 3.0, "shrink": true,
-		"colors": [Color(1, 1, 1, 0.9), Color(0.82, 0.88, 0.95, 0.5), Color(0.75, 0.82, 0.9, 0.0)],
-		"mesh": Fx.drop(Color(0.9, 0.94, 1.0), 2.2),
-	})
-
-# 超载反应：橙红大爆炸 + 冲击波
-func _overload(world):
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(1, 0.55, 0.2), 0.25, 2.4, 0.45)
-	if world.has_method("play_sfx"):
-		world.play_sfx("explode", -6.0, 0.1)
-	Fx.burst(world, global_position, {
-		"amount": 22, "lifetime": 0.5,
-		"vel_min": 160.0, "vel_max": 340.0, "scale_min": 1.4, "scale_max": 2.8, "shrink": true,
-		"colors": [Color(1, 0.9, 0.6, 0.95), Color(1, 0.45, 0.1, 0.7), Color(0.6, 0.1, 0.05, 0.0)],
-		"mesh": Fx.drop(Color(1, 0.55, 0.2), 2.0),
-	})
-
-# 冻结反应：寒冰闪光环 + 冰晶四散
-func _freeze_flash(world):
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(0.75, 0.93, 1.0), 0.2, 1.6, 0.4)
-	Fx.burst(world, global_position, {
-		"amount": 8, "lifetime": 0.5, "gravity": Vector3(0, -160, 0),
-		"vel_min": 60.0, "vel_max": 160.0, "scale_min": 0.6, "scale_max": 1.2,
-		"colors": [Color(0.85, 0.96, 1.0, 0.95), Color(0.55, 0.85, 1.0, 0.0)],
-		"mesh": Fx.drop(Color(0.85, 0.96, 1.0), 1.4),
-	})
-
-# 火龙卷：橙红火柱螺旋上腾 + 双层冲击波
-func _firestorm(world):
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(1, 0.45, 0.15), 0.3, 2.8, 0.55)
-		world.spawn_ring(global_position, Color(1, 0.7, 0.3), 0.2, 2.0, 0.4)
-	if world.has_method("flash_ui"):
-		world.flash_ui(Color(1, 0.5, 0.2), 0.12)
-	if world.has_method("play_sfx"):
-		world.play_sfx("explode", -5.0, 0.1)
-	Fx.burst(world, global_position, {
-		"amount": 30, "lifetime": 0.6, "spread": 25.0, "direction": Vector3(0, 1, 0),
-		"gravity": Vector3(0, 220, 0), "vel_min": 120.0, "vel_max": 300.0,
-		"scale_min": 1.6, "scale_max": 3.2, "shrink": true,
-		"colors": [Color(1, 0.95, 0.6, 0.95), Color(1, 0.4, 0.08, 0.75), Color(0.55, 0.08, 0.02, 0.0)],
-		"mesh": Fx.drop(Color(1, 0.5, 0.15), 2.2),
-	})
-
-# 龙卷：青白漩涡把周围敌机往中心牵引
-func _tornado(world, hit_body):
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(0.5, 0.85, 1.0), 0.4, 0.2, 0.5)
-	if world.has_method("flash_ui"):
-		world.flash_ui(Color(0.5, 0.85, 1.0), 0.08)
-	Fx.burst(world, global_position, {
-		"amount": 24, "lifetime": 0.7, "gravity": Vector3(0, -80, 0),
-		"vel_min": 100.0, "vel_max": 240.0, "scale_min": 1.2, "scale_max": 2.6, "shrink": true,
-		"colors": [Color(0.85, 0.96, 1.0, 0.95), Color(0.45, 0.8, 1.0, 0.6), Color(0.3, 0.6, 1.0, 0.0)],
-		"mesh": Fx.drop(Color(0.6, 0.85, 1.0), 1.9),
-	})
-	# 牵引：周围敌机被吸向反应中心
-	for m in _nearby_others(hit_body, 200.0, 5):
-		if m.has_method("knockback"):
-			var pull = (global_position - m.global_position).normalized()
-			m.knockback(pull * 60.0)
-
-# 融化：目标处白橙闪光
-func _melt_flash(world):
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(1, 0.75, 0.4), 0.15, 1.2, 0.3)
-	Fx.burst(world, global_position, {
-		"amount": 10, "lifetime": 0.4, "gravity": Vector3(0, 100, 0),
-		"vel_min": 80.0, "vel_max": 200.0, "scale_min": 1.2, "scale_max": 2.4, "shrink": true,
-		"colors": [Color(1, 1, 1, 0.95), Color(1, 0.6, 0.3, 0.6), Color(0.8, 0.3, 0.1, 0.0)],
-		"mesh": Fx.drop(Color(1, 0.75, 0.4), 1.8),
-	})
-
-# 雷暴：三道落雷劈在目标周围
-func _storm(world):
-	if world.has_method("flash_ui"):
-		world.flash_ui(Color(0.85, 0.7, 1.0), 0.1)
-	if world.has_method("play_sfx"):
-		world.play_sfx("hit", -2.0, 0.15)
-	for i in 3:
-		var off = Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0)
-		if world.has_method("spawn_lightning"):
-			world.spawn_lightning(global_position + off + Vector3(0, 60, 0), global_position + off)
-
-# 暴击：金色进溅
 func _crit_flash(world):
 	Fx.burst(world, global_position, {
 		"amount": 12, "lifetime": 0.35,
@@ -559,12 +346,3 @@ func _crit_flash(world):
 		"colors": [Color(1, 0.9, 0.4, 1.0), Color(1, 0.65, 0.15, 0.0)],
 		"mesh": Fx.drop(Color(1, 0.85, 0.35), 1.6),
 	})
-
-# 查找命中点附近的其他敌机（按距离排序取前 count 个）
-func _nearby_others(hit_body, radius: float, count: int):
-	var list = []
-	for m in get_tree().get_nodes_in_group("mobs"):
-		if m != hit_body and not m.dead and global_position.distance_to(m.global_position) <= radius:
-			list.append(m)
-	list.sort_custom(func(a, b): return global_position.distance_squared_to(a.global_position) < global_position.distance_squared_to(b.global_position))
-	return list.slice(0, count)

@@ -7,6 +7,10 @@ static func pick(zh: String,en: String) -> String:
 static func describe(w,id: String,level: int) -> String:
 	var p = w.player
 	match id:
+		"pierce": return pick("贯穿额外目标 %d → %d","Additional targets pierced %d → %d") % [p.pierce_level,p.pierce_level+1]
+		"aux_water", "aux_ice", "aux_homing":
+			var level_next: int=mini(p.auxiliary_level+1,3) if p.auxiliary==id.trim_prefix("aux_") else 1
+			return pick("独立辅助炮 Lv.%d · 不替换主炮\n自动追踪 · 单独装配", "Auxiliary Lv.%d · keeps main cannon\nAuto-targeted · separate slot") % level_next
 		"fire_rate": return pick("基础间隔 %d → %d ms","Base interval %d → %d ms") % [roundi(p.fire_cooldown*1000),roundi(maxf(0.055,p.fire_cooldown*0.8)*1000)]
 		"damage": return pick("子弹伤害 %d → %d","Shot damage %d → %d") % [p.damage,p.damage+1]
 		"multishot": return pick("齐射弹道 %d → %d","Projectiles %d → %d") % [p.bullet_count,mini(p.bullet_count+1,8)]
@@ -20,7 +24,8 @@ static func describe(w,id: String,level: int) -> String:
 		"chain_reaction": return pick("反应伤害倍率 %.2f → %.2f","Reaction damage ×%.2f → ×%.2f") % [p.reaction_boost,p.reaction_boost+0.5]
 		"element_last": return pick("标记时长倍率 %.1f → %.1f","Mark duration ×%.1f → ×%.1f") % [p.mark_boost,p.mark_boost+1]
 		"fire":
-			if level==0: return pick("首次装配：伤害 %d → %d\n溅射半径 90 px","First install: damage %d → %d\nSplash radius 90 px") % [p.damage,p.damage+1]
+			if level==0 and p.element_levels.values().all(func(lv):return int(lv)==0): return pick("首次装配：伤害 %d → %d\n溅射半径 90 px","First install: damage %d → %d\nSplash radius 90 px") % [p.damage,p.damage+1]
+			if level==0: return pick("装配火焰弹头\n溅射半径 90 px","Install fire warhead\nSplash radius 90 px")
 			return pick("溅射半径 %d → %d px","Splash radius %d → %d px") % [90+30*(level-1),90+30*level]
 		"water": return pick("浸润 %.1f 秒 · 水流击退\n可与火、冰、雷联动","Wet for %.1fs · Push on impact\nCombines with fire, ice and lightning") % ((1.6+0.5*level)*p.mark_boost)
 		"ice": return pick("减速 %d%% · 持续 %.1f 秒","Slow %d%% for %.1fs") % [roundi(minf(0.45+0.1*level,0.85)*100),1.6+0.4*level]

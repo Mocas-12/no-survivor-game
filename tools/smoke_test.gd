@@ -40,10 +40,14 @@ func _run() -> void:
 	check(world.score >= 0, "计分系统运行")
 
 	print("== 升级三选一 ==")
+	world.run_time=18
 	world.add_xp(20)
 	check(world.levelup_panel.visible, "升级面板弹出")
 	var guard := 0
-	while world.levelup_panel.visible and guard < 10:
+	while world.pending_level_ups>0 and guard < 10:
+		if not world.levelup_panel.visible:
+			world.run_time+=13
+			await get_tree().process_frame
 		world.levelup_panel.get_node("ModuleDraft").reveal_all()
 		world._on_upgrade_button_pressed(0)
 		await get_tree().create_timer(0.55).timeout

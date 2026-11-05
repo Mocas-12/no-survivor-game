@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "bossPhases": 13,
+  "reactionPreviews": 6,
+  "checks": [
+    "Actual exported WebGL model viewer",
+    "All six P1/P2 hulls and OMEGA P3",
+    "Reaction geometry playback",
+    "Native game start, six seconds of gameplay and pause"
+  ],
+  "errors": []
+}

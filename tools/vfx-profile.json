@@ -1,0 +1,21 @@
+{
+  "baseline": {
+    "draw_calls_peak": 0.0,
+    "frame_wall_ms_p95": 0.27,
+    "root_nodes_peak": 1
+  },
+  "device": "NVIDIA GeForce RTX 3060",
+  "metric": "warmed isolated-scene frame wall time, VSync off; not GPU time, full-game FPS or phone FPS",
+  "reduced_six_bursts": {
+    "draw_calls_peak": 42.0,
+    "frame_wall_ms_p95": 0.633,
+    "root_nodes_peak": 7
+  },
+  "renderer": "gl_compatibility",
+  "resolution": "1152x648",
+  "six_bursts": {
+    "draw_calls_peak": 78.0,
+    "frame_wall_ms_p95": 0.629,
+    "root_nodes_peak": 7
+  }
+}

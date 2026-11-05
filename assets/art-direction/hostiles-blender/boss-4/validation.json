@@ -1,0 +1,16 @@
+{
+  "key": "boss-4",
+  "triangles": 14000,
+  "budget": 14000,
+  "non_manifold_edges": 0,
+  "parts": [
+    "SM_Hull",
+    "SM_Weapon_Right",
+    "SM_Engine_Left",
+    "SM_Engine_Right",
+    "SM_Wing_Right"
+  ],
+  "editable_parts": 36,
+  "reference": "assets/art-direction/v2/fleet.png",
+  "texture_size": 1024
+}

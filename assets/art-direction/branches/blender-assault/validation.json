@@ -1,0 +1,38 @@
+{
+  "blender": "5.2.3 LTS",
+  "low": {
+    "triangles": 15000,
+    "vertices": 7646,
+    "materials": 6,
+    "non_manifold_edges": 0,
+    "uv_layers": 1,
+    "dimensions": [
+      7.158863067626953,
+      10.075037002563477,
+      1.5795906782150269
+    ]
+  },
+  "high": {
+    "triangles": 142196,
+    "vertices": 71244,
+    "materials": 6,
+    "non_manifold_edges": 0,
+    "uv_layers": 1,
+    "dimensions": [
+      7.158840179443359,
+      10.074999809265137,
+      1.5807311534881592
+    ]
+  },
+  "primary_components": {
+    "SM_MainFuselage": 1,
+    "SM_TealCanopy": 1,
+    "SM_WingShell_-1": 1,
+    "SM_WingShell_1": 1,
+    "SM_EngineNacelle_-1": 1,
+    "SM_EngineNacelle_1": 1
+  },
+  "editable_parts": 158,
+  "reference": "assets/art-direction/branches/concept.png",
+  "scope": "one assault prototype; other branches unchanged"
+}

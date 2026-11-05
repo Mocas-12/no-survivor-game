@@ -177,7 +177,15 @@ static func lang() -> String:
 		_lang = "zh" if OS.get_locale_language().begins_with("zh") else "en"
 	return _lang
 
+const RUN_TEXT = {
+		"card_pierce":["贯穿弹芯","Piercing core"],"card_pierce_d":["主炮贯穿额外目标，适合突破盾墙","Main rounds pierce extra targets"],
+		"card_aux_water":["水雾辅助炮","Water auxiliary"],"card_aux_water_d":["独立追踪弹浸润目标，配合火焰触发蒸汽","Homing water rounds prime steam reactions"],
+		"card_aux_ice":["寒霜辅助炮","Frost auxiliary"],"card_aux_ice_d":["独立冰弹减速目标，配合雷电触发冰雷连锁","Frost rounds prime lightning shatter chains"],
+		"card_aux_homing":["追猎辅助炮","Hunter auxiliary"],"card_aux_homing_d":["独立追踪弹追击敌机，不改变主炮弹道","Independent homing rounds preserve main fire"],
+		"react_shatter":["冰雷碎裂","SHATTER"],"react_conduct":["感电连锁","CONDUCTION"],"react_steam":["热冲击","THERMAL SHOCK"]}
+
 static func T(key: String) -> String:
+	if RUN_TEXT.has(key): return RUN_TEXT[key][0 if lang()=="zh" else 1]
 	var table: Dictionary = STR[lang()]
 	if table.has(key):
 		return table[key]

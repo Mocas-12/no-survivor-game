@@ -65,9 +65,25 @@ static func mesh(kind: String,hostile: bool) -> Mesh:
 			_:
 				poly(st,[0,13,4,0,0,-8,-4,0],color,1)
 				poly(st,[0,10,1.2,0,0,-5,-1.2,0],Color("f3ffff"),3)
+	# Smooth bright central bodies retain the established outer silhouette/hit cues.
+	if kind not in ["wind","lightning"]:
+		lathe(st,color,hostile)
 	st.generate_normals()
 	meshes[key] = st.commit()
 	return meshes[key]
+
+static func lathe(st: SurfaceTool,color: Color,hostile: bool) -> void:
+	var profiles: Array=[Vector2(-6,.06),Vector2(-3,1.65),Vector2(3,2.3),Vector2(9,.06)] if hostile else [Vector2(-7,.08),Vector2(-3,1.5),Vector2(4,2.2),Vector2(12,.05)]
+	for i in profiles.size()-1:
+		for j in 16:
+			var a: float=TAU*j/16
+			var b: float=TAU*(j+1)/16
+			var p: Vector2=profiles[i]
+			var q: Vector2=profiles[i+1]
+			var vertices: Array[Vector3]=[Vector3(cos(a)*p.y,p.x,3.1+sin(a)*p.y*.55),Vector3(cos(b)*p.y,p.x,3.1+sin(b)*p.y*.55),Vector3(cos(b)*q.y,q.x,3.1+sin(b)*q.y*.55),Vector3(cos(a)*q.y,q.x,3.1+sin(a)*q.y*.55)]
+			for index in [0,1,2,0,2,3]:
+				st.set_color(color.lightened(.15+maxf(sin(a),0)*.45))
+				st.add_vertex(vertices[index])
 
 static func poly(st: SurfaceTool,xy: Array,color: Color,z: float) -> void:
 	var center := Vector3.ZERO

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "checks": [
+    "release build loads and starts through native button",
+    "actual combat and crystal collection opens illustrated module cards",
+    "native mouse selection completes and resumes combat",
+    "pause remains usable after module selection"
+  ],
+  "retries": 0,
+  "picks": 1,
+  "errors": []
+}

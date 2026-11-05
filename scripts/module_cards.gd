@@ -1,8 +1,9 @@
 extends Node
 const I18N := preload("res://scripts/i18n.gd")
 const CARD_SCRIPT := preload("res://scripts/module_card.gd")
-const IDS := ["fire_rate","damage","multishot","velocity","crit","wide","fire","water","ice","lightning","wind","wave","speed","armor","magnet","xp","chain_reaction","element_last","revive","repair"]
+const IDS := ["fire_rate","damage","multishot","velocity","crit","wide","fire","water","ice","lightning","wind","wave","speed","armor","magnet","xp","chain_reaction","element_last","revive","repair","pierce","aux_water","aux_ice","aux_homing"]
 const CAPTIONS := {
+	"pierce":["一发贯穿整列敌机","Punch through an enemy column"],"aux_water":["浸润标记，为蒸汽爆破铺路","Prime targets for steam bursts"],"aux_ice":["寒霜标记，接通雷电连锁","Prime targets for frost arcs"],"aux_homing":["主炮贯穿，副炮追猎","Pierce ahead, hunt the stragglers"],
 	"fire_rate":["火力持续倾泻","Keep the barrels spinning"],"damage":["每一击更有分量","Make every shot count"],"multishot":["更多炮口，一起开火","Bring more barrels online"],"velocity":["让火力更快抵达","Accelerate your firepower"],"crit":["捕捉致命的一瞬","Find the critical opening"],"wide":["展开你的火力扇面","Open a wider firing arc"],
 	"fire":["熔核点燃邻近目标","Ignite nearby targets"],"water":["浸润目标，接通反应","Prime targets for reactions"],"ice":["冻结追兵的步伐","Slow the pursuit"],"lightning":["电弧在敌群间跳跃","Arc between enemies"],"wind":["气旋把敌人卷到一起","Gather foes into the storm"],"wave":["让弹幕覆盖更广","Sweep a wider area"],
 	"speed":["引擎，还有余力","Find another gear"],"armor":["装甲合拢，继续作战","Armor up and press on"],"magnet":["让散落的水晶归队","Bring the crystals home"],"xp":["每场战斗都有收获","Learn from every encounter"],"chain_reaction":["把反应连成一场风暴","Build a reaction storm"],"element_last":["让元素留得更久","Keep the elements active"],"revive":["机体倒下，核心不灭","Keep the core alive"],"repair":["纳米机械，立即抢修","Deploy emergency repairs"]}
@@ -21,7 +22,7 @@ static func install(ui: CanvasLayer) -> void:
 	controller.world = ui.get_parent()
 	controller.panel.add_child(controller)
 	for id in IDS:
-		controller.textures[id] = load("res://assets/modules/%s.webp" % id)
+		controller.textures[id] = load("res://assets/modules/%s.webp" % {"pierce":"velocity","aux_water":"water","aux_ice":"ice","aux_homing":"multishot"}.get(id,id))
 	var box: VBoxContainer = controller.panel.get_node("Box")
 	box.offset_left = -430
 	box.offset_right = 430
@@ -63,17 +64,23 @@ func present() -> void:
 		if id in ["revive","repair"]:
 			badge = ("即刻生效" if id=="repair" else "补充核心") if I18N.lang()=="zh" else ("REPAIR" if id=="repair" else "RECHARGE")
 		var element: bool = id in ["fire","water","ice","lightning","wind","wave","chain_reaction","element_last"]
-		var weapon: bool = id in ["fire_rate","damage","multishot","velocity","crit","wide"]
+		if id.begins_with("aux_"):
+			level=world.player.auxiliary_level if world.player.auxiliary==id.trim_prefix("aux_") else 0
+			badge=("独立辅助" if I18N.lang()=="zh" else "AUXILIARY") if level==0 else "Lv.%d → %d" % [level,mini(level+1,3)]
+			if level==0 and world.player.auxiliary!="": badge="替换辅助" if I18N.lang()=="zh" else "REPLACE AUX"
+		var weapon: bool = id in ["fire_rate","damage","multishot","velocity","crit","wide","pierce","aux_water","aux_ice","aux_homing"]
 		var color := Color("79dce7") if element else (Color("e7bf78") if weapon else Color("a8d6b0"))
 		var category := ("元素接口" if element else ("武装模块" if weapon else "机体系统")) if I18N.lang()=="zh" else ("ELEMENT" if element else ("WEAPON" if weapon else "SYSTEM"))
 		var detail: String = preload("res://scripts/module_readout.gd").describe(world,id,level)
+		if id in ["water","ice","lightning","wind"] and world.player.element_levels.values().all(func(lv):return int(lv)==0):
+			detail=("首次元素装配：伤害 +1\n" if I18N.lang()=="zh" else "First elemental core: damage +1\n")+detail
 		if switching:
 			var current: String = world.player.element if up.hint_fn.call()=="switch_el" else world.player.pattern
 			var old_title: String = I18N.T("card_"+current)
 			if old_title.begins_with("card_"): old_title = ("普通弹" if current=="normal" else "扇形弹道") if I18N.lang()=="zh" else current
 			detail = old_title+" → "+I18N.T("card_"+id)+"\n"+detail
-		card.configure({"title":I18N.T("card_"+id),"detail":detail,"badge":badge,"category":category,"color":color,"texture":textures[id],"caption":CAPTIONS[id][0 if I18N.lang()=="zh" else 1]})
-		card.reveal(0.08+i*0.14,world.reduce_fx)
+		card.configure({"title":I18N.T("card_"+id),"detail":detail,"badge":badge,"category":category,"color":color,"texture":textures[id],"caption":CAPTIONS.get(id,["辅助与主炮协同作战","Combine auxiliary and main fire"])[0 if I18N.lang()=="zh" else 1]})
+		card.reveal(0.08+i*0.14,world.reduce_fx or world.level%3!=0)
 	get_tree().create_timer(0.7).timeout.connect(focus_first.bind(generation))
 
 func focus_first(token: int) -> void:

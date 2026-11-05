@@ -1,0 +1,50 @@
+[
+	{
+		"best_streak": 33,
+		"branch": "assault",
+		"combo": "steam",
+		"damage_taken": 3,
+		"first_boss": 100.116666666665,
+		"first_evolution": 80.5166666666664,
+		"first_upgrade": 18.0166666666667,
+		"kills": 195,
+		"last_damage_source": "projectile_interceptor",
+		"level": 15,
+		"peak_mobs": 10,
+		"reactions": 31,
+		"route": "steam",
+		"seconds": 180.116666666661
+	},
+	{
+		"best_streak": 31,
+		"branch": "escort",
+		"combo": "frost_arc",
+		"damage_taken": 3,
+		"first_boss": 100.216666666665,
+		"first_evolution": 94.5166666666656,
+		"first_upgrade": 18.0166666666667,
+		"kills": 178,
+		"last_damage_source": "collision",
+		"level": 15,
+		"peak_mobs": 13,
+		"reactions": 37,
+		"route": "frost_arc",
+		"seconds": 180.016666666661
+	},
+	{
+		"best_streak": 18,
+		"branch": "siege",
+		"combo": "hunter",
+		"damage_taken": 4,
+		"first_boss": 103.616666666665,
+		"first_evolution": 105.016666666665,
+		"first_upgrade": 18.0166666666667,
+		"kills": 130,
+		"last_damage_source": "projectile_shooter",
+		"level": 12,
+		"peak_mobs": 14,
+		"reactions": 0,
+		"route": "hunter",
+		"seconds": 180.016666666661
+	}
+]
