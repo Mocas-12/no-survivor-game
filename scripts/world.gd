@@ -23,6 +23,8 @@ const UI_FONT := preload("res://assets/fonts/NoSurvivorUI.ttf")
 const SFX := {
 	"shoot": preload("res://assets/sounds/shoot.wav"),
 	"hit": preload("res://assets/sounds/hit.wav"),
+	"metal_hit": preload("res://assets/sounds/metal_hit.wav"),
+	"heavy_hit": preload("res://assets/sounds/heavy_hit.wav"),
 	"explode": preload("res://assets/sounds/explode.wav"),
 	"pickup": preload("res://assets/sounds/pickup.wav"),
 	"levelup": preload("res://assets/sounds/levelup.wav"),
@@ -671,10 +673,10 @@ func spawn_reaction_text(pos: Vector3, key: String, color: Color):
 	var lbl := Label3D.new()
 	lbl.text = I18n.T(key)
 	lbl.font = UI_FONT
-	lbl.font_size = 64
-	lbl.pixel_size = 1.1
+	lbl.font_size = 38
+	lbl.pixel_size = .65
 	lbl.modulate = color
-	lbl.outline_size = 20
+	lbl.outline_size = 8
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	lbl.no_depth_test = true
 	lbl.position = pos
@@ -708,11 +710,15 @@ func spawn_explosion(pos: Vector3, color: Color, big := false):
 func confetti_burst(pos: Vector3, amount: int, color: Color = GOLD):
 	Fx.confetti(self, pos, amount, color)
 
-func spawn_hit_spark(pos: Vector3,element: String="normal"):
-	play_sfx("hit", -10.0, 0.15)
+func spawn_hit_spark(pos: Vector3,element: String="normal",amount:=1,direction:=Vector3.UP):
+	var now=Time.get_ticks_msec()
+	if now-int(get_meta("impact_audio",-1000))>45:
+		set_meta("impact_audio",now)
+		play_sfx("heavy_hit" if amount>=8 else "metal_hit",-13,.12)
 	var style: int={"normal":0,"fire":1,"water":2,"ice":3,"lightning":4,"wind":6}.get(element,0)
 	var color: Color=preload("res://scripts/projectile_geometry.gd").PLAYER.get(element,Color("c9e9ef"))
-	preload("res://scripts/precision_fx.gd").pulse(self,pos,color,22,false,.16,style)
+	var flash=preload("res://scripts/precision_fx.gd").pulse(self,pos,color,30 if amount<8 else 44,false,.16,style)
+	if flash: flash.rotation.z=atan2(direction.y,direction.x)-PI/2
 
 func flash_ui(color: Color, peak: float):
 	if reduce_fx:

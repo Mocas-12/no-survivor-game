@@ -1,5 +1,7 @@
 # Blender fleet and combat presentation · 2026-11-05
 
+Later combat revision: [Boss deployment, reactions and hit feedback](./COMBAT-REVISION.md). That revision changes phase colliders, attack patterns and elemental damage/control; the unchanged-rule statements below describe the earlier fleet-only checkpoint. The current Web PCK is approximately 62 MB.
+
 ## Delivery
 
 Ready for local visual review. The normal game path now uses the authored Blender fleet; this has not been deployed to GitHub Pages. Visual acceptance and physical-phone GPU/memory behavior remain pending.

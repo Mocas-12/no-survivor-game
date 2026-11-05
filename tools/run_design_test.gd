@@ -65,18 +65,18 @@ func run() -> void:
 	var rounds=get_nodes_in_group("player_bullets")
 	var auxiliary=rounds.back()
 	auxiliary._on_body_entered(e)
-	check(e.slow_timer>0,"Actual auxiliary projectile applies frost on collision")
+	check(preload("res://scripts/element_reactions.gd").state(e).has("ice"),"Actual auxiliary projectile applies explicit frost on collision")
 	var b=w.player.new_round()
 	b.launch(2,"lightning",1,0,0,0,1,Vector3.ZERO,Vector3.UP)
 	b._on_body_entered(e)
-	check(d.reactions==1 and e.slow_timer==0,"Main lightning projectile consumes frost and triggers one reaction")
+	check(d.reactions==1 and not preload("res://scripts/element_reactions.gd").state(e).has("ice"),"Main lightning projectile consumes frost and triggers one reaction")
 	b=w.player.new_round()
 	b.launch(2,"normal",1,0,0,0,1,Vector3.ZERO,Vector3.UP)
 	b.pierce_left=1
-	var before: int=e.health
+	var before: float=e.health
 	b._on_body_entered(e)
 	b._on_body_entered(e)
-	check(e.health==before-2 and b._active,"Piercing projectile damages the same target only once")
+	check(is_equal_approx(e.health,before-2) and b._active,"Piercing projectile damages the same target only once")
 	var e2=d.make_enemy("normal",Vector3(100,100,0))
 	e2.set_physics_process(false)
 	e2.health=20

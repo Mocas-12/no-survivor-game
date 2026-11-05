@@ -1,0 +1,102 @@
+[
+  {
+    "key": "boss-1-p2",
+    "triangles": 14000,
+    "budget": 15000,
+    "parts": [
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Hull",
+      "SM_Weapon_Left",
+      "SM_Weapon_Right"
+    ],
+    "source": "boss-1",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-2-p2",
+    "triangles": 10568,
+    "budget": 15000,
+    "parts": [
+      "SM_Hull",
+      "SM_Wing_Left",
+      "SM_Wing_Right"
+    ],
+    "source": "boss-2",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-3-p2",
+    "triangles": 9492,
+    "budget": 15000,
+    "parts": [
+      "SM_Hull",
+      "SM_Shield_Right"
+    ],
+    "source": "boss-3",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-4-p2",
+    "triangles": 14000,
+    "budget": 15000,
+    "parts": [
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Hull",
+      "SM_Weapon_Right",
+      "SM_Wing_Right"
+    ],
+    "source": "boss-4",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-5-p2",
+    "triangles": 14000,
+    "budget": 15000,
+    "parts": [
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Hull",
+      "SM_Shield_Left",
+      "SM_Shield_Right",
+      "SM_Wing_Left",
+      "SM_Wing_Right"
+    ],
+    "source": "boss-5",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-6-p2",
+    "triangles": 14000,
+    "budget": 15000,
+    "parts": [
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Hull",
+      "SM_Rotor0",
+      "SM_Rotor1",
+      "SM_Weapon_Right"
+    ],
+    "source": "boss-6",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  },
+  {
+    "key": "boss-6-p3",
+    "triangles": 14372,
+    "budget": 15000,
+    "parts": [
+      "SM_Engine_Left",
+      "SM_Engine_Right",
+      "SM_Hull",
+      "SM_Rotor0",
+      "SM_Rotor1",
+      "SM_Weapon_Right",
+      "SM_CoreCannon_0",
+      "SM_CoreCannon_1",
+      "SM_CoreCannon_2"
+    ],
+    "source": "boss-6",
+    "method": "deployed articulated mesh; original UV and normal/AO retained"
+  }
+]

@@ -4,6 +4,8 @@
 
 # No Survivor Game
 
+Local development update: deployed Boss P2/P3 hulls, six symmetric elemental reactions, stronger local impact feedback and compact enemy charge cues. See [combat revision and validation](./docs/COMBAT-REVISION.md). This update is not deployed to Pages.
+
 **A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5 rotating bosses + final OMEGA, elemental weapons, 20 evolving 3D ship forms**
 
 [![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)

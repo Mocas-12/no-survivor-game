@@ -32,9 +32,6 @@ var dead = false
 var fx_color = Color(1, 0.3, 0.4)
 var slow_timer = 0.0
 var slow_strength := 0.45   # 减速强度（寒冰弹头等级越高越强）
-var wet_timer = 0.0    # 浸润标记（水元素，元素反应载体）
-var burn_timer = 0.0   # 灼烧标记（火元素，超载/蒸汽/火龙卷反应载体）
-var gust_timer = 0.0   # 气旋标记（风元素，龙卷/火龙卷/雷暴反应载体）
 var sway_t = 0.0
 var phase_t = 0.0           # 行为相位计时（冲刺/顿挫循环用）
 var hover_left := 0.0       # 炮手机悬停剩余时间
@@ -46,8 +43,7 @@ var max_hp = 3           # 满血血量（决定掉落的水晶档位）
 var model: Node3D = null
 var elite := false
 var shot_aim := Vector3.DOWN
-var cue: MeshInstance3D
-var hit_tween: Tween
+var aim_locked:=false
 
 @onready var player = get_tree().get_first_node_in_group("player")
 
@@ -69,19 +65,6 @@ func setup(type: String):
 	$Sparks.color = Color(1, 0.92, 0.75)
 	if type == "shooter":
 		fire_cd = randf_range(1.0, 2.2)
-	if type in ["shooter","fast","tank"]:
-		cue=MeshInstance3D.new()
-		var beam:=BoxMesh.new()
-		beam.size=Vector3(2,220,0.4)
-		cue.mesh=beam
-		cue.position=Vector3(0,-135,2)
-		var mat:=StandardMaterial3D.new()
-		mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.albedo_color=Color(1,0.45,0.3,0.4)
-		cue.material_override=mat
-		cue.visible=false
-		add_child(cue)
 	if type=="tank": fire_cd=3.0
 
 func make_elite() -> void:
@@ -114,12 +97,15 @@ func apply_tier(tier: int):
 func _physics_process(delta):
 	if dead:
 		return
+	preload("res://scripts/element_reactions.gd").tick(self,delta)
+	if dead: return
+	if preload("res://scripts/element_reactions.gd").state(self).has("frozen"):
+		velocity=Vector3.ZERO
+		return
 	slow_timer = maxf(0.0, slow_timer - delta)
-	wet_timer = maxf(0.0, wet_timer - delta)
-	burn_timer = maxf(0.0, burn_timer - delta)
-	gust_timer = maxf(0.0, gust_timer - delta)
 	# 正常射击游戏逻辑：机头恒朝屏幕下方俯冲，不随主角转向
 	var cur_speed = speed * (1.0 - slow_strength) if slow_timer > 0.0 else speed
+	cur_speed=minf(cur_speed,speed*preload("res://scripts/element_reactions.gd").movement(self))
 	var vel := Vector3(vx, -cur_speed, 0.0)
 	phase_t += delta
 	# 各机型专属移动方式（均不追踪主角，只影响各自的进场轨迹）
@@ -132,7 +118,7 @@ func _physics_process(delta):
 			# 快速机：冲刺——滑行 0.8 秒 → 猛冲 0.5 秒循环，速度 ×2.2
 			var burst := 2.2 if fmod(phase_t, 1.3) > 0.8 else 1.0
 			vel *= burst
-			cue.visible=fmod(phase_t,1.3)>0.50 and fmod(phase_t,1.3)<0.8
+			if model.has_method("charge"): model.charge(clampf((fmod(phase_t,1.3)-.5)/.3,0,1) if fmod(phase_t,1.3)<.8 else 0)
 		"shooter":
 			# 炮手机：压到上半区悬停开火 4 秒，随后继续俯冲
 			if hover_y < -9000.0:
@@ -164,15 +150,14 @@ func _physics_process(delta):
 	# 炮手机：机身不转向，炮口仍瞄准玩家开火
 	if kind in ["shooter","tank"] and player:
 		fire_cd -= delta
-		if fire_cd>0 and fire_cd<=0.65:
-			if not cue.visible:
-				shot_aim=(player.global_position-global_position).normalized()
-			cue.visible=true
-			cue.rotation.z=Vector2(shot_aim.x,shot_aim.y).angle()+PI/2
-			cue.position=shot_aim*135+Vector3(0,0,2)
+		if fire_cd>0 and fire_cd<=0.65 and not aim_locked:
+			shot_aim=(player.global_position-global_position).normalized()
+			aim_locked=true
+		if model.has_method("charge"): model.charge(clampf((.35-fire_cd)/.35,0,1))
 		if fire_cd <= 0.0:
 			fire_cd = randf_range(2.8, 3.4)
-			cue.visible=false
+			aim_locked=false
+			if model.has_method("shot"): model.shot()
 			var world = get_tree().current_scene
 			if world.has_method("spawn_enemy_bullet"):
 				if kind=="tank":
@@ -200,12 +185,7 @@ func take_damage(amount):
 	if dead:
 		return
 	health -= amount
-	# 受击反馈：轻微膨胀
-	if hit_tween: hit_tween.kill()
-	model.scale=Vector3.ONE
-	hit_tween = create_tween()
-	hit_tween.tween_property(model, "scale", Vector3.ONE * 1.1, 0.04)
-	hit_tween.tween_property(model, "scale", Vector3.ONE, 0.08)
+	if model.has_method("impact"): model.impact(amount)
 	if health <= 0:
 		die()
 
@@ -228,6 +208,5 @@ func die():
 	$Sparks.emitting = true
 	if model:
 		model.visible = false
-	if cue: cue.hide()
 	await get_tree().create_timer(0.6).timeout
 	queue_free()

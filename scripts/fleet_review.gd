@@ -15,11 +15,14 @@ var family_buttons: Array[Button]=[]
 var controls: Array[Control]=[]
 var time:=0.0
 var mode:=0
+var boss_phase:=1
+var phase_row: HBoxContainer
 var family_row: HBoxContainer
 var ship_selection:=Vector2i(1,9)
 const HOSTILES=preload("res://scripts/blender_hostiles.gd")
 const PRECISION=preload("res://scripts/precision_fx.gd")
-const CATALOG_NAMES=[["常规翼机","高速针形机","三叶机","炮艇","盾翼机","重甲机"],["毁灭者","拦截者","六瓣堡垒","狙击猎手","幻影","OMEGA"],["动能命中","火焰冲击","水花脉冲","冰霜冲击","电能冲击","舰体爆炸"]]
+const CATALOG_NAMES=[["常规翼机","高速针形机","三叶机","炮艇","盾翼机","重甲机"],["毁灭者","拦截者","六瓣堡垒","狙击猎手","幻影","OMEGA"],["热冲击","融化","冻结","感电连锁","冰雷碎裂","超载"]]
+const REACTIONS=["steam","melt","freeze","conduct","shatter","overload"]
 
 func _ready() -> void:
 	get_tree().paused=false
@@ -83,6 +86,9 @@ func _ready() -> void:
 	hint.add_theme_font_size_override("font_size",13)
 	hint.add_theme_color_override("font_color",Color("78949e"))
 	panel.add_child(hint)
+	phase_row=HBoxContainer.new()
+	panel.add_child(phase_row)
+	for i in 3: button(["P1 巡航","P2 暴走","P3 核心展开"][i],phase_row).pressed.connect(select_phase.bind(i+1))
 	var modes:=HBoxContainer.new()
 	modes.theme=panel.theme
 	modes.anchor_top=1
@@ -108,6 +114,7 @@ func button(text: String,parent: Control) -> Button:
 
 func select_family(index: int) -> void:
 	family=index
+	if family!=5: boss_phase=mini(boss_phase,2)
 	if mode!=0: slider.set_value_no_signal(index+1)
 	rebuild()
 
@@ -139,12 +146,14 @@ func change_form(delta: int) -> void:
 	slider.value=clampi(int(slider.value)+delta,1,int(slider.max_value))
 
 func rebuild() -> void:
+	phase_row.visible=mode==2
+	phase_row.get_child(2).visible=family==5
 	if ship:
 		remove_child(ship)
 		ship.free()
 	if mode==0: ship=FLEET.build(FLEET.FAMILIES[family],form)
 	elif mode==1: ship=HOSTILES.build("enemy",family,9,false)
-	elif mode==2: ship=HOSTILES.build("boss",family+1,10,false)
+	elif mode==2: ship=HOSTILES.build("boss",family+1,10,false,boss_phase)
 	else:
 		ship=Node3D.new()
 		ship.scale=Vector3.ONE*.08
@@ -158,16 +167,22 @@ func rebuild() -> void:
 	else:
 		detail.text=CATALOG_NAMES[mode-1][family]+(" · 独立曲面舰体 / 实际游戏模型" if mode<3 else " · 实际运行特效 / 自动循环")
 		print("HOSTILE_VIEW ",mode," ",family)
+		if mode==2:
+			detail.text+=" · P%d"%boss_phase
+			print("BOSS_PHASE_VIEW ",family+1," ",boss_phase)
+
+func select_phase(value: int) -> void:
+	boss_phase=value
+	rebuild()
 
 func preset(index: int) -> void:
 	last_input=Time.get_ticks_msec()/1000.0
 	if index==4:
-		if OS.has_feature("web"): JavaScriptBridge.eval("location.href='?v=blender-fleet'",true)
+		if OS.has_feature("web"): JavaScriptBridge.eval("location.href='?v=combat-rework'",true)
 		return
 	if index==3:
 		if mode==3:
-			var colors: Array[Color]=[Color("bdeaf5"),Color("ff904d"),Color("66bdf1"),Color("b5f1ff"),Color("bf9bea"),Color("f5ac65")]
-			PRECISION.pulse(ship,Vector3.ZERO,colors[family],110,family==5,.55,family)
+			preload("res://scripts/reaction_fx.gd").emit(ship,Vector3.ZERO,REACTIONS[family])
 		elif ship.has_method("fire"):
 			ship.fire(true)
 			ship.launch_bay()
@@ -193,8 +208,9 @@ func _input(event: InputEvent) -> void:
 		if not event.pressed: dragging=false
 		else:
 			for control in controls:
+				if not control.is_visible_in_tree(): continue
 				if control==slider and control.get_global_rect().has_point(event.position):
-					slider.value=1+19*clampf((event.position.x-slider.global_position.x)/slider.size.x,0,1)
+					slider.value=1+(slider.max_value-1)*clampf((event.position.x-slider.global_position.x)/slider.size.x,0,1)
 					get_viewport().set_input_as_handled()
 					return
 				if control is Button and control.get_global_rect().has_point(event.position):
@@ -204,7 +220,7 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenDrag and slider.get_global_rect().has_point(event.position):
-		slider.value=1+19*clampf((event.position.x-slider.global_position.x)/slider.size.x,0,1)
+		slider.value=1+(slider.max_value-1)*clampf((event.position.x-slider.global_position.x)/slider.size.x,0,1)
 		get_viewport().set_input_as_handled()
 		return
 	last_input=Time.get_ticks_msec()/1000.0

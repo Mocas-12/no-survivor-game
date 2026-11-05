@@ -32,12 +32,15 @@ var tp_cd = 2.2
 var dead = false
 var entered = false
 var enraged = false
-var phase3 = false        # OMEGA 第三阶段（≤35%：获得瞬移 + 全屏毁灭环）
+var phase3 = false        # OMEGA 第三阶段：核心炮展开与上方战区瞬移
 var is_omega = false
 var affix = ""            # 循环词缀 id（空 = 无）
 var minion_cd = 6.0       # 增援词缀的召唤计时
 var _cur_style = ""       # 当前攻击使用的弹形（OMEGA 轮转全舰队弹形用）
 var model: Node3D = null
+var transition_left:=0.0
+var visual_phase:=1
+var teleport_ready:=0.0
 
 func setup(id, tier_, affix_ := ""):
 	boss_id = id
@@ -95,9 +98,17 @@ func _physics_process(delta):
 		return
 	t += delta
 	contact_cd -= delta
-	# 狂暴特效旋转件（光珠绕机旋转）
-	if _fx_spin != null and is_instance_valid(_fx_spin):
-		_fx_spin.rotation.z += 1.8 * delta
+	preload("res://scripts/element_reactions.gd").tick(self,delta)
+	if dead: return
+	if transition_left>0:
+		transition_left=maxf(0,transition_left-delta)
+		if transition_left==0: _phase_check()
+		return
+	delta*=preload("res://scripts/element_reactions.gd").movement(self)
+	if teleport_ready>0:
+		teleport_ready-=delta
+		if teleport_ready<=0: _finish_teleport()
+
 
 	# 各 Boss 专属巡航走位（走位即身份）：
 	# 毁灭者镇中缓巡 / 拦截者高速咬位 / 要塞驻停炮台 / 猎手游猎玩家上空 / 幻影漂移待瞬移
@@ -183,6 +194,9 @@ func _attack():
 	var player = get_tree().get_first_node_in_group("player")
 	var spd = (1.15 if enraged else 1.0) * (1.25 if affix == "swift" else 1.0)
 	attack_count += 1
+	if enraged:
+		_attack_deployed(player,spd)
+		return
 	match boss_id:
 		6:
 			# OMEGA：轮转全舰队的五种专属弹形（弹形即它吞噬了谁）
@@ -271,24 +285,23 @@ func _attack_as(vid: int, spd: float, world, player):
 					var d2 = aim.rotated((i - 1) * 0.25)
 					spawn(global_position + Vector3(d2.x, d2.y, 0.0) * 55.0, Vector3(d2.x, d2.y, 0.0), 300.0 * spd, bullet_damage, 1.2, 1.8)
 
-# 幻影 / OMEGA 第三阶段专属：原地留残影 → 闪现到新位置 → 立刻放一圈刺弹
+# 局部蓄光后在上方战区瞬移，重新开火前留出反应时间。
 func _teleport():
-	var world = get_tree().current_scene
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(0.6, 0.85, 1), 0.6, 0.1, 0.3)
-	global_position = Vector3(randf_range(-396.0, 396.0), randf_range(-214.0, -124.0), 0.0)
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(0.6, 0.85, 1), 0.1, 1.3, 0.3)
-	if world.has_method("play_sfx"):
-		world.play_sfx("hit", -6.0, 0.3)
-	for i in 8:
-		var dir = Vector3(cos(TAU * i / 8.0 + randf() * 0.5), sin(TAU * i / 8.0 + randf() * 0.5), 0.0)
-		spawn(global_position + dir * 55.0, dir, 265.0, bullet_damage)
+	if teleport_ready>0: return
+	teleport_ready=.55
+	attack_cd=maxf(attack_cd,.85)
+	if model.has_method("charge"): model.charge(1)
+
+func _finish_teleport():
+	global_position=Vector3(randf_range(-310,310),randf_range(100,220),0)
+	if model.has_method("charge"): model.charge(0)
+	attack_cd=maxf(attack_cd,.45)
 
 func take_damage(amount):
 	if dead:
 		return
 	hp -= amount
+	if model.has_method("impact"): model.impact(amount)
 	hp_changed.emit(hp, max_hp)
 	_phase_check()
 	if hp <= 0:
@@ -305,161 +318,70 @@ func take_damage_silent(amount):
 
 # 阶段判定：普通 Boss 半血狂暴；OMEGA 70% 进入 P2 狂暴、35% 进入 P3
 func _phase_check():
-	var enr_at := 0.7 if is_omega else 0.5
-	if not enraged and hp <= max_hp * enr_at:
-		_enrage()
-	if is_omega and not phase3 and hp <= max_hp * 0.35:
-		_phase3()
+	if hp<=0 or dead or transition_left>0: return
+	var wanted=3 if is_omega and hp<=max_hp*.35 else (2 if hp<=max_hp*(.7 if is_omega else .5) else 1)
+	if wanted>visual_phase: _change_phase(visual_phase+1)
 
 func _enrage():
-	enraged = true
-	var world = get_tree().current_scene
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(1, 0.3, 0.2), 0.4, 3.0, 0.6)
-	if world.has_method("flash_ui"):
-		world.flash_ui(Color(1, 0.3, 0.2), 0.25)
-	if world.has_method("play_sfx"):
-		world.play_sfx("warning", -4.0, 0.2)
-	_enrage_fx()
+	_change_phase(2)
 
-# 狂暴特效专属化：每只 Boss 有自己的狂暴视觉（不再用通用红圈）
-var _fx_spin: Node3D = null
-
-func _enrage_fx():
-	match boss_id:
-		1:
-			# 毁灭者：两颗赤红副炮光珠绕机旋转
-			_orbs([Color(1, 0.25, 0.2), Color(1, 0.35, 0.2)], 120.0, 9.0)
-		2:
-			# 拦截者：紫色流光尾焰喷射（高速咬位感）
-			_streaks(Color(0.8, 0.4, 1.0))
-		3:
-			# 要塞：四角翠绿充能节点呼吸
-			var nodes: Array = []
-			for offset in [Vector3(-90, 55, 0), Vector3(90, 55, 0), Vector3(-90, -55, 0), Vector3(90, -55, 0)]:
-				var orb := MeshInstance3D.new()
-				var sm := SphereMesh.new()
-				sm.radius = 8.0
-				sm.height = 16.0
-				orb.mesh = sm
-				var m := StandardMaterial3D.new()
-				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				m.albedo_color = Color(0.3, 1.0, 0.55)
-				m.emission_enabled = true
-				m.emission = Color(0.3, 1.0, 0.55)
-				m.emission_energy_multiplier = 1.6
-				orb.material_override = m
-				orb.position = offset
-				add_child(orb)
-				nodes.append(orb)
-			for orb in nodes:
-				var mat: StandardMaterial3D = orb.material_override
-				var nt: Tween = orb.create_tween().set_loops()
-				nt.tween_property(mat, "emission_energy_multiplier", 3.2, 0.5)
-				nt.tween_property(mat, "emission_energy_multiplier", 1.2, 0.5)
-		4:
-			# 猎手：金色电弧绕机体噼啪
-			_streaks(Color(1, 0.8, 0.3), true)
-		5:
-			# 幻影：幽蓝魂火袅袅升起
-			_wisps(Color(0.55, 0.75, 1.0))
-		6:
-			# OMEGA：五色舰队光珠绕机旋转（它吞噬了整支舰队）
-			_orbs([Color(1, 0.25, 0.2), Color(0.8, 0.4, 1.0), Color(0.3, 1.0, 0.55), Color(1, 0.8, 0.3), Color(0.55, 0.75, 1.0)], 150.0, 10.0)
-
-# 旋转光珠
-func _orbs(colors: Array, radius: float, size: float):
-	var spin := Node3D.new()
-	add_child(spin)
-	_fx_spin = spin
-	for c in colors:
-		var orb := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = size
-		sm.height = size * 2.0
-		orb.mesh = sm
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = c
-		m.emission_enabled = true
-		m.emission = c
-		m.emission_energy_multiplier = 2.4
-		orb.material_override = m
-		var ang := randf() * TAU
-		orb.position = Vector3(cos(ang) * radius, sin(ang) * radius, 0.0)
-		spin.add_child(orb)
-
-# 机体流光 / 电弧粒子（猎手 jitter=true 时四散噼啪）
-func _streaks(color: Color, jitter := false):
-	var p := CPUParticles3D.new()
-	p.amount = 18
-	p.lifetime = 0.45
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 95.0
-	p.spread = 180.0
-	p.gravity = Vector3.ZERO
-	if jitter:
-		p.initial_velocity_min = 60.0
-		p.initial_velocity_max = 160.0
-	else:
-		p.direction = Vector3(0, -1, 0)
-		p.initial_velocity_min = 180.0
-		p.initial_velocity_max = 320.0
-	p.scale_amount_min = 0.6
-	p.scale_amount_max = 1.3
-	p.color_ramp = _gradient_fade(color)
-	p.mesh = _streak_mesh_srv(color)
-	add_child(p)
-	p.emitting = true
-
-# 幽火袅袅
-func _wisps(color: Color):
-	var p := CPUParticles3D.new()
-	p.amount = 12
-	p.lifetime = 1.1
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	p.emission_sphere_radius = 80.0
-	p.direction = Vector3(0, 1, 0)
-	p.spread = 25.0
-	p.gravity = Vector3(0, 60, 0)
-	p.initial_velocity_min = 40.0
-	p.initial_velocity_max = 90.0
-	p.scale_amount_min = 0.8
-	p.scale_amount_max = 1.6
-	p.color_ramp = _gradient_fade(color)
-	p.mesh = _streak_mesh_srv(color)
-	add_child(p)
-	p.emitting = true
-
-func _gradient_fade(color: Color) -> Gradient:
-	var g := Gradient.new()
-	g.colors = PackedColorArray([Color(color.r, color.g, color.b, 0.9), Color(color.r, color.g, color.b, 0.0)])
-	return g
-
-func _streak_mesh_srv(color: Color) -> SphereMesh:
-	var s := SphereMesh.new()
-	s.radius = 2.6
-	s.height = 5.2
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.vertex_color_use_as_albedo = true
-	m.emission_enabled = true
-	m.emission = color
-	m.emission_energy_multiplier = 2.0
-	s.material = m
-	return s
-
-# OMEGA 第三阶段：获得幻影的瞬移，弹幕密度全面提升
 func _phase3():
-	phase3 = true
-	var world = get_tree().current_scene
-	if world.has_method("spawn_ring"):
-		world.spawn_ring(global_position, Color(0.85, 0.95, 1), 0.5, 4.0, 0.8)
-	if world.has_method("flash_ui"):
-		world.flash_ui(Color(0.85, 0.95, 1), 0.3)
-	if world.has_method("play_sfx"):
-		world.play_sfx("warning", -2.0, 0.1)
+	_change_phase(3)
+
+func _change_phase(next: int):
+	if dead or next<=visual_phase: return
+	visual_phase=next
+	enraged=true
+	phase3=next==3
+	transition_left=.85
+	attack_cd=.6
+	teleport_ready=0
+	var old=model
+	model=preload("res://scripts/blender_hostiles.gd").build("boss",boss_id,MB.BOSS_SHIPS[boss_id][2],true,next)
+	add_child(model)
+	model.scale=Vector3.ONE*.80
+	var tw=create_tween()
+	tw.tween_property(model,"scale",Vector3.ONE,.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if is_instance_valid(old): old.queue_free()
+	# Collider follows the deployed silhouette, never a ring of cosmetic orbs.
+	var bounds=preload("res://scripts/blender_fleet.gd").visible_bounds(model)
+	var shape=BoxShape3D.new()
+	shape.size=Vector3(maxf(70,bounds.size.x*.85/.8),maxf(70,bounds.size.y*.85/.8),40)
+	$Collision.set_deferred("shape",shape)
+	var world=get_tree().current_scene
+	if world.has_method("play_sfx"): world.play_sfx("transform",-7,.1)
+	if world.has_method("_shake"): world._shake(4)
+
+# P2 changes firing origins and timing as well as the deployed hull.
+func _attack_deployed(player,spd: float):
+	var aim=(player.global_position-global_position).normalized() if player else Vector3.DOWN
+	_cur_style=STYLE_OF.get(boss_id,"destructor")
+	match boss_id:
+		1: # Two shoulder batteries fire converging fans, then a breathing interval.
+			for side in [-1,1]:
+				for j in 3:
+					spawn(global_position+Vector3(side*75,-25,0),aim.rotated(Vector3.BACK,(j-1)*.18+side*.08),230*spd,bullet_damage)
+		2: # Alternating blade origins: crossing lanes rather than a denser circle.
+			var side=-1 if attack_count%2 else 1
+			for j in 5: spawn(global_position+Vector3(side*80,0,0),Vector3.DOWN.rotated(Vector3.BACK,(j-2)*.17-side*.25),255*spd,bullet_damage)
+		3: # Open petals alternate spiral direction with a deliberate gap.
+			spiral_a+=.24 if attack_count%12<6 else -.24
+			for j in 3:
+				var d=Vector3(cos(spiral_a+j*TAU/3),sin(spiral_a+j*TAU/3),0)
+				spawn(global_position+d*75,d,185*spd,bullet_damage)
+		4: # Rail salvo from the extended spine, short homing window only.
+			for j in 3: spawn(global_position+Vector3((j-1)*36,-55,0),aim.rotated(Vector3.BACK,(j-1)*.13),265*spd,bullet_damage,.55,.65)
+		5: # Two wing tips leave a central dodge corridor; teleport stays above player.
+			for side in [-1,1]:
+				for j in 3: spawn(global_position+Vector3(side*80,0,0),Vector3.DOWN.rotated(Vector3.BACK,side*(.20+j*.18)),220*spd,bullet_damage)
+		6: # Staggered ring batteries with one rotating safe sector.
+			var gap=attack_count%12
+			for j in 12:
+				if mini(absi(j-gap),12-absi(j-gap))<=1: continue
+				var d=Vector3(cos(j*TAU/12),sin(j*TAU/12),0)
+				spawn(global_position+d*90,d,190*spd,bullet_damage)
+			if phase3:
+				for side in [-1,1]: spawn(global_position+Vector3(side*48,-70,0),aim,255,bullet_damage)
 
 func _die():
 	if dead:
