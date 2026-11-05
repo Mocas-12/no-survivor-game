@@ -9,6 +9,24 @@ const GOLD := Color(1, 0.84, 0.35)
 
 static var _mesh_cache := {}
 
+static func fire_head() -> QuadMesh:
+	if not _mesh_cache.has("fire_head"):
+		var mesh=QuadMesh.new();mesh.size=Vector2(18,30)
+		var mat=ShaderMaterial.new();mat.shader=preload("res://scripts/projectile_fire.gdshader")
+		mat.set_shader_parameter("turbulence",preload("res://assets/vfx/turbulence.png"))
+		mesh.material=mat;_mesh_cache["fire_head"]=mesh
+	return _mesh_cache["fire_head"]
+
+static func soft_particle(color: Color,radius: float,flame:=false) -> QuadMesh:
+	var key="soft|%s|%s|%s"%[color.to_html(),radius,flame]
+	if not _mesh_cache.has(key):
+		var mesh=QuadMesh.new();mesh.size=Vector2(radius*3,radius*5)
+		var mat=ShaderMaterial.new();mat.shader=preload("res://scripts/particle_soft.gdshader")
+		mat.set_shader_parameter("turbulence",preload("res://assets/vfx/turbulence.png"))
+		mat.set_shader_parameter("tint",color);mat.set_shader_parameter("flame",1.0 if flame else 0.0)
+		mesh.material=mat;_mesh_cache[key]=mesh
+	return _mesh_cache[key]
+
 # 发光水滴粒子网格（按 颜色+半径 缓存）
 static func drop(c: Color, r: float) -> SphereMesh:
 	var key := "d|%s|%.1f" % [c.to_html(), r]
@@ -118,32 +136,7 @@ static func ring(parent: Node, pos: Vector3, color: Color, from_scale: float, to
 
 # 爆炸粒子云
 static func explosion(parent: Node, pos: Vector3, color: Color, big := false) -> void:
-	preload("res://scripts/precision_fx.gd").pulse(parent,pos,color,100 if big else 52,big,.48 if big else .32,5)
-	var p := CPUParticles3D.new()
-	p.amount = 22 if big else 10
-	p.lifetime = 0.55
-	p.one_shot = true
-	p.explosiveness = 1.0
-	p.spread = 180.0
-	p.gravity = Vector3.ZERO
-	p.initial_velocity_min = 130.0
-	p.initial_velocity_max = 320.0
-	p.scale_amount_min = 1.2
-	p.scale_amount_max = 3.2 if big else 2.2
-	var m := BoxMesh.new()
-	m.size=Vector3(.8,4.5,.65)
-	var mm := StandardMaterial3D.new()
-	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mm.albedo_color = color
-	mm.emission_enabled = true
-	mm.emission = color
-	mm.emission_energy_multiplier = .7
-	m.material = mm
-	p.mesh = m
-	p.position = pos
-	parent.add_child(p)
-	p.emitting = true
-	parent.get_tree().create_timer(1.0).timeout.connect(p.queue_free)
+	preload("res://scripts/layered_fx.gd").burst(parent,pos,"explosion",1.6 if big else .8)
 
 # 彩带迸发（升级 / 变形演出用）
 static func confetti(parent: Node, pos: Vector3, amount: int, color: Color = GOLD) -> void:
@@ -176,51 +169,7 @@ static func confetti(parent: Node, pos: Vector3, amount: int, color: Color = GOL
 
 # 逼真闪电：抖折主放电通道 + 两条随机分支，二次闪烁后消散
 static func lightning(parent: Node, from: Vector3, to: Vector3) -> void:
-	_channel(parent, from, to, 3.4)
-	for i in 2:
-		var anchor = from.lerp(to, randf_range(0.3, 0.7))
-		var branch_dir = Vector3(randf_range(-1, 1), randf_range(-0.4, 1), randf_range(-1, 1)).normalized()
-		_channel(parent, anchor, anchor + branch_dir * from.distance_to(to) * randf_range(0.2, 0.38), 1.7)
-
-static func _channel(parent: Node, from: Vector3, to: Vector3, width: float) -> void:
-	var dist = from.distance_to(to)
-	if dist < 1.0:
-		return
-	var root := Node3D.new()
-	parent.add_child(root)
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = Color(0.9, 0.86, 1.0, 0.95)
-	m.emission_enabled = true
-	m.emission = Color(0.72, 0.58, 1.0)
-	m.emission_energy_multiplier = 3.4
-	# 中点位移：沿通道逐段向随机侧向抖折，形成锯齿放电
-	var steps = maxi(int(dist / 24.0), 3)
-	var prev = from
-	for i in steps:
-		var endp = from.lerp(to, float(i + 1) / steps)
-		if i < steps - 1:
-			var jitter = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
-			endp += jitter.cross(to - from).normalized() * randf_range(-16.0, 16.0)
-		var seg_len = prev.distance_to(endp)
-		if seg_len > 0.5:
-			var mi := MeshInstance3D.new()
-			var bm := BoxMesh.new()
-			bm.size = Vector3(width, width, 1.0)
-			mi.mesh = bm
-			mi.material_override = m
-			root.add_child(mi)
-			var dirv = (endp - prev).normalized()
-			var up := Vector3.UP
-			if absf(dirv.dot(up)) > 0.98:
-				up = Vector3(0, 0, 1)
-			mi.look_at_from_position((prev + endp) * 0.5, endp, up)
-			mi.scale = Vector3(1, 1, seg_len)
-		prev = endp
-	# 闪烁：亮 → 短暂变暗 → 回亮 → 淡出
-	var tw := root.create_tween()
-	tw.tween_property(m, "albedo_color:a", 0.3, 0.05)
-	tw.tween_property(m, "albedo_color:a", 0.9, 0.03)
-	tw.tween_property(m, "albedo_color:a", 0.0, 0.1)
-	tw.tween_callback(root.queue_free)
+	var fx=preload("res://scripts/layered_fx.gd").burst(parent,from,"beam")
+	if fx:
+		fx.arc(to-from,0,.24)
+		fx.advance(0)

@@ -394,8 +394,8 @@ func _die():
 			spawn(global_position + dir * 55.0, dir, 235.0, bullet_damage)
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
-	$ExplosionParticles.emitting = true
-	$Sparks.emitting = true
+	$ExplosionParticles.emitting = false
+	$Sparks.emitting = false
 	if model:
 		model.visible = false
 	died.emit(global_position, is_omega)
@@ -404,8 +404,8 @@ func _die():
 	var world = get_tree().current_scene
 	for i in 5:
 		await get_tree().create_timer(0.18).timeout
-		if world.has_method("spawn_ring"):
+		if world.has_method("spawn_explosion"):
 			var off = Vector3(randf_range(-90, 90), randf_range(-60, 60), 0.0)
-			world.spawn_ring(global_position + off, Color(1, 0.7, 0.3), 0.3, 1.6, 0.4)
+			world.spawn_explosion(global_position + off, Color(1, 0.7, 0.3), i==4)
 	await get_tree().create_timer(0.3).timeout
 	queue_free()

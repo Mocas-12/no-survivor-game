@@ -205,7 +205,7 @@ func die():
 	died.emit(global_position, score_value, fx_color, max_hp)
 	# The shared layered death effect is emitted by the world from this signal.
 	$ExplosionParticles.emitting = false
-	$Sparks.emitting = true
+	$Sparks.emitting = false
 	if model:
 		model.visible = false
 	await get_tree().create_timer(0.6).timeout

@@ -170,8 +170,7 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 	w.play_sfx("boss_die")
 	w._shake(18.0)
 	w.flash_ui(Color(1, 0.6, 0.3), 0.45)
-	for i in 3:
-		w.spawn_ring(pos + Vector3(randf_range(-60, 60), randf_range(-40, 40), 0.0), Color(1, 0.75, 0.4), 0.3, 2.4 + i * 0.8, 0.6)
+	w.spawn_explosion(pos, Color(1, 0.75, 0.4),true)
 
 	if is_omega and not w.omega_slain:
 		# ✦ 胜利：灭世母舰被击破（记录徽章，随后进入无尽模式）
@@ -192,8 +191,6 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 		w.flash_ui(Color(1, 0.85, 0.35), 0.5)
 		w.play_sfx("levelup", 0.0)
 		w._shake(24.0)
-		for i in 6:
-			w.spawn_ring(pos + Vector3(randf_range(-120, 120), randf_range(-80, 80), 0.0), Color(1, 0.85, 0.35) if i % 2 == 0 else CYAN, 0.3, 3.0 + i * 0.7, 0.8)
 		# 演出落定后弹出胜利结算（终点弧线的落点：战绩 + 徽章 + 无尽/重开选择）
 		# SceneTreeTimer 归场景树所有，跨 reload_current_scene 存活：玩家在窗口内
 		# 阵亡并快速重开时 w 已释放，直接连方法会访问悬空实例，须包一层有效性守卫

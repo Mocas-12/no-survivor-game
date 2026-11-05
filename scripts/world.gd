@@ -320,7 +320,6 @@ func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 
 	# 击杀演出：3D 爆炸粒子 + 冲击波环 + 音效 + 震屏
 	spawn_explosion(pos, fx_color, value >= 30)
-	spawn_ring(pos, fx_color, 0.35, 2.0, 0.35)
 	play_sfx("explode", -8.0, 0.12)
 	_shake(6.0 if value >= 30 else 0.7)
 
@@ -715,10 +714,7 @@ func spawn_hit_spark(pos: Vector3,element: String="normal",amount:=1,direction:=
 	if now-int(get_meta("impact_audio",-1000))>45:
 		set_meta("impact_audio",now)
 		play_sfx("heavy_hit" if amount>=8 else "metal_hit",-13,.12)
-	var style: int={"normal":0,"fire":1,"water":2,"ice":3,"lightning":4,"wind":6}.get(element,0)
-	var color: Color=preload("res://scripts/projectile_geometry.gd").PLAYER.get(element,Color("c9e9ef"))
-	var flash=preload("res://scripts/precision_fx.gd").pulse(self,pos,color,30 if amount<8 else 44,false,.16,style)
-	if flash: flash.rotation.z=atan2(direction.y,direction.x)-PI/2
+	preload("res://scripts/layered_fx.gd").burst(self,pos,"hit",.7 if amount<8 else 1.0)
 
 func flash_ui(color: Color, peak: float):
 	if reduce_fx:

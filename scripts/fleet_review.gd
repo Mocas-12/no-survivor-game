@@ -102,6 +102,7 @@ func _ready() -> void:
 		button(["主角舰队","小怪图鉴","Boss 机库","特效台"][i],modes).pressed.connect(select_mode.bind(i))
 	rebuild()
 	update_camera()
+	if OS.has_feature("web") and JavaScriptBridge.eval("new URLSearchParams(location.search).get('fx')==='1'",true): select_mode(3)
 	print("FLEET_REVIEW_READY")
 
 func button(text: String,parent: Control) -> Button:
@@ -157,6 +158,9 @@ func rebuild() -> void:
 	else:
 		ship=Node3D.new()
 		ship.scale=Vector3.ONE*.08
+		var target=HOSTILES.build("enemy",5,55,false)
+		target.name="ReactionTarget"
+		ship.add_child(target)
 	ship.rotation.x=-PI/2
 	add_child(ship)
 	for i in family_buttons.size():
@@ -178,11 +182,12 @@ func select_phase(value: int) -> void:
 func preset(index: int) -> void:
 	last_input=Time.get_ticks_msec()/1000.0
 	if index==4:
-		if OS.has_feature("web"): JavaScriptBridge.eval("location.href='?v=combat-rework'",true)
+		if OS.has_feature("web"): JavaScriptBridge.eval("location.href='?v=organic-vfx'",true)
 		return
 	if index==3:
 		if mode==3:
 			preload("res://scripts/reaction_fx.gd").emit(ship,Vector3.ZERO,REACTIONS[family])
+			ship.get_node("ReactionTarget").impact(6)
 		elif ship.has_method("fire"):
 			ship.fire(true)
 			ship.launch_bay()

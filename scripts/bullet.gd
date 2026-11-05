@@ -96,9 +96,10 @@ func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float,
 	visible = true
 	_active = true
 	set_deferred("monitoring", true)
-	$Mesh.mesh = PG.mesh(element,false)
-	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
-	$Mesh.material_override = _body_mat(element)
+	$Mesh.mesh = Fx.fire_head() if element=="fire" else PG.mesh(element,false)
+	rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
+	$Mesh.rotation.z = 0
+	$Mesh.material_override = null if element=="fire" else _body_mat(element)
 	# 元素 / 弹道没变就只恢复发射，变了才重建拖尾（复用路径零分配）
 	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx:
 		_rebuild_fx()
@@ -116,7 +117,7 @@ func _rebuild_fx():
 	_fx_element = element
 	_has_water_fx = wave_amp > 0.0
 	var c: Color = ELEMENT_COLORS[element]
-	$Trail.mesh = Fx.drop(c, 0.85)
+	$Trail.mesh = Fx.soft_particle(c, 0.85)
 	$Trail.amount = 4
 	$Trail.lifetime = 0.16
 	$Trail.emitting = true
@@ -157,7 +158,7 @@ func _attach_flame_trail():
 	f.scale_amount_max = 2.8
 	f.scale_amount_curve = Fx.shrink_curve()
 	f.color_ramp = Fx.gradient([Color(1, 0.95, 0.55, 0.95), Color(1, 0.55, 0.15, 0.8), Color(0.85, 0.12, 0.05, 0.0)])
-	f.mesh = Fx.drop(Color(1, 0.62, 0.2), 1.9)
+	f.mesh = Fx.soft_particle(Color(1, 0.62, 0.2), 1.9,true)
 	f.emitting = true
 
 # 疾风：绿色树叶侧向卷落
@@ -173,7 +174,7 @@ func _attach_leaf_trail():
 	w.scale_amount_min = 0.7
 	w.scale_amount_max = 1.2
 	w.color_ramp = Fx.gradient([Color(0.6, 0.92, 0.35, 0.95), Color(0.35, 0.72, 0.25, 0.75), Color(0.25, 0.6, 0.2, 0.0)])
-	w.mesh = Fx.leaf()
+	w.mesh = Fx.soft_particle(Color(.5,.85,.7),.8)
 	w.emitting = true
 
 # 疾风：白绿风痕向后高速拉出，表现风的流向
@@ -187,7 +188,7 @@ func _attach_gust_trail():
 	s.scale_amount_min = 0.8
 	s.scale_amount_max = 1.3
 	s.color_ramp = Fx.gradient([Color(0.8, 1.0, 0.75, 0.8), Color(0.7, 0.95, 0.65, 0.0)])
-	s.mesh = Fx.streak()
+	s.mesh = Fx.soft_particle(Color(.7,.95,.8),.7)
 	s.emitting = true
 
 # 雷电：弹体四周噼啪爆裂的白色电火花
@@ -201,12 +202,12 @@ func _attach_crackle_trail():
 	k.scale_amount_min = 0.5
 	k.scale_amount_max = 1.0
 	k.color_ramp = Fx.gradient([Color(1, 1, 1, 1), Color(0.82, 0.62, 1.0, 0.0)])
-	k.mesh = Fx.drop(Color(0.88, 0.78, 1.0), 1.2)
+	k.mesh = Fx.soft_particle(Color(0.88, 0.78, 1.0), 1.2)
 	k.emitting = true
 
 # 波浪：定向喷溅水花 + 向后拖出的白色水痕尾流
 func _attach_water_trail():
-	$Splash.mesh = Fx.drop(Color(0.75, 0.95, 1.0), 1.1)
+	$Splash.mesh = Fx.soft_particle(Color(0.75, 0.95, 1.0), 1.1)
 	$Splash.color_ramp = Fx.gradient([Color(1, 1, 1, 0.95), Color(0.55, 0.85, 1.0, 0.75), Color(0.4, 0.7, 1.0, 0.0)])
 	$Splash.amount = 10
 	$Splash.lifetime = 0.6
@@ -221,7 +222,7 @@ func _attach_water_trail():
 	wk.scale_amount_min = 0.7
 	wk.scale_amount_max = 1.3
 	wk.color_ramp = Fx.gradient([Color(0.92, 0.98, 1.0, 0.85), Color(0.6, 0.88, 1.0, 0.0)])
-	wk.mesh = Fx.drop(Color(0.9, 0.97, 1.0), 1.3)
+	wk.mesh = Fx.soft_particle(Color(0.9, 0.97, 1.0), 1.3)
 	wk.emitting = true
 
 func _process(delta):
@@ -244,7 +245,7 @@ func _process(delta):
 		wave_t += delta * 9.0
 		move += Vector3(-dir.y, dir.x, 0.0) * sin(wave_t) * wave_amp * delta
 	position += move
-	$Mesh.rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
+	$Mesh.rotation.z = 0
 	rotation.z = Vector2(dir.x, dir.y).angle() - PI / 2
 	# 飞出游戏区域自动回池
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:

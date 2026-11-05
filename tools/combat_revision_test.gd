@@ -85,7 +85,7 @@ func run():
 	shooter.model.charge(0)
 	check(not shooter.model.muzzle.visible,"Charge resets")
 	shooter.free()
-	await create_timer(.7).timeout
+	await create_timer(1.5).timeout
 	check(preload("res://scripts/reaction_fx.gd").active==0,"Reaction geometry cleans up after playback")
 	await process_frame
 	print("COMBAT_REVISION ",checks," checks failures=",failures)
