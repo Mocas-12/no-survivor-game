@@ -126,6 +126,12 @@ var bgm_player: AudioStreamPlayer
 
 func _ready():
 	Engine.time_scale = 1.0
+	if OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('review') === 'fleet'",true)):
+		set_process(false)
+		player.set_physics_process(false)
+		$Timer.stop()
+		get_tree().change_scene_to_file.call_deferred("res://scenes/fleet_review.tscn")
+		return
 	if OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('review') === 'assault'",true)):
 		set_process(false)
 		player.set_physics_process(false)
@@ -134,8 +140,9 @@ func _ready():
 		return
 	var hull_preview: bool=OS.has_feature("web") and bool(JavaScriptBridge.eval("new URLSearchParams(location.search).get('hull') === 'blender'",true))
 	preload("res://scripts/branch_visual.gd").use_blender_assault=hull_preview
-	# 预热全部飞船模型与涂装：变形换装零加载卡顿
+	# 预热基础舰与敌人资源；分支舰体按需共享加载。
 	MB.warm_up()
+	if preload("res://scripts/blender_fleet.gd").enabled: print("BLENDER_FLEET_ACTIVE")
 	# 音效播放器对象池（暂停菜单/开始面板期间音效不中断）
 	for i in 14:
 		var p := AudioStreamPlayer.new()
@@ -701,11 +708,11 @@ func spawn_explosion(pos: Vector3, color: Color, big := false):
 func confetti_burst(pos: Vector3, amount: int, color: Color = GOLD):
 	Fx.confetti(self, pos, amount, color)
 
-func spawn_hit_spark(pos: Vector3):
+func spawn_hit_spark(pos: Vector3,element: String="normal"):
 	play_sfx("hit", -10.0, 0.15)
-	var s := hit_spark_scene.instantiate()
-	s.position = pos
-	add_child(s)
+	var style: int={"normal":0,"fire":1,"water":2,"ice":3,"lightning":4,"wind":6}.get(element,0)
+	var color: Color=preload("res://scripts/projectile_geometry.gd").PLAYER.get(element,Color("c9e9ef"))
+	preload("res://scripts/precision_fx.gd").pulse(self,pos,color,22,false,.16,style)
 
 func flash_ui(color: Color, peak: float):
 	if reduce_fx:

@@ -2,6 +2,7 @@ extends SceneTree
 const MB=preload("res://scripts/model_builder.gd")
 const BRANCH=preload("res://scripts/branch_visual.gd")
 func _init() -> void:
+	preload("res://scripts/blender_fleet.gd").enabled=false
 	var failures: Array=[]
 	var signatures: Dictionary={}
 	for branch in ["assault","escort","siege"]:

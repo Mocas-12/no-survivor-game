@@ -16,6 +16,8 @@ static func drop(c: Color, r: float) -> SphereMesh:
 		var sm := SphereMesh.new()
 		sm.radius = r
 		sm.height = r * 2.0
+		sm.radial_segments=8
+		sm.rings=4
 		var mm := StandardMaterial3D.new()
 		mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -108,33 +110,17 @@ static func burst(parent: Node, pos: Vector3, cfg: Dictionary) -> void:
 
 # 3D 冲击波圆环：放大 + 淡出后自毁
 static func ring(parent: Node, pos: Vector3, color: Color, from_scale: float, to_scale: float, dur: float) -> void:
-	var ring := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = 9.0
-	torus.outer_radius = 11.0
-	ring.mesh = torus
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.albedo_color = color
-	m.emission_enabled = true
-	m.emission = color
-	m.emission_energy_multiplier = 1.8
-	ring.material_override = m
-	ring.position = pos
-	ring.rotation_degrees = Vector3(90, 0, 0)
-	ring.scale = Vector3.ONE * from_scale
-	parent.add_child(ring)
-	var tw := ring.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(ring, "scale", Vector3.ONE * to_scale, dur).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(m, "albedo_color:a", 0.0, dur)
-	tw.chain().tween_callback(ring.queue_free)
+	var largest:=maxf(maxf(from_scale,to_scale),.01)
+	var effect=preload("res://scripts/precision_fx.gd").pulse(parent,pos,color,22*largest,false,dur,8)
+	if effect:
+		effect.material.set_shader_parameter("radius_from",from_scale/largest)
+		effect.material.set_shader_parameter("radius_to",to_scale/largest)
 
 # 爆炸粒子云
 static func explosion(parent: Node, pos: Vector3, color: Color, big := false) -> void:
+	preload("res://scripts/precision_fx.gd").pulse(parent,pos,color,100 if big else 52,big,.48 if big else .32,5)
 	var p := CPUParticles3D.new()
-	p.amount = 40 if big else 22
+	p.amount = 22 if big else 10
 	p.lifetime = 0.55
 	p.one_shot = true
 	p.explosiveness = 1.0
@@ -144,15 +130,14 @@ static func explosion(parent: Node, pos: Vector3, color: Color, big := false) ->
 	p.initial_velocity_max = 320.0
 	p.scale_amount_min = 1.2
 	p.scale_amount_max = 3.2 if big else 2.2
-	var m := SphereMesh.new()
-	m.radius = 2.6
-	m.height = 5.2
+	var m := BoxMesh.new()
+	m.size=Vector3(.8,4.5,.65)
 	var mm := StandardMaterial3D.new()
 	mm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mm.albedo_color = color
 	mm.emission_enabled = true
 	mm.emission = color
-	mm.emission_energy_multiplier = 2.0
+	mm.emission_energy_multiplier = .7
 	m.material = mm
 	p.mesh = m
 	p.position = pos

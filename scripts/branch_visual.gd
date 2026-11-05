@@ -9,7 +9,25 @@ static var use_blender_assault := false
 static func decorate(ship: Node3D, branch: String) -> void:
 	if branch=="": return
 	var variant: int=ship.get_meta("form_variant",0)
-	var key:=branch+str(variant)+("_blender" if branch=="assault" and use_blender_assault else "")
+	if preload("res://scripts/blender_fleet.gd").enabled and not (branch=="assault" and use_blender_assault):
+		# GLB tier resources already share meshes. Do not pack transient animation state.
+		var length: float=ship.scale.x*float(ship.get_meta("extent",115.0))
+		if ship.has_method("advance"):
+			ship.set_process(false)
+			ship.moving.clear()
+		for old in ship.get_children():
+			ship.remove_child(old)
+			old.free()
+		var assembly:=preload("res://scripts/blender_fleet.gd").build(branch,variant)
+		assembly.name="BranchAssembly"
+		ship.add_child(assembly)
+		var extent: float=assembly.get_meta("extent")
+		ship.scale=Vector3.ONE*(length/extent)
+		ship.set_meta("extent",extent)
+		ship.set_meta("glow_mat",assembly.get_meta("glow_mat"))
+		ship.set_meta("fleet_motion",assembly)
+		return
+	var key:=branch+str(variant)+("_blender" if branch=="assault" and use_blender_assault else "_fleet" if preload("res://scripts/blender_fleet.gd").enabled else "")
 	if not prototypes.has(key):
 		var template:=build(branch,variant)
 		var packed:=PackedScene.new()
@@ -17,6 +35,9 @@ static func decorate(ship: Node3D, branch: String) -> void:
 		prototypes[key]=packed
 		template.free()
 	var length: float=ship.scale.x*float(ship.get_meta("extent",115.0))
+	if ship.has_method("advance"):
+		ship.set_process(false)
+		ship.moving.clear()
 	for old in ship.get_children():
 		ship.remove_child(old)
 		old.free()
@@ -26,6 +47,10 @@ static func decorate(ship: Node3D, branch: String) -> void:
 	var extent: float=assembly.get_meta("extent")
 	ship.scale=Vector3.ONE*(length/extent)
 	ship.set_meta("extent",extent)
+	if assembly.has_meta("glow_mat"):
+		ship.set_meta("glow_mat",assembly.get_meta("glow_mat"))
+		ship.set_meta("fleet_motion",assembly)
+		return
 	if assembly.has_node("Surface4"):
 		var glow: MeshInstance3D=assembly.get_node("Surface4")
 		glow.material_override=glow.material_override.duplicate()
@@ -72,6 +97,8 @@ static func engine(m, x: float, y: float, width: float) -> void:
 
 static func build(branch: String, variant: int) -> Node3D:
 	if branch=="assault" and use_blender_assault: return blender_assault()
+	if preload("res://scripts/blender_fleet.gd").enabled:
+		return preload("res://scripts/blender_fleet.gd").build(branch,variant)
 	var m=FLEET.new()
 	m.curve_segments=40
 	for color in [Color("152536"),Color("e4e6dd"),Color("6a8494"),Color("123f50"),Color("56d4e0"),Color("d7ad65")]:

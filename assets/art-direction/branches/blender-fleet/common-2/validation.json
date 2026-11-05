@@ -1,0 +1,30 @@
+{
+  "family": "common",
+  "tier": 2,
+  "triangles": 18000,
+  "high_triangles": 36984,
+  "non_manifold_edges": 0,
+  "material_roles": 6,
+  "stage_triangles": {
+    "2": 978,
+    "1": 976,
+    "3": 864,
+    "4": 2920
+  },
+  "parts": [
+    "SM_Hull",
+    "SM_Wing_Left",
+    "SM_Engine_Left",
+    "SM_Weapon_Left",
+    "SM_Wing_Right",
+    "SM_Engine_Right",
+    "SM_Weapon_Right",
+    "SM_Stage02",
+    "SM_Stage01",
+    "SM_Stage03",
+    "SM_Stage04"
+  ],
+  "editable_parts": 61,
+  "normal_ao": 1024,
+  "source": "assets\\art-direction\\branches\\blender-fleet\\common-2"
+}

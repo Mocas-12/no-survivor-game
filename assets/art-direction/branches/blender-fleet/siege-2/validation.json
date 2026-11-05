@@ -1,0 +1,30 @@
+{
+  "family": "siege",
+  "tier": 2,
+  "triangles": 18000,
+  "high_triangles": 46448,
+  "non_manifold_edges": 0,
+  "material_roles": 6,
+  "stage_triangles": {
+    "1": 832,
+    "2": 394,
+    "3": 768,
+    "4": 2366
+  },
+  "parts": [
+    "SM_Hull",
+    "SM_Weapon_Right",
+    "SM_Wing_Left",
+    "SM_Engine_Left",
+    "SM_Weapon_Left",
+    "SM_Wing_Right",
+    "SM_Engine_Right",
+    "SM_Stage01",
+    "SM_Stage02",
+    "SM_Stage03",
+    "SM_Stage04"
+  ],
+  "editable_parts": 83,
+  "normal_ao": 1024,
+  "source": "assets\\art-direction\\branches\\blender-fleet\\siege-2"
+}

@@ -1,0 +1,26 @@
+{
+  "source": "assets/art-direction/v2/fleet.png",
+  "primary_view": "top",
+  "families": [
+    "red wing fighter",
+    "orange needle",
+    "green triskelion",
+    "blue gunship",
+    "white shield crescent",
+    "purple heavy barge",
+    "red battery carrier",
+    "purple twin blade",
+    "green six-petal fortress",
+    "bronze asymmetric sniper",
+    "blue phase crescent",
+    "ivory double-ring OMEGA"
+  ],
+  "requirements": [
+    "distinct primary silhouettes rather than palette swaps",
+    "six shield petals on fortress",
+    "two concentric OMEGA armor rings",
+    "protected weapon mounts and inset engine exits"
+  ],
+  "unseen_views": "depth and unseen sides are authored extrapolations",
+  "verification": "topology and runtime geometry validated separately from subjective visual fidelity; no exact mask-match claim"
+}

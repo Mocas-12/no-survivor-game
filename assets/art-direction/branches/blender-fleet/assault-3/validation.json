@@ -1,0 +1,30 @@
+{
+  "family": "assault",
+  "tier": 3,
+  "triangles": 18000,
+  "high_triangles": 67992,
+  "non_manifold_edges": 0,
+  "material_roles": 6,
+  "stage_triangles": {
+    "1": 560,
+    "2": 254,
+    "3": 576,
+    "4": 1258
+  },
+  "parts": [
+    "SM_Hull",
+    "SM_Wing_Left",
+    "SM_Weapon_Left",
+    "SM_Engine_Left",
+    "SM_Wing_Right",
+    "SM_Weapon_Right",
+    "SM_Engine_Right",
+    "SM_Stage01",
+    "SM_Stage02",
+    "SM_Stage03",
+    "SM_Stage04"
+  ],
+  "editable_parts": 109,
+  "normal_ao": 1024,
+  "source": "assets\\art-direction\\branches\\blender-fleet\\assault-3"
+}

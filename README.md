@@ -25,6 +25,8 @@
 
 ## Gameplay development branch
 
+The local Blender revision adds 16 authored player hull tiers / 80 equipment forms, six enemy hulls, six bosses and layered pooled combat effects. See [fleet verification and sources](./docs/BLENDER-FLEET-QA.md). The full local model viewer is `http://127.0.0.1:8316/?review=fleet`; this revision has not been deployed to Pages.
+
 The local `codex/run-variety` revision adds main + auxiliary builds, paced encounters, selectable evolution frames and a discovery archive. See [implementation and test notes](./docs/RUN-VARIETY.md). This gameplay revision is not included in the current Pages release.
 
 ## Current visual edition

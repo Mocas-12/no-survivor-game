@@ -223,7 +223,8 @@ func die():
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
 	died.emit(global_position, score_value, fx_color, max_hp)
-	$ExplosionParticles.emitting = true
+	# The shared layered death effect is emitted by the world from this signal.
+	$ExplosionParticles.emitting = false
 	$Sparks.emitting = true
 	if model:
 		model.visible = false

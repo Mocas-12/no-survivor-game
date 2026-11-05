@@ -1,0 +1,12 @@
+{
+  "key": "enemy-3",
+  "triangles": 4200,
+  "budget": 4200,
+  "non_manifold_edges": 0,
+  "parts": [
+    "SM_Hull"
+  ],
+  "editable_parts": 43,
+  "reference": "assets/art-direction/v2/fleet.png",
+  "texture_size": 512
+}

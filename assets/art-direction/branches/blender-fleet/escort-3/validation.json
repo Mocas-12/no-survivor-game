@@ -1,0 +1,32 @@
+{
+  "family": "escort",
+  "tier": 3,
+  "triangles": 18000,
+  "high_triangles": 47768,
+  "non_manifold_edges": 0,
+  "material_roles": 6,
+  "stage_triangles": {
+    "1": 718,
+    "2": 298,
+    "3": 668,
+    "4": 1960
+  },
+  "parts": [
+    "SM_Hull",
+    "SM_Wing_Left",
+    "SM_Shield_Left",
+    "SM_Engine_Left",
+    "SM_Wing_Right",
+    "SM_Shield_Right",
+    "SM_Engine_Right",
+    "SM_Stage01",
+    "SM_Stage02",
+    "SM_Stage03",
+    "SM_Stage04",
+    "SM_Bay_Left",
+    "SM_Bay_Right"
+  ],
+  "editable_parts": 86,
+  "normal_ao": 1024,
+  "source": "assets\\art-direction\\branches\\blender-fleet\\escort-3"
+}

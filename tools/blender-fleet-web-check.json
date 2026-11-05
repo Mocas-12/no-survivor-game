@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "checks": [
+    "80 family/form selections using native UI",
+    "12 hostile model selections",
+    "six distinct impact/explosion shader previews",
+    "top/side/hero cameras",
+    "shoot/bay demonstration",
+    "orbit and zoom",
+    "default gameplay uses Blender fleet",
+    "start and pause"
+  ],
+  "errors": [],
+  "configurations": 80
+}

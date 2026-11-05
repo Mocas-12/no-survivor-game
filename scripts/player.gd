@@ -87,6 +87,8 @@ func _physics_process(delta):
 		else:
 			bank = clampf((m.x - 576.0 - position.x) * 0.0015, -0.3, 0.3)
 		model.rotation.z = lerpf(model.rotation.z, bank, minf(10.0 * delta, 1.0))
+		if preload("res://scripts/blender_fleet.gd").enabled:
+			model.rotation.y=lerpf(model.rotation.y,-bank*.55,minf(8.0*delta,1.0))
 
 	# 呼吸灯：机体自发光与跟随灯同步起伏（幅度调低，不遮盖机体本体细节）
 	glow_t += delta
@@ -101,6 +103,7 @@ func _physics_process(delta):
 		fire_auxiliary()
 		auxiliary_timer = maxf(0.65,1.15-auxiliary_level*0.12)
 	if branch == "siege" and heavy_timer <= 0:
+		_hull_fire(true)
 		var heavy = new_round()
 		heavy.launch(damage*3,"normal",0.65,0,0,0,1,global_position+Vector3(0,35,1),Vector3.UP)
 		heavy.pierce_left = 3
@@ -112,7 +115,13 @@ func _physics_process(delta):
 		shoot()
 		fire_timer = fire_cooldown
 
+func _hull_fire(heavy:=false) -> void:
+	if not is_instance_valid(model): return
+	var hull: Node3D=model.get_meta("fleet_motion",model)
+	if hull.has_method("fire"): hull.fire(heavy)
+
 func shoot():
+	_hull_fire()
 	var speed_mul = 1.4 if element == "wind" else 1.0
 	var spacing = (0.1 if branch=="assault" else 0.18) * spacing_scale
 	var shots: int = mini(bullet_count + (1 if branch=="assault" else 0),9)
@@ -163,6 +172,9 @@ func new_round():
 	return b
 
 func fire_auxiliary():
+	if is_instance_valid(model):
+		var hull: Node3D=model.get_meta("fleet_motion",model)
+		if hull.has_method("launch_bay"): hull.launch_bay()
 	var targets: Array = get_tree().get_nodes_in_group("mobs").filter(func(m): return not m.dead and m.position.y > position.y-20 and m.position.y < 340)
 	if targets.is_empty(): return
 	targets.sort_custom(func(a,b): return global_position.distance_squared_to(a.global_position)<global_position.distance_squared_to(b.global_position))

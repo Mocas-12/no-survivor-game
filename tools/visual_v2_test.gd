@@ -14,6 +14,7 @@ func check(ok: bool,message: String) -> void:
 		printerr("FAIL ",message)
 
 func run() -> void:
+	preload("res://scripts/blender_hostiles.gd").enabled=false
 	root.size = Vector2i(1152,648)
 	preload("res://scripts/save.gd").disabled = true
 	for id in MB.BOSS_SHIPS:

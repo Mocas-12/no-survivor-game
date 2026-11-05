@@ -298,7 +298,7 @@ func _on_body_entered(body):
 		struck[body.get_instance_id()]=true
 		var world = get_tree().current_scene
 		if world.has_method("spawn_hit_spark"):
-			world.spawn_hit_spark(global_position)
+			world.spawn_hit_spark(global_position,element)
 		# 暴击：双倍伤害 + 金色进溅
 		var dmg: int = damage
 		if crit > 0.0 and randf() < crit:
