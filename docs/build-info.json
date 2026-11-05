@@ -1,5 +1,7 @@
 {
-  "build": "visual-polish-4d43aa7",
-  "source": "4d43aa7",
-  "pck_sha256": "05209b9ca1c94eaff7f9943aef1285088578189411ef8fd7645fbc19ba61d4cb"
+  "build": "fleet-vfx-266eae6",
+  "source": "266eae6",
+  "executable": "game-266eae6",
+  "pck_sha256": "13620305a713f4cf139b7398ffbb810c220a99836ed7194ecd32cb374f66625f",
+  "pck_bytes": 62225464
 }

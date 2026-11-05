@@ -6,42 +6,38 @@
 
 **Godot 4 の 3D 縦スクロール アリーナ サバイバー——マウス/タッチで操縦する戦闘機、5種の巡回ボスと最終OMEGA、属性武器、進化する 20 形態の 3D 戦闘機**
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
-[![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/)
+[![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 
-**[🌐 ブラウザでプレイ (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/)**
+**[🌐 ブラウザでプレイ (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)**
 
 [English](./README.md) | [简体中文](./README.zh-CN.md) | **日本語**
 
 *デスクトップ：マウスを動かすだけ——戦闘機が追従して自動で発砲 · モバイル：左親指のジョイスティック*
 
-<img src="./screenshots/polish-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/polish-boss.png" width="49%" alt="Boss battle" />
+<img src="./screenshots/combat-web-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/combat-web-omega-p3.png" width="49%" alt="Boss battle" />
 
 </div>
 
 ---
 
-## ゲームプレイ開発ブランチ
+## 現在のリリース · Blender艦隊と多層VFX
 
-ローカルの `codex/run-variety` では主砲＋補助武器、戦闘の緩急、選択式進化、探索アーカイブを追加。[実装・検証メモ](./docs/RUN-VARIETY.md)を参照。このゲームプレイ版は現在のPages公開版には含まれません。
+[最新版をプレイ](https://mocas-12.github.io/no-survivor-game/?v=266eae6) · [艦隊ビューア](https://mocas-12.github.io/no-survivor-game/?review=fleet&v=266eae6) · [属性VFX](https://mocas-12.github.io/no-survivor-game/?review=fleet&fx=1&v=266eae6)
 
-## 現在のビジュアル版
+- 基本・突撃・護衛・攻城の4系列、計16段階のBlender機体と80装備構成。敵6種とボス6種も専用モデルを使用。
+- 全ボスにP2展開形態と専用攻撃、OMEGAにP3を追加。変形中もプレイヤー操作は継続。
+- 主砲と補助武器、分岐進化、編隊戦闘、探索アーカイブ。
+- 6組の双方向属性反応。汎用スローと氷霜を分離し、ボスには拘束耐性。
+- 乱流煙、侵食する炎、氷片、分岐電弧。閃光から余煙と消散まで多層で再生し、軽量設定も用意。
 
-最新ソースには **プレイヤー20形態、敵6種、OMEGAを含むボス6種**を収録。モデル、マテリアル、戦闘UIを刷新し、戦闘ルール、衝突形状、強化効果、セーブ形式は維持しています。
+<img src="./screenshots/fleet-effects-combat.png" width="100%" alt="実モデルとVFXを使った制御された戦闘デモ" />
 
-- **艦隊：**敵とボスごとのシルエット、平坦な装甲と丸みのあるベベル、滑らかなキャノピーとリング。塗装、金属、ガラス、エネルギーを別々の質感に。
-- **戦闘表示：**発射元ごとの弾体、装甲HUD、ボスのフェーズ目盛りと遅延ダメージ表示。
-- **カード：**20枚のモジュールイラスト（通常19枚＋緊急修理）、カード裏面と公開演出、早送り、キーボード／タッチ選択、現在値 → 次の値。枠色は種類を表し、レア度ではありません。
-- **描画：**デスクトップ4× MSAA、タッチ端末2× MSAA、高DPI対応。点滅軽減設定も維持。低性能スマートフォンの実機性能は未検証です。
+Web版は `main/docs` から配信。バージョン付きファイル名で古いキャッシュを回避します。[ビルド情報とSHA-256](./docs/build-info.json)。初回は約62MBのゲームデータとエンジンをダウンロード。スマートフォン実機性能と全編バランスは未検証です。
 
-<img src="./screenshots/polish-fleet.png" width="100%" alt="プレイヤー20形態と敵・ボス各6種" />
-<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="モジュールカードのイラスト" />
-
-**Webリリース：**仕上げ済みビジュアル版を `docs/` から[オンライン版](https://mocas-12.github.io/no-survivor-game/)に配信します。ビルド識別子とパッケージのチェックサムは [build-info.json](./docs/build-info.json) を参照。今後もソース更新後にはWeb版の再エクスポートが必要です。
-
-詳細：[全体の改版](./docs/VISUAL-REDESIGN.md)、[カード・HUD・敵艦隊](./docs/VISUAL-V2.md)、[表面の仕上げ](./docs/VISUAL-POLISH.md)。これらは執筆時点の開発記録です。「未アップロード」は当時の状態を示し、現在は [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3) でマージ済みです。
+[艦隊](./docs/BLENDER-FLEET-QA.md)・[戦闘](./docs/COMBAT-REVISION.md)・[VFX検証](./docs/VFX-REWORK.md)・[構築と進行](./docs/RUN-VARIETY.md)。旧メモのローカル限定表記は執筆時点の記録です。
 
 ## 📖 目次
 
@@ -135,9 +131,9 @@
 | 🎇 Multishot | 1 斉射の弾数 +1（最大 7） |
 | 👟 Sprint | 移動速度 +12%（最大 Lv.5） |
 | 🛡️ Armor | 最大 HP +2、4 回復（重複可） |
-| 🔴 Fire warhead | 弾が近くの敵に飛散、ダメージ +1 |
+| 🔴 Fire warhead | 燃焼状態と継続ダメージ、ダメージ +1 |
 | 💧 Water warhead | 敵をノックバックして濡らし、リアクションを発動 |
-| 🔵 Ice warhead | 命中した敵を 1.6 秒間 45% スロー |
+| 🔵 Ice warhead | 氷霜スローを付与し、属性反応を準備 |
 | 🟣 Lightning warhead | 命中が近く 2 体まで連鎖 |
 | 🟢 Wind warhead | 弾速 +40%、近くの敵を 1 箇所へ集束 |
 | 🌠 Wide barrage | 扇が広がり、弾数 +1 |
@@ -152,16 +148,17 @@
 
 **属性リアクション**（最初の命中がマークを残し、2 回目で発動して消費——リアクション名が着弾点に浮かぶ）：
 
-| リアクション | 組み合わせ | 効果 |
+| 反応 | 組み合わせ（双方向） | 効果 |
 | --- | --- | --- |
-| Steam | Fire + Water | 白い蒸気バースト、周囲の敵を焼く |
-| Overload | Storm + Fire | オレンジの爆風、重い範囲ダメージ |
-| Freeze | Ice + Water | 対象を 1.2 秒ほぼ完全に凍結 |
-| Conduct | Storm + Water | 追加 2 対標的へ連鎖 |
-| Firestorm | Wind + Fire | 螺旋の火柱、二重衝撃波 |
-| Tornado | Wind + Water | シアンの渦が敵を引き込む |
-| Melt | Fire + 凍結状態 | 単体に 200% のバースト |
-| Tempest | Storm + Wind | 対象周辺に 3 回の落雷 |
+| 熱衝撃 | 火 + 水 | 周辺ダメージと短時間の弱体化 |
+| 融解 | 火 + 氷 | 単体バースト |
+| 凍結 | 水 + 氷 | 敵を凍結、ボスには軽い拘束のみ |
+| 感電 | 水 + 雷 | 濡れた対象を優先して連鎖 |
+| 粉砕 | 氷 + 雷 | 氷片と範囲ダメージ |
+| 過負荷 | 火 + 雷 | 範囲ダメージと敵射撃の短い中断 |
+
+風は既存の属性状態を広げ、周辺の敵を軽く引き寄せます。1ヒットにつき反応は1回、二次ダメージからは再発動しません。[戦闘ルール](./docs/COMBAT-REVISION.md)を参照。
+
 
 **追尾ミサイルはカードではなくアイテム**：ボス撃破ごとに 1 チャージ獲得——マウスクリック（モバイルは右下ボタン）で発動：**画面上の全プレイヤー弾が追尾弾に変わる**（金色に輝き、フラッシュと変身 SE 付き）。画面上に弾がなければチャージは消費されない。属性はいつでも切替でき、レベルは失われない。プール全体が最大になったときは、Field Repair の穴埋めカードがレベルアップに意味を保つ。
 
@@ -171,7 +168,7 @@
 - 🎵 完全合成の疾走感 BGM——140 BPM ループ、ドラム グルーヴ、ソー ベース、パワー コード、アルペジオ、ヒロイックなリード旋律
 - 🔊 全アクションに合成 SE：レーザー発射、ヒット、爆発、ピックアップ、レベルアップのチャイム、ボス サイレン、変形スイープ
 - 💫 弾は属性色のトレイルで発光、ヒットで火花が散る
-- 💥 撃破は色の合うグロー パフ + 火花 + 拡散する衝撃波リングに爆散。ボスは連鎖爆発
+- 💥 撃破は多層の炎・火花・消散する煙に爆散。ボスは連鎖爆発
 - 📳 イベントに応じた画面シェイク（ボスは強く揺らす）
 - 🩸 被弾後 0.35 秒の無敵時間、赤いダメージ フラッシュ付き
 
@@ -267,7 +264,9 @@ python tools/gen_sounds.py
 リポジトリのルートで実行します。Godot 4.7とWebエクスポートテンプレートが必要です。プレビューにはNode.jsを使用し、`build/web/` をポート8316で配信します。
 
 ```sh
-godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script tools/blender_fleet_test.gd
+godot --headless --path . --script tools/combat_revision_test.gd
+godot --headless --path . --script tools/vfx_quality_test.gd
 godot --headless --path . --script res://tools/polish_geometry_test.gd
 godot --headless --path . --script res://tools/visual_v2_test.gd
 godot --headless --path . res://tools/smoke_test.tscn

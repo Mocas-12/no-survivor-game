@@ -4,48 +4,42 @@
 
 # No Survivor Game
 
-Local development update: deployed Boss P2/P3 hulls and six symmetric elemental reactions now use layered turbulent smoke, eroded fire, branching arcs and pooled impact effects. See [VFX sources and validation](./docs/VFX-REWORK.md) and [combat rules](./docs/COMBAT-REVISION.md). This update is not deployed to Pages.
-
 **A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5 rotating bosses + final OMEGA, elemental weapons, 20 evolving 3D ship forms**
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 [![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
 [![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
-[![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/)
+[![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
 
-**[🌐 Play in Browser (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/)**
+**[🌐 Play in Browser (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)**
 
 **English** | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
 
 *Desktop: move the mouse — the fighter follows and fires automatically · Mobile: left-thumb joystick*
 
-<img src="./screenshots/polish-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/polish-boss.png" width="49%" alt="Boss battle" />
+<img src="./screenshots/combat-web-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/combat-web-omega-p3.png" width="49%" alt="Boss battle" />
 
 </div>
 
 ---
 
-## Gameplay development branch
+## Current release · Blender fleet and layered combat VFX
 
-The local Blender revision adds 16 authored player hull tiers / 80 equipment forms, six enemy hulls, six bosses and layered pooled combat effects. See [fleet verification and sources](./docs/BLENDER-FLEET-QA.md). The full local model viewer is `http://127.0.0.1:8316/?review=fleet`; this revision has not been deployed to Pages.
+[Play the current build](https://mocas-12.github.io/no-survivor-game/?v=266eae6) · [Fleet viewer](https://mocas-12.github.io/no-survivor-game/?review=fleet&v=266eae6) · [Reaction showcase](https://mocas-12.github.io/no-survivor-game/?review=fleet&fx=1&v=266eae6)
 
-The local `codex/run-variety` revision adds main + auxiliary builds, paced encounters, selectable evolution frames and a discovery archive. See [implementation and test notes](./docs/RUN-VARIETY.md). This gameplay revision is not included in the current Pages release.
+- **Fleet:** 16 Blender-authored main hull tiers across common, assault, escort and siege families; five cumulative equipment stages per tier give 80 configurations. Six enemy hulls and six bosses have separate silhouettes and PBR finishes.
+- **Boss phases:** deployed P2 hulls and dedicated attack patterns for all six bosses, plus OMEGA P3. Transformations briefly pause new attacks and keep player input active.
+- **Builds:** independent main/auxiliary weapons, branching evolution, paced encounters and a discovery archive.
+- **Reactions:** six symmetric elemental pairs; Bosses resist hard crowd control. Generic slow is separate from frost.
+- **Effects:** turbulent smoke, eroded fire, faceted ice and branching electrical arcs; flash → impact → debris/smoke → fade. Reusable visual effects have normal/reduced quality caps.
+- **UI:** illustrated upgrade cards, armor HUD and Boss phase markers. Enemy firing cues stay local to the weapon rather than drawing long aim lines.
 
-## Current visual edition
+<img src="./screenshots/fleet-effects-combat.png" width="100%" alt="Controlled combat presentation using actual models and effects" />
+<img src="./screenshots/vfx-timeline/0200ms.png" width="100%" alt="Six elemental reaction effects rendered at 0.2 seconds" />
 
-The latest source includes **20 player forms, 6 enemy types and 6 bosses including OMEGA**, with a rebuilt presentation layer. Combat rules, collision shapes, upgrade effects and save format are preserved.
+The Web release is served from `main/docs`, with version-named loader, WASM and package files to avoid stale asset caches. [Build identity and SHA-256](./docs/build-info.json). First load downloads about 62 MB of game data plus the engine. Physical-phone performance and full-run balance remain unverified.
 
-- **Fleet:** distinct enemy and boss silhouettes, flat armor panels, rounded bevels, smooth canopies and rings; separate paint, metal, glass and energy finishes.
-- **Combat readability:** source-specific projectile meshes, segmented player armor HUD, boss phase markers and delayed damage feedback.
-- **Illustrated upgrades:** 20 module illustrations (19 pool cards plus emergency repair), animated card backs, quick reveal, keyboard/touch selection and current → next attribute previews. Frames indicate module category, not rarity.
-- **Rendering:** desktop 4× MSAA, touch-device 2× MSAA, high-DPI canvas sizing and reduced-flash support. Physical low-end mobile performance still needs testing.
-
-<img src="./screenshots/polish-fleet.png" width="100%" alt="20 player forms, six enemy types and six bosses" />
-<img src="./screenshots/visual-v2-final-cards.png" width="100%" alt="Illustrated module upgrade cards" />
-
-**Web release:** the visual-polish build is distributed from `docs/` for [online play](https://mocas-12.github.io/no-survivor-game/). Build identity and package checksum are recorded in [build-info.json](./docs/build-info.json). Future source changes still require a new Web export to update Pages.
-
-Details: [visual redesign](./docs/VISUAL-REDESIGN.md), [cards, HUD and enemy fleet](./docs/VISUAL-V2.md), [surface polish](./docs/VISUAL-POLISH.md). These are dated development notes; their local-only status describes the time they were written. The visual work was merged in [PR #3](https://github.com/Mocas-12/no-survivor-game/pull/3).
+Sources and checks: [fleet](./docs/BLENDER-FLEET-QA.md), [combat rules](./docs/COMBAT-REVISION.md), [VFX](./docs/VFX-REWORK.md), [run design](./docs/RUN-VARIETY.md). Older notes describe the state when written; this release supersedes their local-only status.
 
 ## 📖 Table of Contents
 
@@ -139,9 +133,9 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 | 🎇 Multishot | +1 bullet per volley (up to 7) |
 | 👟 Sprint | move speed +12% (up to Lv.5) |
 | 🛡️ Armor | max HP +2 and heal 4 (stackable) |
-| 🔴 Fire warhead | bullets splash to nearby enemies, damage +1 |
+| 🔴 Fire warhead | applies a burning mark and damage over time, damage +1 |
 | 💧 Water warhead | knocks foes back and soaks them, triggers reactions |
-| 🔵 Ice warhead | hits slow enemies by 45% for 1.6s |
+| 🔵 Ice warhead | applies frost slow; can prime freeze, melt or shatter |
 | 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
 | 🟢 Wind warhead | bullet speed +40%, gathers nearby foes into one spot |
 | 🌠 Wide barrage | wider fan, +1 bullet |
@@ -156,16 +150,17 @@ Each level-up pauses the game and deals **3 random cards out of a 19-card pool**
 
 **Elemental reactions** (the first hit leaves a mark, the second triggers and consumes it — the reaction name floats up at the impact point):
 
-| Reaction | Combo | Effect |
+| Reaction | Pair (either order) | Effect |
 | --- | --- | --- |
-| Steam | Fire + Water | white vapor burst, burns nearby foes |
-| Overload | Storm + Fire | orange blast, heavy area damage |
-| Freeze | Ice + Water | target nearly frozen for 1.2s |
-| Conduct | Storm + Water | chains to 2 extra targets |
-| Firestorm | Wind + Fire | spiraling fire pillar, double shockwave |
-| Tornado | Wind + Water | cyan vortex pulls foes in |
-| Melt | Fire + chilled | 200% single-target burst |
-| Tempest | Storm + Wind | three lightning strikes around the target |
+| Thermal shock | Fire + Water | Nearby damage and brief vulnerability |
+| Melt | Fire + Ice | Single-target burst |
+| Freeze | Water + Ice | Freeze enemies; reduced control on Bosses |
+| Conduction | Water + Lightning | Prefer soaked chain targets |
+| Shatter | Ice + Lightning | Flying shards and area damage |
+| Overload | Fire + Lightning | Area damage and brief enemy firing interruption |
+
+Wind spreads existing elemental states and gently gathers enemies. Each hit triggers at most one reaction; secondary damage never recursively applies elements. See [combat rules](./docs/COMBAT-REVISION.md).
+
 
 **Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to trigger it: **every player bullet on screen turns into a homing round** (gilded, with a golden flash and a transform sfx). If no bullets are on screen, the charge is not consumed. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
 
@@ -271,7 +266,9 @@ Current fleet meshes are generated by the project’s own geometry scripts. Hang
 Run from the repository root with Godot 4.7 and its Web export templates installed. The preview server needs Node.js and serves `build/web/` on port 8316.
 
 ```sh
-godot --headless --path . --script res://tools/visual_test.gd
+godot --headless --path . --script tools/blender_fleet_test.gd
+godot --headless --path . --script tools/combat_revision_test.gd
+godot --headless --path . --script tools/vfx_quality_test.gd
 godot --headless --path . --script res://tools/polish_geometry_test.gd
 godot --headless --path . --script res://tools/visual_v2_test.gd
 godot --headless --path . res://tools/smoke_test.tscn
