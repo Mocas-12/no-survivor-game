@@ -7,7 +7,7 @@ const ENEMIES=["normal","fast","swift","shooter","shield","tank"]
 
 static func build(role: String,id: int,length: float,down:=true,phase:=1) -> Node3D:
 	var key:=role+"-"+str(id)+("-p"+str(phase) if phase>1 else "")
-	if not resources.has(key): resources[key]=load("res://assets/ships/blender-hostiles/"+key+".glb")
+	if not resources.has(key): resources[key]=load("res://assets/ships/"+("hostiles-final/" if role in ["boss","tactical"] else "blender-hostiles/")+key+".glb")
 	var root:=MOTION.new()
 	root.name="HostileHull"
 	root.hostile_role=role

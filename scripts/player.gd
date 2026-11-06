@@ -29,6 +29,17 @@ var auxiliary_timer := 0.25
 var heavy_timer := 1.5
 var pierce_level := 0
 var branch := ""
+var weapon := "pulse"
+var weapon_modules := {}
+var equipment_focus := "main"
+var modules := {}
+var second_auxiliary := ""
+var second_auxiliary_level := 0
+var contact_charge := 0.0
+var last_contact := 0.0
+var overdrive := 0.0
+var formation_spread := 0.0
+var previous_position := Vector3.ZERO
 var fire_timer = 0.0
 var use_touch = false              # 触屏设备：摇杆专属移动
 var model: Node3D = null           # 当前 3D 机体模型
@@ -43,6 +54,9 @@ func _ready():
 	_update_base_scale()
 	scale = Vector3.ONE * base_scale
 	_set_model(0)
+	var beam=preload("res://scripts/beam_weapon.gd").new()
+	beam.name="BeamWeapon"
+	add_child(beam)
 
 func _update_base_scale():
 	base_scale = 0.60 + 0.021 * form   # 形态越高机体越大：0.60 → 1.0
@@ -97,23 +111,31 @@ func _physics_process(delta):
 		_glow_mat.emission_energy_multiplier = 0.9 + 0.22 * breath
 	$Glow.light_energy = 1.0 + 0.22 * breath
 
+	last_contact+=delta
+	overdrive=maxf(0,overdrive-delta)
+	if last_contact>.55: contact_charge=maxf(0,contact_charge-delta)
+	formation_spread=lerpf(formation_spread,1.0 if position.distance_to(previous_position)>1.5 else 0.0,minf(1,delta*5))
+	previous_position=position
 	auxiliary_timer -= delta
 	heavy_timer -= delta
 	if auxiliary != "" and auxiliary_timer <= 0:
 		fire_auxiliary()
-		auxiliary_timer = maxf(0.65,1.15-auxiliary_level*0.12)
+		auxiliary_timer = maxf(0.4,1.15-auxiliary_level*0.12)*(0.72 if modules.has("escort_core") else 1.0)
 	if branch == "siege" and heavy_timer <= 0:
 		_hull_fire(true)
 		var heavy = new_round()
-		heavy.launch(damage*3,"normal",0.65,0,0,0,1,global_position+Vector3(0,35,1),Vector3.UP)
+		heavy.launch(damage*(5 if modules.has("heavy_core") else 3),"normal",0.65,0,0,0,1,global_position+Vector3(0,35,1),Vector3.UP)
 		heavy.pierce_left = 3
+		heavy.source_player=self
+		heavy.damage_channel="siege_heavy"
+		heavy.get_node("Mesh").mesh=preload("res://scripts/weapon_projectile.gd").mesh("rail","normal")
 		heavy.get_node("Mesh").scale=Vector3(1.8,2.8,1.8)
-		heavy_timer=1.6
+		heavy_timer=2.0 if modules.has("heavy_core") else 1.6
 	# 全自动射击：只需专注走位躲弹幕
 	fire_timer -= delta
 	if fire_timer <= 0:
 		shoot()
-		fire_timer = fire_cooldown
+		fire_timer = preload("res://scripts/arsenal.gd").interval(self)
 
 func _hull_fire(heavy:=false) -> void:
 	if not is_instance_valid(model): return
@@ -121,6 +143,8 @@ func _hull_fire(heavy:=false) -> void:
 	if hull.has_method("fire"): hull.fire(heavy)
 
 func shoot():
+	if weapon=="beam": return
+	if get_tree().get_nodes_in_group("player_bullets").filter(func(b):return b._active).size()>220: return
 	_hull_fire()
 	var speed_mul = 1.4 if element == "wind" else 1.0
 	var spacing = (0.1 if branch=="assault" else 0.18) * spacing_scale
@@ -157,6 +181,7 @@ func shoot():
 		b.crit = crit_chance
 		b.reaction_boost = reaction_boost
 		b.mark_boost = mark_boost
+		preload("res://scripts/arsenal.gd").configure(self,b)
 	$MuzzleFlash.restart()
 
 	# 射击音效
@@ -172,6 +197,10 @@ func new_round():
 	return b
 
 func fire_auxiliary():
+	_fire_auxiliary_slot(auxiliary,auxiliary_level,-1)
+	if second_auxiliary!="": _fire_auxiliary_slot(second_auxiliary,second_auxiliary_level,1)
+
+func _fire_auxiliary_slot(slot: String,slot_level: int,side: int):
 	if is_instance_valid(model):
 		var hull: Node3D=model.get_meta("fleet_motion",model)
 		if hull.has_method("launch_bay"): hull.launch_bay()
@@ -180,14 +209,15 @@ func fire_auxiliary():
 	targets.sort_custom(func(a,b): return global_position.distance_squared_to(a.global_position)<global_position.distance_squared_to(b.global_position))
 	var target: Node3D=targets[0]
 	for i in (2 if branch=="escort" else 1):
-		var origin: Vector3=global_position+Vector3((-25 if i==0 else 25),10,1)
+		var origin: Vector3=global_position+Vector3(side*(25+i*12+formation_spread*(65 if branch=="escort" or modules.has("crossfire") else 15)),10,1)
 		var toward: Vector3=(target.global_position-origin).normalized()
 		var b=new_round()
-		var el: String="normal" if auxiliary=="homing" else auxiliary
-		b.launch(maxi(1,roundi(damage*0.5)),el,0.8,0,5.0,2.0,auxiliary_level,origin,toward)
+		var el: String="normal" if slot=="homing" else slot
+		b.launch(maxi(1,roundi(damage*0.5)),el,0.8,0,5.0,2.0,slot_level,origin,toward)
 		b.reaction_boost=reaction_boost
 		b.mark_boost=mark_boost
-		if auxiliary=="homing": b.make_homing()
+		if slot=="homing": b.make_homing()
+		preload("res://scripts/arsenal.gd").configure(self,b,false,"aux1" if side<0 else "aux2")
 
 # 阵亡演出第一步：机体熄火隐去（由 world 驱动爆炸与慢动作）
 func play_death():

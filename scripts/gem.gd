@@ -13,6 +13,7 @@ var t = randf() * TAU
 @onready var player = get_tree().get_first_node_in_group("player")
 
 func _ready():
+	add_to_group("gems")
 	add_child(MB.build_gem(tier))
 	body_entered.connect(_on_body_entered)
 

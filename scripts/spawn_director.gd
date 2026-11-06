@@ -36,6 +36,11 @@ static func spawn_enemy(w) -> void:
 	w.add_child(enemy)
 
 static func pick_enemy_type(w) -> String:
+	if w.get("director")!=null and w.run_time>90 and randf()<.28:
+		var roles: Array=["repair","splitter"]
+		if w.boss_tier>=1: roles.append_array(["minelayer","projector"])
+		if w.boss_tier>=2: roles.append_array(["tractor","bomber"])
+		return roles.pick_random()
 	var roll = randf()
 	if w.score >= 150 and roll < 0.12:
 		return "tank"
@@ -141,7 +146,7 @@ static func _spawn_boss(w) -> void:
 		boss.setup(6, w.boss_tier)
 		w.omega_armed = false
 	else:
-		var id = ((w.boss_tier - 1) % 5) + 1
+		var id = w.director.boss_order[(w.boss_tier-1)%5] if w.get("director")!=null else ((w.boss_tier - 1) % 5) + 1
 		# 第二轮循环（tier 6）起，Boss 随机携带一个词缀
 		var affix := ""
 		if w.boss_tier >= 6:
@@ -197,7 +202,7 @@ static func on_boss_died(w, pos: Vector3, is_omega := false) -> void:
 		w.get_tree().create_timer(2.6).timeout.connect(func():
 			if is_instance_valid(w):
 				w._show_victory())
-	elif w.boss_tier >= 10 and not w.omega_slain:
+	elif w.boss_tier >= (2 if w.get("director")!=null else 10) and not w.omega_slain:
 		# 五种 Boss 两轮循环完毕：武装终局 OMEGA，短间隔后降临
 		w.omega_armed = true
 		w.next_boss_at = w.kill_count + 25

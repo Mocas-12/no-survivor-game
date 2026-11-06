@@ -12,6 +12,10 @@ static func pair(a: String,b: String) -> String:
 	var keys=[a,b]; keys.sort()
 	return PAIRS.get("+".join(keys),"")
 
+static func hurt(target,amount: float,world) -> void:
+	if world.get("campaign")!=null: world.campaign.record_damage("reaction",target,amount)
+	target.take_damage_silent(amount)
+
 static func tick(target,dt: float) -> void:
 	var s=state(target)
 	for key in s.keys():
@@ -21,7 +25,7 @@ static func tick(target,dt: float) -> void:
 		var next=float(target.get_meta("burn_tick",0))-dt
 		if next<=0:
 			next=.65
-			target.take_damage_silent(float(target.get_meta("burn_damage",1)))
+			hurt(target,float(target.get_meta("burn_damage",1)),target.get_tree().current_scene)
 		target.set_meta("burn_tick",next)
 
 static func movement(target) -> float:
@@ -64,18 +68,20 @@ static func apply(target,element: String,damage: float,level: int,boost: float,m
 		if element=="lightning" and not s.has("chain_cd"):
 			s["chain_cd"]=.3
 			for m in nearby(target,140,mini(level+1,4)):
-				m.take_damage_silent(maxf(1,damage*.5))
+				hurt(m,maxf(1,damage*.5),world)
 				if world.has_method("spawn_lightning"): world.spawn_lightning(target.global_position,m.global_position)
 		return ""
 	s.erase(element)
 	s["reaction_cd"]=.8 if "boss_id" in target else .55
+	if world.get("campaign")!=null: world.campaign.reaction_counts[reaction]=int(world.campaign.reaction_counts.get(reaction,0))+1
 	var amount=damage*boost
 	var affected=[]
 	match reaction:
-		"melt": target.take_damage_silent(amount*1.6)
+		"melt": hurt(target,amount*1.6,world)
 		"steam":
 			s["exposed"]=1.8
-			for m in nearby(target,130): m.take_damage_silent(maxf(1,amount*.65))
+			if world.get("player")!=null and world.player.modules.has("reaction_salvage"): preload("res://scripts/reaction_field.gd").spawn(world,target.global_position,amount)
+			for m in nearby(target,130): hurt(m,maxf(1,amount*.65),world)
 		"freeze":
 			s["frozen"]=.65 if "boss_id" in target else 1.15
 			if "attack_cd" in target: target.attack_cd=maxf(target.attack_cd,.35)
@@ -84,13 +90,16 @@ static func apply(target,element: String,damage: float,level: int,boost: float,m
 			affected.sort_custom(func(a,b): return state(a).has("water") and not state(b).has("water"))
 			affected=affected.slice(0,5)
 			for m in affected:
-				m.take_damage_silent(maxf(1,amount*(1 if state(m).has("water") else .65)))
+				hurt(m,maxf(1,amount*(1 if state(m).has("water") else .65)),world)
 				if world.has_method("spawn_lightning"): world.spawn_lightning(target.global_position,m.global_position)
 		"shatter", "overload":
-			target.take_damage_silent(amount*.7)
-			for m in nearby(target,150): m.take_damage_silent(maxf(1,amount*.8))
+			hurt(target,amount*.7,world)
+			for m in nearby(target,150): hurt(m,maxf(1,amount*.8),world)
 			if reaction=="overload" and "fire_cd" in target: target.fire_cd=maxf(target.fire_cd,.35)
+	if reaction=="shatter" and world.get("player")!=null and preload("res://scripts/equipment.gd").has_active(world.player,"split"):
+		for other in nearby(target,160,3): state(other)["ice"]=1.2
 	if world.get("director")!=null: world.director.reactions+=1
+	if world.get("player")!=null and world.player.modules.has("reaction_salvage"): world.player.overdrive=minf(6,world.player.overdrive+.2)
 	if world.has_method("spawn_reaction_text"):
 		var key="react_"+reaction
 		world.spawn_reaction_text(target.global_position,key,Color("e4f4ff"))

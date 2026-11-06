@@ -16,6 +16,7 @@ var speed = 240.0
 var damage = 1
 var style = "shooter"  # 弹形来源，见顶部表
 var homing = 0.0        # 转向速率（弧度/秒），0 为直线弹
+var age:=0.0
 var homing_time = 0.0   # 追踪持续时间
 
 # 弹形配置：[颜色, 自发光强度, 半径或厚度]
@@ -29,11 +30,18 @@ static func _style_mat(p_style: String) -> StandardMaterial3D:
 	return PG.material(p_style,true)
 
 func _ready():
-	$Mesh.mesh = _style_mesh(style)
-	$Mesh.material_override = _style_mat(style)
-	if style == "hunter":
+	scale=Vector3.ONE*.75
+	$Mesh.mesh = preload("res://scripts/weapon_projectile.gd").mesh({"shooter":"pulse","destructor":"rail","interceptor":"blade","fortress":"beam","hunter":"missile","phantom":"rail","mine":"mine"}.get(style,"pulse"),"fire" if style in ["shooter","destructor","mine"] else "lightning")
+	$Mesh.material_override = preload("res://scripts/weapon_projectile.gd").material("fire" if style in ["shooter","destructor","mine"] else "lightning")
+	var shape:=SphereShape3D.new()
+	shape.radius=3.2 if style!="mine" else 5.0
+	$Collision.shape=shape
+	var world=get_tree().current_scene
+	var low: bool=world!=null and (world.get("reduce_fx")==true or world.get("performance_limited")==true)
+	if style == "hunter" and not low:
 		_attach_gold_trail()
 	body_entered.connect(_on_body_entered)
+	if style=="mine": $Collision.set_deferred("disabled",true)
 
 # 猎手弹的金色微光尾迹（数量少，代价可控）
 func _attach_gold_trail():
@@ -66,6 +74,13 @@ func _attach_gold_trail():
 	t.emitting = true
 
 func _physics_process(delta):
+	age+=delta
+	if style=="mine":
+		if age>5.5:
+			queue_free()
+			return
+		$Mesh.scale=Vector3.ONE*(.9+sin(age*10)*.12)
+		if age>=1.0: $Collision.set_deferred("disabled",false)
 	# 追踪弹：向玩家方向缓慢转向
 	if homing > 0.0 and homing_time > 0.0:
 		homing_time -= delta

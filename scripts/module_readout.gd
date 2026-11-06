@@ -5,6 +5,11 @@ static func pick(zh: String,en: String) -> String:
 	return zh if I18N.lang()=="zh" else en
 
 static func describe(w,id: String,level: int) -> String:
+	if id.begins_with("aux_"): return auxiliary_preview(w,id)
+	if preload("res://scripts/arsenal.gd").EXTRA.has(id):
+		var extra: String=preload("res://scripts/arsenal.gd").detail(id)
+		if id in preload("res://scripts/equipment.gd").MODS: extra=preload("res://scripts/equipment.gd").preview(w.player,id)+"\n"+extra
+		return extra
 	var p = w.player
 	match id:
 		"pierce": return pick("贯穿额外目标 %d → %d","Additional targets pierced %d → %d") % [p.pierce_level,p.pierce_level+1]
@@ -37,3 +42,11 @@ static func describe(w,id: String,level: int) -> String:
 		"revive": return pick("补充 1 次凤凰复活\n复活时释放清场冲击波","Restore one phoenix charge\nRelease a shockwave on revival")
 		"repair": return pick("装甲 %d → %d\n立即生效","Armor %d → %d\nImmediate repair") % [w.health,mini(w.health+6,w.max_health)]
 	return I18N.T("card_"+id+"_d")
+
+static func auxiliary_preview(w,id: String) -> String:
+	var slot: String=id.trim_prefix("aux_")
+	var p=w.player
+	if p.auxiliary==slot: return pick("强化辅助 Lv.%d → %d · 保留另一辅助","Upgrade auxiliary Lv.%d → %d · keep other slot") % [p.auxiliary_level,mini(3,p.auxiliary_level+1)]
+	if p.second_auxiliary==slot: return pick("强化辅助 Lv.%d → %d · 保留另一辅助","Upgrade auxiliary Lv.%d → %d · keep other slot") % [p.second_auxiliary_level,mini(3,p.second_auxiliary_level+1)]
+	if p.auxiliary!="" and p.second_auxiliary!="": return pick("替换：%s\n主炮与另一辅助保留","Replaces: %s\nKeep main weapon and other auxiliary") % preload("res://scripts/arsenal.gd").title("aux_"+p.second_auxiliary)
+	return pick("装入空闲辅助槽 · 不替换主炮\n自动追踪，独立挂元素","Install in empty auxiliary slot\nAuto-target and independently apply elements")

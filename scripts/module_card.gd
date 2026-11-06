@@ -15,7 +15,7 @@ var flip_tween: Tween
 var reveal_requested: Callable
 
 func build() -> void:
-	custom_minimum_size = Vector2(268,398)
+	custom_minimum_size = Vector2(268,370)
 	for state in ["font_color","font_hover_color","font_pressed_color","font_disabled_color","font_focus_color"]:
 		add_theme_color_override(state,Color(0,0,0,0))
 	content = VBoxContainer.new()
@@ -36,7 +36,7 @@ func build() -> void:
 	badge = label(header,11,Color("efd39b"))
 	artwork = TextureRect.new()
 	artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	artwork.custom_minimum_size = Vector2(0,160)
+	artwork.custom_minimum_size = Vector2(0,138)
 	artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	content.add_child(artwork)
@@ -54,7 +54,7 @@ func build() -> void:
 	detail = label(content,16,Color("dce7ed"))
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	detail.max_lines_visible = 4
+	detail.max_lines_visible = 5
 	back = TextureRect.new()
 	back.name = "SealedCartridge"
 	back.texture = preload("res://assets/modules/card_back.webp")
@@ -131,7 +131,8 @@ func unseal() -> void:
 	front = true
 	content.show()
 	back.hide()
-	disabled = false
+	disabled = bool(get_meta("unavailable",false))
+	modulate=Color(.58,.58,.58) if disabled else Color.WHITE
 
 func hover(active: bool) -> void:
 	if not front or disabled: return

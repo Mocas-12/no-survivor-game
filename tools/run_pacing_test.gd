@@ -18,6 +18,7 @@ func run() -> void:
 		var boss_time: float=-1
 		var max_mobs:=0
 		while w.run_time<180 and not w.game_over_panel.visible:
+			if w.campaign.panel.visible: w.campaign.resolve_event(false)
 			if w.director.panel.visible:
 				var option:=0
 				if route=="frost_arc": option=1 if w.director.branch=="" else 0

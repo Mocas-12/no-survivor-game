@@ -47,7 +47,9 @@ func advance(dt: float) -> void:
 		if role.begins_with("Bay"):
 			part.position.x+=(1.0 if role.ends_with("Right") else -1.0)*bay_response*.12
 		if role.begins_with("Wing"):
-			part.scale.x=.84+.16*opening
+			part.scale.x=.62+.38*opening
+			part.position.x*=lerpf(.6,1.0,opening)
+			part.rotation.z=(1-opening)*(.5 if part.position.x>0 else -.5)
 		if role.begins_with("Shield"):
 			part.rotation.y=sin(age*.8)*.07
 		if role.begins_with("Engine"):
