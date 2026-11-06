@@ -116,10 +116,10 @@ static func _morph_cocoon(w, form, accent: Color) -> void:
 
 	var tw := cocoon.create_tween()
 	# 包裹：茧体胀起并显现（节奏压缩：拾取 → 破茧全程约 1 秒，不再长时间小机体）
-	tw.tween_property(m, "albedo_color:a", 0.68, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(m, "albedo_color:a", 0.22, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.parallel().tween_property(cocoon, "scale", Vector3.ONE * 1.32, 0.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	# 茧色渐变 → 新形态的主题色（形态特征预兆）
-	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.68), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(m, "albedo_color", Color(accent.r, accent.g, accent.b, 0.22), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.parallel().tween_property(m, "emission", accent, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	# 两次快速重塑脉冲：新形态在茧内逐次成形
 	for i in 2:
@@ -140,7 +140,7 @@ static func _spawn_reveal(w) -> void:
 	_spawn_evolution_beam(w)
 	var tw2 = w.create_tween()
 	tw2.set_parallel(true)
-	tw2.tween_property(w.player.model, "rotation_degrees:y", 360.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+	tw2.tween_property(w.player.model, "rotation_degrees:y", 0.0, 0.55).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	tw2.tween_property(w.player, "scale", Vector3.ONE * w.player.base_scale * 1.32, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw2.chain().tween_property(w.player, "scale", Vector3.ONE * w.player.base_scale, 0.22).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 

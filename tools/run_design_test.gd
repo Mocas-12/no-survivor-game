@@ -20,6 +20,7 @@ func run() -> void:
 	check(w.start_panel.visible,"Archive modal prevents starting combat behind it")
 	w.director.archive_panel.hide()
 	w._on_start_pressed()
+	w.campaign.set_process(false)
 	w.get_node("Timer").stop()
 	w.player.set_physics_process(false)
 	var d=w.director
@@ -34,7 +35,7 @@ func run() -> void:
 	w._apply_upgrade_choice(0)
 	check(not paused and not w.levelup_panel.visible and w.pending_level_ups>0,"Queued upgrades return to combat for twelve seconds")
 	check(not d.can_draft(),"Upgrade cadence prevents back-to-back interruption")
-	w.run_time=31
+	w.run_time=41
 	check(d.can_draft(),"Queued upgrade becomes eligible after combat interval")
 	w.show_level_up()
 	check(w.upgrade_buttons[0].get_meta("upgrade").id=="aux_water","Steam route gets an available matching auxiliary offer")
@@ -63,7 +64,7 @@ func run() -> void:
 	w.player.position=Vector3(0,-100,0)
 	w.player.fire_auxiliary()
 	var rounds=get_nodes_in_group("player_bullets")
-	var auxiliary=rounds.back()
+	var auxiliary=rounds.filter(func(round): return round.element=="ice").back()
 	auxiliary._on_body_entered(e)
 	check(preload("res://scripts/element_reactions.gd").state(e).has("ice"),"Actual auxiliary projectile applies explicit frost on collision")
 	var b=w.player.new_round()
@@ -90,8 +91,9 @@ func run() -> void:
 	check(d.combo=="hunter","Piercing and hunter auxiliary form the third build")
 	w.player.element="fire"
 	w.player.auxiliary="ice"
+	w.player.second_auxiliary="water"
 	d.check_combo()
-	check(d.combo=="","Changing weapons clears a build that no longer exists")
+	check(d.combo=="steam","Second auxiliary keeps the steam build active")
 	w.player.element="normal"
 	w.player.auxiliary="homing"
 	d.check_combo()
@@ -129,11 +131,11 @@ func run() -> void:
 	check(paused and d.panel.visible,"Queued evolution opens after morph completion")
 	d.choose_branch(1)
 	await create_timer(1.6).timeout
-	check(w.player.branch=="siege" and w.player.form==2,"Queued core progresses once with a different frame")
+	check(w.player.branch=="assault" and w.player.form==10,"Evolution preserves the chosen frame and advances a full hull tier")
 	d.record_run()
 	check(d.metrics.combo=="hunter" and d.metrics.first_upgrade>=18,"Run recap records build and timing metrics")
 	check(d.discovery_label.text.length()>0,"Result screen includes build and next exploration goal")
-	check(w.upgrade_pool.size()==23,"Expanded pool contains four functional additions")
+	check(w.upgrade_pool.size()==48,"Expanded pool contains 48 distinct modules")
 	w.player.element="fire"
 	w.player.element_levels.fire=3
 	w.card_taken.chain_reaction=2

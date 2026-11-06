@@ -21,7 +21,7 @@ var kind:=""
 
 static func burst(parent: Node,pos: Vector3,type: String,size:=1.0,seed_value: int=-1):
 	var world=parent.get_tree().current_scene
-	var low: bool=world!=null and world.get("reduce_fx")==true
+	var low: bool=world!=null and (world.get("reduce_fx")==true or world.get("performance_limited")==true)
 	if active_count>=(10 if low else 24): return null
 	if type=="hit" and active_count>=(6 if low else 16): return null
 	var fx

@@ -48,8 +48,16 @@ var _retarget := 0.0     # 目标重扫描计时（避免每帧全组扫描）
 var _target: Node3D = null
 var pierce_left := 0
 var struck := {}
+var source_player: Node = null
+var damage_channel:="main"
+var projectile_role:=""
+var modules := {}
+var return_after := -1.0
+var bounces := 0
+var flight_age := 0.0
 var _active := false             # 池中休眠的子弹不参与逻辑
 var _fx_element := ""            # 当前特效所属元素（判断是否需要重建拖尾）
+var _low_fx := false
 var _has_water_fx := false       # 当前是否带波浪水花尾
 var _created: Array = []         # 动态创建的粒子发射器（重建时销毁）
 var _fx_all: Array = []          # 全部发射器（回收时统一停发）
@@ -76,6 +84,13 @@ static func _homing_mat() -> StandardMaterial3D:
 # 发射 / 复用：由 player.shoot 调用，一次性配置全部飞行参数
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
 	damage = p_damage
+	source_player=null
+	damage_channel="main"
+	projectile_role=""
+	modules.clear()
+	return_after=-1
+	bounces=0
+	flight_age=0
 	pierce_left=0
 	struck.clear()
 	crit=0
@@ -95,13 +110,17 @@ func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float,
 	global_position = p_pos
 	visible = true
 	_active = true
+	set_process(true)
 	set_deferred("monitoring", true)
 	$Mesh.mesh = Fx.fire_head() if element=="fire" else PG.mesh(element,false)
 	rotation.z = Vector2(dir.x,dir.y).angle()-PI/2
 	$Mesh.rotation.z = 0
 	$Mesh.material_override = null if element=="fire" else _body_mat(element)
 	# 元素 / 弹道没变就只恢复发射，变了才重建拖尾（复用路径零分配）
-	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx:
+	var world=get_tree().current_scene
+	var low: bool=world!=null and (world.get("reduce_fx")==true or world.get("performance_limited")==true)
+	if element != _fx_element or (wave_amp > 0.0) != _has_water_fx or low!=_low_fx:
+		_low_fx=low
 		_rebuild_fx()
 	else:
 		for e in _fx_all:
@@ -116,6 +135,11 @@ func _rebuild_fx():
 	_fx_all = [$Trail]
 	_fx_element = element
 	_has_water_fx = wave_amp > 0.0
+	if _low_fx:
+		$Trail.emitting=false
+		$Splash.emitting=false
+		_fx_all.clear()
+		return
 	var c: Color = ELEMENT_COLORS[element]
 	$Trail.mesh = Fx.soft_particle(c, 0.85)
 	$Trail.amount = 4
@@ -239,6 +263,24 @@ func _process(delta):
 			_target = _find_target()
 		if _target:
 			_steer_toward(_target, delta)
+	flight_age+=delta
+	if projectile_role=="mine" and flight_age>.5:
+		speed=0
+		for target in get_tree().get_nodes_in_group("mobs"):
+			if not target.dead and target.position.distance_to(position)<60:
+				_on_body_entered(target)
+				return
+	if return_after>0 and flight_age>=return_after:
+		dir=-dir
+		return_after=-1
+		struck.clear()
+	if bounces>0 and absf(position.x)>530:
+		dir.x=-dir.x
+		position.x=clampf(position.x,-530,530)
+		bounces-=1
+	if flight_age>3.8:
+		_recycle()
+		return
 	var move = dir * speed * delta
 	if wave_amp > 0.0:
 		# 波浪弹道：垂直于航向叠加正弦摆动
@@ -280,6 +322,7 @@ func _recycle():
 	if not _active:
 		return
 	_active = false
+	set_process(false)
 	visible = false
 	homing_time = 0.0
 	set_deferred("monitoring", false)
@@ -316,9 +359,13 @@ func _on_body_entered(body):
 				if guard!=body and guard.get("kind")=="shield" and not guard.dead and guard.position.y<body.position.y and guard.position.distance_to(body.position)<115:
 					dmg=maxi(1,roundi(dmg*0.6))
 					break
+		if modules.has("execute") and float(body.get("hp") if body.get("hp")!=null else body.get("health"))<float(body.max_hp)*.3: dmg=roundi(dmg*1.6)
+		preload("res://scripts/arsenal.gd").hit(self,body,world)
 		_apply_element(body, world)
 		var exposed=preload("res://scripts/element_reactions.gd").state(body).has("exposed")
-		body.take_damage(float(dmg)*(1.18 if exposed else 1.0))
+		var dealt: float=float(dmg)*(1.18 if exposed else 1.0)
+		if world.get("campaign")!=null: world.campaign.record_damage(damage_channel,body,dealt)
+		body.take_damage(dealt)
 		if pierce_left>0:
 			pierce_left-=1
 		else:

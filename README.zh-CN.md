@@ -1,288 +1,65 @@
 <div align="center">
-
-<img src="./screenshots/app_icon.png" width="112" alt="No Survivor Game 图标" />
+<img src="./screenshots/app_icon.png" width="100" alt="No Survivor Game" />
 
 # No Survivor Game
 
-**Godot 4 纵向弹幕生存游戏 —— 鼠标/触屏驾驶战机、五大轮换 Boss 与终局 OMEGA、元素武器、形态进化**
+[在线试玩](https://mocas-12.github.io/no-survivor-game/?v=flight-pulse-20261106) · [English](./README.md) · [日本語](./README.ja-JP.md)
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-立即游玩-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
-[![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
-[![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
-[![Web](https://img.shields.io/badge/Platform-浏览器%20%7C%20手机-525252)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
+三幕科幻生存射击：自由武器构筑、分支机型与机械暴走Boss。
 
-**[🌐 在线游玩（GitHub Pages）](https://mocas-12.github.io/no-survivor-game/?v=266eae6)**
-
-[English](./README.md) | **简体中文** | [日本語](./README.ja-JP.md)
-
-*桌面：移动鼠标驾驶战机，火力全自动 · 手机：左半屏摇杆移动*
-
-<img src="./screenshots/combat-web-gameplay.png" width="32%" alt="战斗画面" /> <img src="./screenshots/combat-web-omega-p3.png" width="32%" alt="Boss 战" /> <img src="./screenshots/polish-victory.png" width="32%" alt="胜利结算" />
-
+<img src="./screenshots/pulse-beam.gif" width="100%" alt="游戏引擎内的受控脉冲光束演示" />
 </div>
 
----
+## 当前版本 · 分层航行与脉冲武装
 
-## 当前版本 · Blender 舰队与分层战斗特效
+- **三幕航线：**碎星巡航、风暴防线、母舰深域。每局面对两只打乱选择的常规Boss和终局OMEGA；胜利后可继续无尽模式。
+- **三种起始机型：**突击、护航、攻坚。拾取三次进化核心，依次进入5/10/15舰体阶段，保留机型并选择不同专精。
+- **六类主武器：**脉冲机炮、轨道重炮、蜂群导弹、回旋刃、脉冲光束、感应雷。主炮与两个辅助槽各保留两个独立改造，装满后明确提示替换目标。
+- **48张模块卡：**新增25张原创插画，每局三次重抽，也可跳过。元素弹芯、辅助武装和模块联动共同构筑；衍生攻击有数量和递归保护。
+- **多样遭遇：**12组遭遇模式，新增维修、布雷、护盾投射、分裂、牵引、侧翼轰炸六类职责。风险委托可接受或绕行，额外压力换取维修与火力。
+- **Boss表现：**新立体舰体、独立机械分组，约两秒连续展开进入P2，OMEGA还具有P3；敌弹形状更小、更容易辨认。
+- **分层飞行背景：**image-2制作远景与独立景物，远景不再上下平铺或镜像；侧边景物单次经过，最多12条微小星尘提供速度感。章节用四秒渐变与景物退场衔接。
+- **脉冲光束：**聚能、爆发、能量流动、收束四阶段，独立发射与命中音效、炮口动作、升级后的束体表现；无阻挡时延伸出视野，达到第三个贯穿目标时显示撞击终点。
+- **暂停与界面：**补给舰事件居中显示，暂停时按钮仍可点击；背景、脉冲时钟和音效同步暂停。插画选卡、装甲仪表与火力贡献结算帮助理解构筑。
 
-[立即试玩新版](https://mocas-12.github.io/no-survivor-game/?v=266eae6) · [舰队机库](https://mocas-12.github.io/no-survivor-game/?review=fleet&v=266eae6) · [六种反应特效台](https://mocas-12.github.io/no-survivor-game/?review=fleet&fx=1&v=266eae6)
+<img src="./screenshots/expansion-cards.png" width="49%" alt="插画模块选择" /> <img src="./screenshots/flight-scene-2.png" width="49%" alt="引擎内受控母舰环境演示" />
 
-- **舰队模型：**基础、突击、护航、攻坚四个系列，共16个 Blender 主舰体阶段，每阶段5种累积装备配置，共80种配置；另有6类小怪、6种 Boss 的独立舰体及材质。
-- **Boss 暴走：**六种 P2 展开舰体与独立攻击方式，OMEGA 增加 P3 核心展开。切换期间短暂停止新攻击，玩家仍可移动射击。
-- **构筑与探索：**独立主炮和辅助武器、分支进化、编队节奏与探索档案。
-- **元素反应：**六组双向组合，普通减速与冰霜状态分开；Boss 具有控制抗性。
-- **战斗特效：**湍流烟雾、侵蚀火焰、不规则冰晶和分支电弧，按闪光、爆发、碎屑与余烟、消散分层播放；支持低特效档与对象复用。
-- **界面与辨识：**插画翻牌、装甲仪表、Boss 阶段刻度；小怪使用局部蓄光提示开火。
+## 操作与验证边界
 
-<img src="./screenshots/fleet-effects-combat.png" width="100%" alt="使用实际模型与特效的受控战斗演示" />
-<img src="./screenshots/vfx-timeline/0200ms.png" width="100%" alt="六组元素反应在0.2秒时的实际渲染" />
+电脑移动鼠标驾驶，武器自动发射；手机使用左侧虚拟摇杆。Esc或暂停按钮打开菜单。最高分和发现记录保存在本机。
 
-网页版由 `main/docs` 发布，加载器、WASM 和游戏包均使用带版本号的文件名，避免读取旧缓存。[版本与 SHA-256 校验](./docs/build-info.json)。首次加载约62MB游戏数据及引擎文件；实体手机性能与完整通关平衡仍待验证。
+在线版本由`main/docs`发布，加载器、WASM与PCK使用带版本号的文件名，避免更新后仍读到旧包。首次需要下载约72 MB游戏数据及引擎，加载速度取决于网络与浏览器缓存。
 
-实现与验证：[舰队源文件](./docs/BLENDER-FLEET-QA.md)、[战斗规则](./docs/COMBAT-REVISION.md)、[特效技能与实测](./docs/VFX-REWORK.md)、[构筑与节奏](./docs/RUN-VARIETY.md)。旧文档中的“仅本地”描述属于当时的开发记录，以本次发布为准。
+自动检查覆盖构筑、战斗、Boss阶段、暂停恢复、触屏和特效上限。加速机器人只验证战役可走通，不代表真人留存或机型强度均衡；实体手机性能、发热及最终音效混音仍需人工复核。部分无头退出保留既有ObjectDB/资源引用警告。展示图由真实引擎受控摆设拍摄，不代表自然通关过程。
 
-## 📖 目录
+## Source and verification
 
-- [玩法](#-玩法)
-- [敌机图鉴](#-敌机图鉴)
-- [Boss 舰队](#-boss-舰队)
-- [战机形态](#️-战机形态)
-- [升级系统：元素与弹道](#-升级系统元素与弹道)
-- [打击感](#-打击感)
-- [技术亮点](#-技术亮点)
-- [项目结构](#-项目结构)
-- [快速开始](#-快速开始)
-- [常见问题](#-常见问题)
-- [协议与致谢](#-协议与致谢)
-
-## 🎮 玩法
-
-桌面端用鼠标驾驶战机（指哪飞哪、火力朝上、全自动射击），手机端左半屏呼出虚拟摇杆。敌机编队像抢滩登陆一样从屏幕上方涌来，炮手机还会朝你开火；每打掉若干波便响起警报，一艘带专属弹幕的 Boss 巨舰独自登场。击杀、拾取水晶、进化战机，看你能守住多久。
-
-- 🖱️ **桌面端**：鼠标驾驶，火力全自动——专心走位躲弹幕
-- 📱 **手机端**：左半屏触摸呼出摇杆移动
-- ⏸️ **随时暂停**：Esc 或屏幕右上角按钮——继续 / 重开 / 静音 / 减少闪光
-- 🏆 **最高分持久化**：网页版存 localStorage（桌面版存文件），破纪录会有庆祝横幅
-- 🔤 **中英双语**：全部界面文案按系统语言在 中文 / English 间自动切换
-- 🌊 **抢滩登陆波次**：6 种敌机从屏幕上缘登陆，另有编队突击——V 字纵队、盾机横墙、两翼包抄
-- 💎 **经验水晶**：击杀掉落发光水晶，随星空下漂、靠近磁吸
-- 👑 **Boss 战**：警报响起后 Boss 携专属血条登场（小怪降为低频续刷）
-- 🛩️ **战机进化**：Boss 掉落核心装备，接住即触发全套变形演出——没接住也会悬停在屏幕下缘等你
-- 📈 **动态难度**：刷怪间隔随积分从 0.9 秒一路压缩到 0.3 秒，敌机血量还随 Boss 波数增厚
-- 💚 **脱战修复**：4 秒未受击后，机体缓慢自动回血
-- ✦ **形态能力**：每次变形都会循环获得一种特殊能力——引力新星、超载射击、寒霜/烈焰力场、磁力核心、纳米修复、相位护盾、超频引擎、弹幕风暴、引力井；能力期间机体常驻主题光环（寒霜细雪绕机环绕 / 力场范围圈 / 护盾能量泡），左上角指示器长显当前能力，限时增益附带倒计时条
-- 💀 **谢幕演出**：阵亡时慢动作殉爆再进结算——若带着凤凰模块，则原地复活并放冲击波清场
-
-## 👾 敌机图鉴
-
-| 敌机 | 长相 | 血量 | 速度 | 积分 | 撞击伤害 | 经验 | 特长 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 普通机 | 红色攻击机 | 3 | 150 | 10 | 1 | 1 ⚪ | — |
-| 快速机 | 橙色单眼拦截机 | 1 | 260 | 5 | 1 | 1 ⚪ | 周期冲刺突进 |
-| 疾风机 | 黄绿微型战机 | 1 | 300 | 8 | 1 | 1 ⚪ | 蛇形走位 |
-| 炮手机 | 蓝灰炮艇 | 4 | 110 | 15 | 1 | 3 🟢 | 压至上半区悬停开火 |
-| 盾机 | 银色装甲楔 | 8 | 80 | 25 | 2 | 3 🟢 | 缓慢横向巡逻 |
-| 重装机 | 紫色重型战列 | 12 | 80 | 40 | 3 | 8 🟣 | 顿挫式推进 |
-
-**经验水晶三档**，按敌机血量掉落：⚪ 白（小）1 点 · 🟢 绿（中）3 点 · 🟣 紫（大）8 点——越肉的家伙掉的水晶越大越值钱。
-
-积分达到 20 / 40 / 60 / 100 / 150 时，疾风机、快速机、炮手机、盾机、重装机陆续登场。每击破一波 Boss，全体敌机血量 ×1.15 复合增厚（对冲后期火力成长）；并且每约 15 秒有一波编队突击：疾风机 V 字纵队、盾机横墙、或从两翼斜插的包抄梯队。
-
-## 👑 Boss 舰队
-
-击杀数越过阈值后，警报响起、小怪降为低频续刷，Boss 巨舰带着专属血条入场。五种 Boss 轮番上阵，越往后血越厚、弹越痛：
-
-| Boss | 长相 | 专属技能 |
-| --- | --- | --- |
-| 🔴 **毁灭者** | 三舰体红色战列舰 | 旋转 14 连环形弹幕 |
-| 🟣 **拦截者** | 双叉隐形巡洋舰 | 追踪玩家的 5 连扇形弹 + 慢速环 |
-| 🟢 **要塞** | 青绿巨型航母 | 三向旋转螺旋弹幕 |
-| 🟡 **猎手** | 金色双爪追猎舰 | 追踪弹 + 六向直弹 |
-| 🔵 **幻影** | 蓝白水晶幽灵舰 | 瞬移闪现 + 八向刺弹 |
-
-每种 Boss 的弹幕都有专属弹形与颜色，弹形即身份：毁灭者**赤红重弹**、拦截者**紫色飞镖**、要塞**翠绿激光矢**、猎手**金色猎刺**（带微光尾迹）、幻影**青蓝水晶棱刺**。狂暴时每只 Boss 有**专属狂暴特效**：毁灭者赤红副炮光珠绕机旋转、拦截者紫色流光喷射、要塞四角翠绿充能节点、猎手金色电弧噼啪、幻影幽蓝魂火升起、OMEGA 五色舰队光珠环绕。
-
-第二轮循环（第 6 波）起，每个 Boss 还会随机携带一个**词缀**（名字旁标注）——**迅捷**（弹速 +25%）、**坚壁**（血量 +50%）、**增援**（定期召唤小怪）、**遗言**（死亡时爆出一圈弹幕）。
-
-五种 Boss 打满两轮（10 波）后，终局 **OMEGA 灭世母舰** 降临——它吞噬了整支舰队：轮转释放全部五种专属弹形，70% 血量狂暴，35% 觉得不够还会获得幻影的瞬移并泼出全屏毁灭环。击破它即触发**胜利结算**——战绩回顾、永久徽章存档与「继续无尽 / 重开」选择，之后可带着满级机体冲击更高分。
-
-击破 Boss 触发连环爆炸，并掉落一枚**核心装备**——接住即变形；就算任它飘到屏幕底部，它也会悬停在那里等你来接。Boss 血量过半会**狂暴**：攻速、弹速与弹幕密度全面提升。
-
-## 🛩️ 战机形态
-
-**横跨 5 个等级梯队的 20 种渐进形态**——每枚核心进化一号，每次都有看得见的轮廓变化（翼展更宽、翼型切换、引擎更多、翼尖炮管、装甲带）：
-
-| 等级 | 形态 | 翼型 | 新增武装 |
-| --- | --- | --- | --- |
-| 侦察级 | 1-4 | 三角翼 | 1-2 引擎 |
-| 攻击级 | 5-8 | 后掠翼 | 翼尖挂舱 |
-| 重装级 | 9-12 | 宽幅翼 | 翼尖炮管 |
-| 旗舰级 | 13-16 | X 翼 | 装甲带 |
-| 主宰级 | 17-20 | 前伸双叉翼 | 全部+最大体型 |
-
-每枚核心同时附带永久属性成长（弹道/伤害/射速/机体交替增强）。变形过程**完全不暂停战斗**：旧机身收缩化作白光、光柱冲天，新机身弹性放大登场，全程保持飞行。
-
-## 🧬 升级系统：元素与弹道
-
-每次升级暂停游戏，从 **19 张卡池随机抽 3 张**。各卡遵循独立的叠加规则和上限；元素与波浪弹道最高 Lv.3，切换后保留各自等级。插画卡面展示效果和当前 → 下一属性预览：
-
-| 卡牌 | 效果 |
-| --- | --- |
-| 🔥 射速强化 | 射击间隔 −20%（可叠加） |
-| 💪 威力强化 | 子弹伤害 +1（可叠加） |
-| 🎇 多重弹道 | 每轮齐射多一发（最多 7 发） |
-| 👟 疾跑强化 | 移动速度 +12%（最高 Lv.5） |
-| 🛡️ 装甲强化 | 生命上限 +2 并回复 4 点（可叠加） |
-| 🔴 火焰弹头 | 火元素：留下灼烧标记与持续伤害，伤害 +1 |
-| 💧 水元素 | 水元素：浸润并击退敌机，可与火/雷/冰触发元素反应 |
-| 🔵 寒冰弹头 | 冰元素：独立冰霜减速，可准备冻结、融化或碎裂 |
-| 🟣 雷电弹头 | 雷元素：链式电击最多 2 个邻近目标 |
-| 🟢 疾风弹头 | 风元素：弹速 +40%，命中把周围敌机聚向一点 |
-| 🌠 扩散弹幕 | 扇形张开，弹道 +1 |
-| 〰️ 波浪弹道 | 子弹蛇行，覆盖更广 |
-| 🧲 磁力强化 | 水晶磁吸范围 +35%（最高 Lv.3） |
-| 🎓 精英学员 | 获得经验 +15%（最高 Lv.3） |
-| 🐦‍🔥 凤凰模块 | 被击毁时原地复活一次，并放冲击波清场 |
-| ✨ 暴击强化 | 子弹 10% 概率双倍伤害（最高 Lv.3） |
-| 🚀 弹速强化 | 子弹飞行速度 +20%（最高 Lv.3） |
-| ⚡ 连锁反应 | 元素反应伤害 +50%、范围扩大（最高 Lv.2） |
-| ⏳ 元素延续 | 元素标记持续时间 +1 秒（最高 Lv.2） |
-
-**元素反应**（先手留下标记，后手触发并消耗标记，命中点会浮出反应名）：
-
-| 反应 | 组合（双向） | 效果 |
-| --- | --- | --- |
-| 热冲击 | 火 + 水 | 周围伤害与短暂易伤 |
-| 融化 | 火 + 冰 | 单体重击 |
-| 冻结 | 水 + 冰 | 小怪冻结，Boss 转为短暂减速 |
-| 感电 | 水 + 雷 | 优先连锁浸润目标 |
-| 碎裂 | 冰 + 雷 | 冰晶飞散与范围伤害 |
-| 超载 | 火 + 雷 | 范围伤害与短暂打断小怪开火 |
-
-风会扩散已有元素状态并轻微聚拢目标。单次命中最多触发一种反应，二次伤害不会递归触发反应；具体参数见[战斗规则](./docs/COMBAT-REVISION.md)。
-
-
-**追踪导弹是道具不是卡牌**：每击破一个 Boss 获得 1 枚，桌面端点击鼠标、手机按右下角按钮触发——**当前整个屏幕上的主角子弹全部转为追踪弹**（镀金标识），伴金色闪光与变身音效；屏幕上没有子弹时不消耗。元素流派随时可换，等级不丢。卡池全满的超后期，会出现"紧急维修"补位卡，让升级始终有意义。
-
-## ✨ 打击感
-
-- 🌌 四层视差星空（星云→远→中→近）持续向你流动，随时都有"在飞"的感觉
-- 🎵 程序化合成的 140BPM 燃向循环 BGM：鼓组律动 + 锯齿贝斯 + 力量和弦 + 琶音 + 英雄感主旋律
-- 🔊 全动作合成音效：激光、命中、爆炸、拾取、升级音阶、Boss 警报、变身滑音
-- 💫 子弹按元素变色发光拖尾，命中迸出火花
-- 💥 击杀爆炸：分层火焰、火花与逐渐消散的烟雾；Boss 死亡连环殉爆
-- 📳 镜头震动按事件分量缩放（Boss 震得更狠）
-- 🩸 受伤后 0.35 秒无敌帧 + 红闪反馈
-
-## 🧠 技术亮点
-
-- 🎮 **Godot 4 / GDScript**，GL Compatibility 渲染器，浏览器兼容性拉满
-- 🎨 **背景与触屏 UI 程序化生成**：`tools/gen_assets.py`（Python + Pillow）；飞船、Boss、特效全面 3D 化
-- 🔈 **全部音频程序化合成**：`tools/gen_sounds.py`（纯数学 → WAV）——音效与循环 BGM，零音频素材
-- 🌐 **子弹零分配**：玩家子弹走对象池，元素材质/网格静态共享，极限射速下弱设备不再抖动
-- 🀄 **内嵌 UI 字体**：当前界面使用 Noto Sans SC 子集 `NoSurvivorUI.ttf`（SIL OFL），同时保留原站酷快乐体资源。
-- 🕸️ **Web 导出关闭线程支持**：不需要 SharedArrayBuffer / COOP-COEP 响应头，GitHub Pages 直接可跑
-- 📱 **触屏优先适配**：检测到触屏设备自动显示虚拟摇杆；暂停与设置按钮拇指可达
-- 💾 **轻量存档层**：最高分与设置在网页版存 localStorage、桌面版存 user://save.json
-- 🧠 **程序化 3D 舰队**：`visual_fleet.gd`、`enemy_shapes.gd` 和 `fleet_motion.gd` 构建并驱动当前舰队；`polished_geometry.gd` 与 `fleet_materials.gd` 负责倒角表面及材质，模型原型缓存复用。低端设备性能尚未实测。
-
-## 📁 项目结构
-
-```text
-no-survivor-game/
-├── assets/                # 美术与音频资源
-│   ├── fonts/             # Noto Sans SC subset + legacy ZCOOL KuaiLe (SIL OFL)
-│   ├── ships/             # retained legacy Quaternius assets (CC0)
-│   ├── sounds/            # 合成音效 + 循环 BGM（tools/gen_sounds.py）
-│   └── *.png              # 视差星空层 + 触屏摇杆 + 雪花贴图（tools/gen_assets.py）
-├── scenes/                # 9 个场景：主世界 / 玩家 / 敌机 / Boss / 双方子弹 / 核心 / 水晶
-├── scripts/               # 全部游戏逻辑（20 个脚本）
-│   ├── world.gd           # 游戏状态中枢：UI / 音频 / 存档 / 暂停 / 结算
-│   ├── spawn_director.gd  # 刷怪 / 编队 / Boss 调度（静态模块）
-│   ├── form_ability.gd    # 变形演出 / 形态能力 / 光环（静态模块）
-│   ├── player.gd          # 鼠标/触屏驾驶、元素与弹道系统、20 形态、阵亡/复活
-│   ├── enemy.gd           # 6 种敌机、专属移动、Boss 波数血量缩放
-│   ├── boss.gd            # 6 种 Boss（含终局 OMEGA）、循环词缀、专属狂暴特效
-│   ├── bullet.gd          # 玩家子弹：对象池 + 元素反应（蒸汽/超载/冻结/感电/火龙卷…）
-│   ├── enemy_bullet.gd    # 敌方弹幕：弹形按来源区分（赤红重弹 / 紫飞镖 / 金猎刺…）
-│   ├── upgrades.gd        # 19 张升级卡池（id / 出现条件 / 选中效果）
-│   ├── i18n.gd            # 中英字符串表，按系统语言自动选择
-│   ├── save.gd            # 最高分与设置（网页 localStorage / 桌面文件）
-│   ├── fx.gd              # 一次性特效库：冲击波环、爆炸、彩带、闪电
-│   ├── model_builder.gd   # fleet entry point → visual_fleet.gd / enemy_shapes.gd
-│   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
-├── tools/                 # 开发工具：贴图/音效生成器 + 无头冒烟测试 + 无头平衡测试 + 截图与模型预览
-├── docs/                  # 已部署的网页版（GitHub Pages 指向这里）
-├── screenshots/           # README 截图
-├── project.godot          # Godot 工程配置（主场景 / 渲染器 / 内嵌字体）
-└── export_presets.cfg     # Web 导出预设（线程关闭）
-```
-
-## 🚀 快速开始
-
-**在线游玩**：打开 <https://mocas-12.github.io/no-survivor-game/>，首次加载约 40 MB（引擎本体），之后浏览器缓存秒开。
-
-**本地运行**：
-
-```bash
-git clone https://github.com/Mocas-12/no-survivor-game.git
-# 用 Godot 4.7+ 打开该文件夹，按 F5 运行
-```
-
-**重新构建网页版**：
-
-```bash
-godot --headless --path . --export-release "Web" build/web/index.html
-cp -r build/web/* docs/    # 提交推送后自动重新部署
-```
-
-**重新生成旧背景 / 音频**（可选，不会重做新版插画）：
-
-```bash
-python tools/gen_assets.py
-python tools/gen_sounds.py
-```
-
-**无头测试**（不打开编辑器验证核心流程 / 输出平衡数据）：
-
-```bash
-godot --headless --path . res://tools/smoke_test.tscn    # 35 项流程断言
-godot --headless --path . res://tools/balance_test.tscn  # 自动驾驶 bot 打完整局，输出 Boss TTK / 承伤 / 节奏数据表
-```
-
-## ❓ 常见问题
-
-**首次加载为什么慢？**
-39 MB 的 WebAssembly 引擎只需下载一次，浏览器缓存后第二次起秒开。
-
-**手机上能玩吗？**
-能——触摸屏幕左半边呼出移动摇杆，战机自动开火。桌面端鼠标操作依然最精准。
-
-**图片 / 音频是哪来的？**
-当前主舰队使用 Blender 舰体与 glTF 模型，原有几何脚本保留用于对比。机库和模块插画使用内置图像工具制作，源图及提示词保存在 `assets/art-direction/`。音效与 BGM 由 `tools/gen_sounds.py` 合成，原星空和摇杆贴图由 `tools/gen_assets.py` 生成；这两个脚本不会重新生成新版插画或舰体。原 Quaternius CC0 资源及许可证另行保留。
-
-## 📄 协议与致谢
-
-- **代码与生成美术 / 音频**：[MIT 协议](./LICENSE) — © Mocas-12
-- **Legacy ship assets**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0; retained alongside the current procedural fleet.
-- **Fonts**: Noto Sans SC subset and ZCOOL KuaiLe — SIL Open Font License; see [Noto license](./assets/fonts/NotoSansSC-OFL.txt).
-- **引擎**：[Godot Engine](https://godotengine.org/) 4.7 — MIT License
-
-## 验证与本地预览
-
-在仓库根目录执行，需要 Godot 4.7 及对应 Web 导出模板。预览服务器需要 Node.js，从 `build/web/` 提供文件，端口为 8316。
+- [Full combat redesign](./docs/FULL-COMBAT-REDESIGN.md)
+- [Flight and pulse beam changes](./docs/FLIGHT-PULSE.md)
+- [Version identity and package SHA-256](./docs/build-info.json)
+- [Export and release conventions](./EXPORTING.md)
 
 ```sh
-godot --headless --path . --script tools/blender_fleet_test.gd
-godot --headless --path . --script tools/combat_revision_test.gd
-godot --headless --path . --script tools/vfx_quality_test.gd
-godot --headless --path . --script res://tools/polish_geometry_test.gd
-godot --headless --path . --script res://tools/visual_v2_test.gd
+git clone https://github.com/Mocas-12/no-survivor-game.git
+cd no-survivor-game
+# Open project.godot in Godot 4.7 and press F5.
+godot --headless --path . --script tools/flight_pulse_test.gd
+godot --headless --path . --script tools/campaign_ui_test.gd
+godot --headless --path . --script tools/full_plan_test.gd
 godot --headless --path . res://tools/smoke_test.tscn
-godot --headless --path . --export-release Web build/web/index.html
-node tools/serve_preview.cjs
 ```
 
-http://127.0.0.1:8316/
+```sh
+# Install the matching Godot Web export templates first.
+mkdir -p build/expansion
+godot --headless --path . --export-release Web build/expansion/index.html
+node tools/serve_expansion.cjs
+# http://127.0.0.1:8318/
+```
 
-测试覆盖舰体几何、75 项表现层检查和完整冒烟流程。无头测试退出时仍可能出现已有的音频资源引用提示；实体手机 GPU 性能尚未验证。发布请参阅[导出与分发约定](./EXPORTING.md)。
+## License and credits
+
+- Code and project-generated assets: [MIT](./LICENSE), © Mocas-12.
+- Retained legacy spacecraft: Quaternius Ultimate Spaceships, CC0; original licenses remain in the asset folders.
+- Noto Sans SC subset and ZCOOL KuaiLe: SIL Open Font License; [font license](./assets/fonts/NotoSansSC-OFL.txt).
+- Godot Engine 4.7: MIT.

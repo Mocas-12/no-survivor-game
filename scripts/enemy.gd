@@ -23,6 +23,7 @@ const COLORS := {
 	"tank": Color(0.72, 0.4, 1),
 }
 
+const TACTICAL=preload("res://scripts/tactical_enemy.gd")
 var kind = "normal"
 var speed = 150
 var health = 3
@@ -49,7 +50,7 @@ var aim_locked:=false
 
 func setup(type: String):
 	kind = type
-	var st: Dictionary = STATS[type]
+	var st: Dictionary = STATS[TACTICAL.BASE.get(type,type)]
 	speed = st["speed"]
 	health = st["hp"]
 	max_hp = health
@@ -58,9 +59,10 @@ func setup(type: String):
 	scale = Vector3.ONE * st["scale"]
 	if model:
 		model.queue_free()
-	model = MB.build_enemy(type)
+	model = MB.build_enemy(TACTICAL.BASE.get(type,type))
 	add_child(model)
-	fx_color = COLORS[type]
+	fx_color = TACTICAL.COLORS.get(type,COLORS.get(type,Color.WHITE))
+	if TACTICAL.BASE.has(type): TACTICAL.configure(self)
 	$ExplosionParticles.color = fx_color
 	$Sparks.color = Color(1, 0.92, 0.75)
 	if type == "shooter":
@@ -108,6 +110,7 @@ func _physics_process(delta):
 	cur_speed=minf(cur_speed,speed*preload("res://scripts/element_reactions.gd").movement(self))
 	var vel := Vector3(vx, -cur_speed, 0.0)
 	phase_t += delta
+	if TACTICAL.BASE.has(kind): TACTICAL.tick(self,delta)
 	# 各机型专属移动方式（均不追踪主角，只影响各自的进场轨迹）
 	match kind:
 		"swift":
@@ -184,6 +187,7 @@ func knockback(v: Vector3):
 func take_damage(amount):
 	if dead:
 		return
+	if get_tree().current_scene.run_time<float(get_meta("projected_shield_until",0)): amount*=.65
 	health -= amount
 	if model.has_method("impact"): model.impact(amount)
 	if health <= 0:
@@ -200,6 +204,7 @@ func die():
 	if dead:
 		return
 	dead = true
+	TACTICAL.split(self)
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)
 	died.emit(global_position, score_value, fx_color, max_hp)

@@ -43,11 +43,11 @@ static func _element_last(w) -> void:
 
 static func build(w) -> Array:
 	var player = w.player
-	return [
+	return preload("res://scripts/arsenal.gd").cards(w) + [
 		{"id":"pierce", "can":func(): return player.pierce_level<2, "apply":func(): player.pierce_level+=1},
-		{"id":"aux_water", "can":func(): return player.auxiliary!="water" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"water")},
-		{"id":"aux_ice", "can":func(): return player.auxiliary!="ice" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"ice")},
-		{"id":"aux_homing", "can":func(): return player.auxiliary!="homing" or player.auxiliary_level<3, "apply":func(): auxiliary(w,"homing")},
+		{"id":"aux_water", "can":func(): return auxiliary_eligible(player,"water"), "apply":func(): auxiliary(w,"water")},
+		{"id":"aux_ice", "can":func(): return auxiliary_eligible(player,"ice"), "apply":func(): auxiliary(w,"ice")},
+		{"id":"aux_homing", "can":func(): return auxiliary_eligible(player,"homing"), "apply":func(): auxiliary(w,"homing")},
 		{"id": "fire_rate", "can": func(): return player.fire_cooldown > 0.06,
 			"apply": func(): player.fire_cooldown = maxf(0.055, player.fire_cooldown * 0.8)},
 		{"id": "damage", "can": func(): return true,
@@ -80,7 +80,7 @@ static func build(w) -> Array:
 			"lv_fn": func(): return int(player.element_levels.get("wind", 0)),
 			"hint_fn": func(): return "" if player.element == "wind" else "switch_el"},
 		# 特殊弹道卡：波浪（追踪弹已改为 Boss 掉落道具）
-		{"id": "wave", "can": func(): return int(player.pattern_levels.get("wave", 0)) < 3,
+		{"id": "wave", "can": func(): return player.weapon!="beam" and int(player.pattern_levels.get("wave", 0)) < 3,
 			"apply": func(): _pattern(w, "wave"),
 			"lv_fn": func(): return int(player.pattern_levels.get("wave", 0)),
 			"hint_fn": func(): return "" if player.pattern == "wave" else "switch_pt"},
@@ -105,6 +105,22 @@ static func build(w) -> Array:
 	]
 
 static func auxiliary(w, id: String) -> void:
+	if w.player.auxiliary!="" and w.player.auxiliary!=id:
+		if w.player.second_auxiliary==id:
+			var previous: String=w.player.auxiliary
+			var previous_level: int=w.player.auxiliary_level
+			w.player.auxiliary=id
+			w.player.auxiliary_level=mini(w.player.second_auxiliary_level+1,3)
+			w.player.second_auxiliary=previous
+			w.player.second_auxiliary_level=previous_level
+			return
+		w.player.second_auxiliary=w.player.auxiliary
+		w.player.second_auxiliary_level=w.player.auxiliary_level
 	w.player.auxiliary_level = mini(w.player.auxiliary_level+1,3) if w.player.auxiliary==id else 1
 	w.player.auxiliary=id
 	w.player.auxiliary_timer=0.1
+
+static func auxiliary_eligible(p,id: String) -> bool:
+	if p.auxiliary==id: return p.auxiliary_level<3
+	if p.second_auxiliary==id: return p.second_auxiliary_level<3
+	return true

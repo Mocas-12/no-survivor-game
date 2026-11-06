@@ -1,0 +1,707 @@
+{
+  "firstRun": {
+    "errors": [],
+    "profiles": [
+      {
+        "width": 1152,
+        "height": 648,
+        "cpu": 1,
+        "audio": [
+          {
+            "state": "running",
+            "sampleRate": 48000
+          }
+        ],
+        "samples": [
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 18,
+              "low_fx": true,
+              "mobs": 19,
+              "physics_ms": 6.4,
+              "process_ms": 268
+            },
+            "beam": {
+              "audio_cycles": 3,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 81,
+              "low_fx": true,
+              "mobs": 18,
+              "physics_ms": 2.7,
+              "process_ms": 9.6
+            },
+            "beam": {
+              "audio_cycles": 6,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 141,
+              "low_fx": true,
+              "mobs": 13,
+              "physics_ms": 5.1,
+              "process_ms": 9
+            },
+            "beam": {
+              "audio_cycles": 8,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 142,
+              "low_fx": true,
+              "mobs": 9,
+              "physics_ms": 2.7,
+              "process_ms": 8
+            },
+            "beam": {
+              "audio_cycles": 9,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 144,
+              "low_fx": true,
+              "mobs": 9,
+              "physics_ms": 6.6,
+              "process_ms": 10.1
+            },
+            "beam": {
+              "audio_cycles": 11,
+              "beam_length": 519.697799682617,
+              "phase": "burst",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 141,
+              "low_fx": true,
+              "mobs": 8,
+              "physics_ms": 3.2,
+              "process_ms": 9.2
+            },
+            "beam": {
+              "audio_cycles": 12,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 141,
+              "low_fx": true,
+              "mobs": 8,
+              "physics_ms": 3.2,
+              "process_ms": 9.2
+            },
+            "beam": {
+              "audio_cycles": 12,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 14,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 8,
+              "process_ms": 3404.4
+            },
+            "beam": {
+              "audio_cycles": 14,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 64,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 1.3,
+              "process_ms": 47.9
+            },
+            "beam": {
+              "audio_cycles": 15,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 143,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 2.6,
+              "process_ms": 7.4
+            },
+            "beam": {
+              "audio_cycles": 17,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          }
+        ]
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "cpu": 4,
+        "audio": [
+          {
+            "state": "running",
+            "sampleRate": 48000
+          }
+        ],
+        "samples": [
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 33,
+              "low_fx": true,
+              "mobs": 19,
+              "physics_ms": 34.1,
+              "process_ms": 123.8
+            },
+            "beam": {
+              "audio_cycles": 5,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 34,
+              "low_fx": true,
+              "mobs": 18,
+              "physics_ms": 17.6,
+              "process_ms": 134.6
+            },
+            "beam": {
+              "audio_cycles": 6,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 45,
+              "low_fx": true,
+              "mobs": 14,
+              "physics_ms": 17.4,
+              "process_ms": 21.1
+            },
+            "beam": {
+              "audio_cycles": 8,
+              "beam_length": 519.697799682617,
+              "phase": "burst",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 51,
+              "low_fx": true,
+              "mobs": 10,
+              "physics_ms": 11.9,
+              "process_ms": 19.4
+            },
+            "beam": {
+              "audio_cycles": 9,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 50,
+              "low_fx": true,
+              "mobs": 9,
+              "physics_ms": 16.2,
+              "process_ms": 38.7
+            },
+            "beam": {
+              "audio_cycles": 11,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 55,
+              "low_fx": true,
+              "mobs": 7,
+              "physics_ms": 12.3,
+              "process_ms": 19.5
+            },
+            "beam": {
+              "audio_cycles": 12,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 48,
+              "low_fx": true,
+              "mobs": 6,
+              "physics_ms": 14.9,
+              "process_ms": 21.3
+            },
+            "beam": {
+              "audio_cycles": 13,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 66,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 14.4,
+              "process_ms": 19.2
+            },
+            "beam": {
+              "audio_cycles": 15,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 61,
+              "low_fx": true,
+              "mobs": 5,
+              "physics_ms": 8.7,
+              "process_ms": 16.4
+            },
+            "beam": {
+              "audio_cycles": 16,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 43,
+              "low_fx": true,
+              "mobs": 3,
+              "physics_ms": 13.8,
+              "process_ms": 205.5
+            },
+            "beam": {
+              "audio_cycles": 18,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          }
+        ]
+      }
+    ],
+    "scope": "Desktop GPU, synthetic stress scene and emulated CPU/touch; not a physical phone or human audio mix review."
+  },
+  "repeat": {
+    "errors": [],
+    "profiles": [
+      {
+        "width": 1152,
+        "height": 648,
+        "cpu": 1,
+        "audio": [
+          {
+            "state": "running",
+            "sampleRate": 48000
+          }
+        ],
+        "samples": [
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 129,
+              "low_fx": false,
+              "mobs": 19,
+              "physics_ms": 2.7,
+              "process_ms": 86
+            },
+            "beam": {
+              "audio_cycles": 5,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 86,
+              "low_fx": false,
+              "mobs": 18,
+              "physics_ms": 2.6,
+              "process_ms": 6.9
+            },
+            "beam": {
+              "audio_cycles": 6,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 144,
+              "low_fx": false,
+              "mobs": 14,
+              "physics_ms": 2.4,
+              "process_ms": 4.2
+            },
+            "beam": {
+              "audio_cycles": 8,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 144,
+              "low_fx": false,
+              "mobs": 10,
+              "physics_ms": 1.8,
+              "process_ms": 35.1
+            },
+            "beam": {
+              "audio_cycles": 9,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 140,
+              "low_fx": false,
+              "mobs": 9,
+              "physics_ms": 2.2,
+              "process_ms": 6.4
+            },
+            "beam": {
+              "audio_cycles": 11,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 144,
+              "low_fx": false,
+              "mobs": 8,
+              "physics_ms": 2.1,
+              "process_ms": 7
+            },
+            "beam": {
+              "audio_cycles": 12,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 143,
+              "low_fx": false,
+              "mobs": 5,
+              "physics_ms": 1.5,
+              "process_ms": 18.2
+            },
+            "beam": {
+              "audio_cycles": 13,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 143,
+              "low_fx": false,
+              "mobs": 5,
+              "physics_ms": 1.5,
+              "process_ms": 18.2
+            },
+            "beam": {
+              "audio_cycles": 13,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 111,
+              "low_fx": false,
+              "mobs": 4,
+              "physics_ms": 3.5,
+              "process_ms": 2221.5
+            },
+            "beam": {
+              "audio_cycles": 15,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 110,
+              "low_fx": false,
+              "mobs": 3,
+              "physics_ms": 3.2,
+              "process_ms": 166.1
+            },
+            "beam": {
+              "audio_cycles": 16,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          }
+        ]
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "cpu": 4,
+        "audio": [
+          {
+            "state": "running",
+            "sampleRate": 48000
+          }
+        ],
+        "samples": [
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 55,
+              "low_fx": true,
+              "mobs": 18,
+              "physics_ms": 9.5,
+              "process_ms": 111.5
+            },
+            "beam": {
+              "audio_cycles": 6,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 67,
+              "low_fx": true,
+              "mobs": 14,
+              "physics_ms": 7,
+              "process_ms": 14.1
+            },
+            "beam": {
+              "audio_cycles": 8,
+              "beam_length": 519.697799682617,
+              "phase": "burst",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 77,
+              "low_fx": true,
+              "mobs": 10,
+              "physics_ms": 10.2,
+              "process_ms": 11.2
+            },
+            "beam": {
+              "audio_cycles": 9,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 1,
+              "fps": 73,
+              "low_fx": true,
+              "mobs": 9,
+              "physics_ms": 8.2,
+              "process_ms": 20.1
+            },
+            "beam": {
+              "audio_cycles": 11,
+              "beam_length": 519.697799682617,
+              "phase": "charge",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 79,
+              "low_fx": true,
+              "mobs": 8,
+              "physics_ms": 9.1,
+              "process_ms": 14.6
+            },
+            "beam": {
+              "audio_cycles": 12,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 84,
+              "low_fx": true,
+              "mobs": 6,
+              "physics_ms": 10.3,
+              "process_ms": 10.3
+            },
+            "beam": {
+              "audio_cycles": 13,
+              "beam_length": 519.697799682617,
+              "phase": "cooldown",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 94,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 6.3,
+              "process_ms": 17.6
+            },
+            "beam": {
+              "audio_cycles": 15,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 97,
+              "low_fx": true,
+              "mobs": 5,
+              "physics_ms": 8.2,
+              "process_ms": 9.7
+            },
+            "beam": {
+              "audio_cycles": 16,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 95,
+              "low_fx": true,
+              "mobs": 4,
+              "physics_ms": 20.7,
+              "process_ms": 98.8
+            },
+            "beam": {
+              "audio_cycles": 18,
+              "beam_length": 519.697799682617,
+              "phase": "burst",
+              "weapon": "beam"
+            }
+          },
+          {
+            "perf": {
+              "fields": 0,
+              "fps": 66,
+              "low_fx": true,
+              "mobs": 3,
+              "physics_ms": 12.7,
+              "process_ms": 98.3
+            },
+            "beam": {
+              "audio_cycles": 19,
+              "beam_length": 519.697799682617,
+              "phase": "sustain",
+              "weapon": "beam"
+            }
+          }
+        ]
+      }
+    ],
+    "scope": "Desktop GPU, synthetic stress scene and emulated CPU/touch; not a physical phone or human audio mix review."
+  },
+  "note": "Synthetic desktop Chrome; GPU, startup compilation and concurrent workloads affect results. Not physical-phone verification."
+}

@@ -101,11 +101,18 @@ static func shrink_curve() -> Curve:
 #   scale_min / scale_max / shrink(收缩曲线) / angle(随机初相角范围) / colors(色带) /
 #   mesh(缺省 drop(color)) / color(缺省网格颜色) / ttl(节点存活秒)
 static func burst(parent: Node, pos: Vector3, cfg: Dictionary) -> void:
+	var world=parent.get_tree().current_scene
+	var low: bool=world!=null and (world.get("reduce_fx")==true or world.get("performance_limited")==true)
+	if parent.get_tree().get_nodes_in_group("cosmetic_bursts").size()>=(8 if low else 64): return
 	var p := CPUParticles3D.new()
+	p.add_to_group("cosmetic_bursts")
 	p.one_shot = true
 	p.explosiveness = 1.0
 	p.amount = int(cfg.get("amount", 12))
 	p.lifetime = float(cfg.get("lifetime", 0.5))
+	if low:
+		p.amount=mini(p.amount,3)
+		p.lifetime=minf(p.lifetime,.35)
 	p.spread = float(cfg.get("spread", 180.0))
 	if cfg.has("direction"):
 		p.direction = cfg["direction"]

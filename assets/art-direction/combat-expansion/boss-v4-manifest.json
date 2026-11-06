@@ -1,0 +1,93 @@
+[
+  {
+    "key": "boss-1",
+    "triangles": 4904,
+    "parts": 8,
+    "source": "boss-v4-1-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-1-p2",
+    "triangles": 4904,
+    "parts": 8,
+    "source": "boss-v4-1-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-2",
+    "triangles": 3840,
+    "parts": 8,
+    "source": "boss-v4-2-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-2-p2",
+    "triangles": 3968,
+    "parts": 8,
+    "source": "boss-v4-2-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-3",
+    "triangles": 4216,
+    "parts": 8,
+    "source": "boss-v4-3-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-3-p2",
+    "triangles": 4216,
+    "parts": 8,
+    "source": "boss-v4-3-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-4",
+    "triangles": 3872,
+    "parts": 8,
+    "source": "boss-v4-4-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-4-p2",
+    "triangles": 3872,
+    "parts": 8,
+    "source": "boss-v4-4-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-5",
+    "triangles": 3368,
+    "parts": 8,
+    "source": "boss-v4-5-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-5-p2",
+    "triangles": 3400,
+    "parts": 8,
+    "source": "boss-v4-5-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-6",
+    "triangles": 4700,
+    "parts": 8,
+    "source": "boss-v4-6-p1.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-6-p2",
+    "triangles": 5204,
+    "parts": 8,
+    "source": "boss-v4-6-p2.blend",
+    "reference": "boss-deployment-concepts.png"
+  },
+  {
+    "key": "boss-6-p3",
+    "triangles": 5204,
+    "parts": 8,
+    "source": "boss-v4-6-p3.blend",
+    "reference": "boss-deployment-concepts.png"
+  }
+]

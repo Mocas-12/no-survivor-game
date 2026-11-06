@@ -1,281 +1,65 @@
 <div align="center">
-
-<img src="./screenshots/app_icon.png" width="112" alt="No Survivor Game icon" />
+<img src="./screenshots/app_icon.png" width="100" alt="No Survivor Game" />
 
 # No Survivor Game
 
-**A Godot 4 3D vertical-scrolling arena survivor — mouse/touch-piloted fighter, 5 rotating bosses + final OMEGA, elemental weapons, 20 evolving 3D ship forms**
+[Play in Browser](https://mocas-12.github.io/no-survivor-game/?v=flight-pulse-20261106) · [简体中文](./README.zh-CN.md) · [日本語](./README.ja-JP.md)
 
-[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Play_Now-222?logo=githubpages&logoColor=white)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
-[![Godot](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godotengine&logoColor=white)](https://godotengine.org/)
-[![GDScript](https://img.shields.io/badge/Language-GDScript-355570)](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/index.html)
-[![Web](https://img.shields.io/badge/Platform-Browser%20%7C%20Mobile-525252)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)
+A three-act sci-fi survivor with modular weapons, branching spacecraft and transforming bosses.
 
-**[🌐 Play in Browser (GitHub Pages)](https://mocas-12.github.io/no-survivor-game/?v=266eae6)**
-
-**English** | [简体中文](./README.zh-CN.md) | [日本語](./README.ja-JP.md)
-
-*Desktop: move the mouse — the fighter follows and fires automatically · Mobile: left-thumb joystick*
-
-<img src="./screenshots/combat-web-gameplay.png" width="49%" alt="Gameplay" /> <img src="./screenshots/combat-web-omega-p3.png" width="49%" alt="Boss battle" />
-
+<img src="./screenshots/pulse-beam.gif" width="100%" alt="Controlled in-engine pulse beam presentation" />
 </div>
 
----
+## Current version · layered flight and pulse weapons
 
-## Current release · Blender fleet and layered combat VFX
+- **Three-act campaign:** shattered orbit, storm front and mothership approach. Each run faces two shuffled regular bosses followed by OMEGA; endless mode remains available after victory.
+- **Three starting frames:** assault, escort and siege. Three evolution-core pickups advance hull tiers 5/10/15, retain the chosen family and add specialization choices.
+- **Six primary weapons:** pulse cannon, rail cannon, homing missiles, returning blades, pulse beam and proximity mines. Main weapon and two auxiliary slots keep independent two-modification loadouts; full slots show what will be replaced.
+- **48 module cards:** 25 new illustrations, three rerolls per run, optional skips, elemental payloads and combo discoveries. Reaction-generated attacks are bounded to avoid recursive spawning.
+- **Varied encounters:** twelve encounter patterns and six additional tactical roles: repair, minelaying, shield projection, splitting, salvage attraction and flank bombing. Optional contracts trade additional pressure for repairs and firepower.
+- **Boss presentation:** rebuilt volumetric fleet, moving mechanical sections and approximately two-second P2 deployments; OMEGA also has P3. Enemy bullets have smaller, distinct silhouettes.
+- **Layered flight:** stationary distant image-2 plates, separately moving side scenery and at most twelve tiny directional dust marks. The background never vertically tiles or mirrors. Chapters blend over four seconds while old scenery departs.
+- **Pulse beam:** charge → burst → flowing sustain → cooldown, dedicated layered audio and contact sounds, animated energy filaments, muzzle recoil and world-space range. An unobstructed beam exits the view; the third penetrating contact provides a visible endpoint.
+- **Reliable pause and UI:** centered convoy contracts remain clickable while paused. Background, pulse clocks and audio pause together. Illustrated cards, armor HUD and a capped damage-contribution recap support build readability.
 
-[Play the current build](https://mocas-12.github.io/no-survivor-game/?v=266eae6) · [Fleet viewer](https://mocas-12.github.io/no-survivor-game/?review=fleet&v=266eae6) · [Reaction showcase](https://mocas-12.github.io/no-survivor-game/?review=fleet&fx=1&v=266eae6)
+<img src="./screenshots/expansion-cards.png" width="49%" alt="Illustrated module cards" /> <img src="./screenshots/flight-scene-2.png" width="49%" alt="Controlled mothership environment presentation" />
 
-- **Fleet:** 16 Blender-authored main hull tiers across common, assault, escort and siege families; five cumulative equipment stages per tier give 80 configurations. Six enemy hulls and six bosses have separate silhouettes and PBR finishes.
-- **Boss phases:** deployed P2 hulls and dedicated attack patterns for all six bosses, plus OMEGA P3. Transformations briefly pause new attacks and keep player input active.
-- **Builds:** independent main/auxiliary weapons, branching evolution, paced encounters and a discovery archive.
-- **Reactions:** six symmetric elemental pairs; Bosses resist hard crowd control. Generic slow is separate from frost.
-- **Effects:** turbulent smoke, eroded fire, faceted ice and branching electrical arcs; flash → impact → debris/smoke → fade. Reusable visual effects have normal/reduced quality caps.
-- **UI:** illustrated upgrade cards, armor HUD and Boss phase markers. Enemy firing cues stay local to the weapon rather than drawing long aim lines.
+## Controls and limits
 
-<img src="./screenshots/fleet-effects-combat.png" width="100%" alt="Controlled combat presentation using actual models and effects" />
-<img src="./screenshots/vfx-timeline/0200ms.png" width="100%" alt="Six elemental reaction effects rendered at 0.2 seconds" />
+Desktop: move the mouse to pilot; firing is automatic. Mobile: use the left-side virtual joystick. Esc or Pause opens the menu. Save data and discovery history stay on the device.
 
-The Web release is served from `main/docs`, with version-named loader, WASM and package files to avoid stale asset caches. [Build identity and SHA-256](./docs/build-info.json). First load downloads about 62 MB of game data plus the engine. Physical-phone performance and full-run balance remain unverified.
+The live game is exported into `main/docs` with versioned loader, WASM and PCK names to avoid stale game packages. First load downloads roughly 72 MB of game data plus the engine; later startup depends on connection and browser caching.
 
-Sources and checks: [fleet](./docs/BLENDER-FLEET-QA.md), [combat rules](./docs/COMBAT-REVISION.md), [VFX](./docs/VFX-REWORK.md), [run design](./docs/RUN-VARIETY.md). Older notes describe the state when written; this release supersedes their local-only status.
+Automated checks cover combat, modules, phase transitions, pause/resume, touch controls and bounded effects. Accelerated bots verified the campaign route, not player retention or equal frame difficulty. Physical-phone heat/performance and the final audio mix still require human device testing. Some headless exits retain existing ObjectDB/resource warnings. Screenshots labelled controlled presentations are staged in the actual engine, not proof of natural campaign progression.
 
-## 📖 Table of Contents
+## Source and verification
 
-- [Gameplay](#-gameplay)
-- [Enemy Fleet](#-enemy-fleet)
-- [Boss Fleet](#-boss-fleet)
-- [Ship Forms](#️-ship-forms)
-- [Upgrades: Elements & Patterns](#-upgrades-elements--patterns)
-- [Game Feel](#-game-feel)
-- [Tech Highlights](#-tech-highlights)
-- [Project Structure](#-project-structure)
-- [Quick Start](#-quick-start)
-- [FAQ](#-faq)
-- [License & Credits](#-license--credits)
-
-## 🎮 Gameplay
-
-Pilot your fighter by mouse on desktop or a virtual joystick on touch screens — guns fire automatically, so all you do is dodge. Enemy squadrons storm in from the top like a beach landing, gunships shoot back, and every few waves a siren announces a boss warship with its own bullet patterns. Grab XP crystals, evolve your ship, and hold the line.
-
-- 🖱️ **Desktop**: mouse piloting with full-auto fire — focus on dodging
-- 📱 **Mobile**: touch anywhere on the left half to summon a movement joystick
-- ⏸️ **Pause anywhere**: Esc or the on-screen button — resume, restart, mute, or turn on reduced-flash mode
-- 🏆 **Best score persists**: saved to localStorage on the web (a file on desktop); beat it and the game cheers
-- 🔤 **Bilingual UI**: every label, card and banner auto-switches between 中文 and English by system language
-- 🌊 **Beach-defense waves**: 6 enemy types land from the top edge, plus formation assaults — V-formations, shield walls and twin-flank pincers
-- 💎 **XP crystals**: kills drop glowing gems that drift with the starfield and magnet toward you
-- 👑 **Boss battles**: every wave triggers a sirened 1v1 duel — normal spawns slow to a trickle until it falls
-- 🛩️ **Ship evolution**: bosses drop power cores that transform your fighter (with a full cinematic) — a missed core hovers at the bottom edge instead of vanishing
-- 📈 **Dynamic difficulty**: spawn interval shrinks from 0.9s to 0.3s as your score climbs, and enemies toughen with every boss wave
-- 💚 **Out-of-combat repair**: after 4s without taking damage, the hull slowly self-repairs
-- ✦ **Form abilities**: every transformation grants a rotating special power — gravity nova, overcharge, frost/flame auras, magnet core, nano-repair, phase shield, thrust, bullet storm, gravity well; while active, the ship carries a themed aura (orbiting frost snowflakes / radius rings / shield bubble), the HUD indicator stays on, and timed buffs show a countdown bar
-- 💀 **A cinematic death**: exploding in slow motion before the results screen — unless you carry a Phoenix Core, which revives you with a screen-clearing shockwave
-
-## 👾 Enemy Fleet
-
-| Enemy | Look | HP | Speed | Score | Touch Damage | XP | Special |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Grunt | red strike fighter | 3 | 150 | 10 | 1 | 1 ⚪ | — |
-| Dart | orange one-eye interceptor | 1 | 260 | 5 | 1 | 1 ⚪ | periodic dash bursts |
-| Swift | green micro-fighter | 1 | 300 | 8 | 1 | 1 ⚪ | serpentine weaving |
-| Shooter | blue-gray gunship | 4 | 110 | 15 | 1 | 3 🟢 | hovers in the upper half and fires |
-| Guard | silver armored wedge | 8 | 80 | 25 | 2 | 3 🟢 | slow lateral patrol |
-| Tank | purple heavy battleship | 12 | 80 | 40 | 3 | 8 🟣 | stop-and-go advance |
-
-**XP gems come in three tiers** dropped by enemy HP: ⚪ white (small) 1 XP · 🟢 green (medium) 3 XP · 🟣 purple (large) 8 XP — the tougher the foe, the bigger and richer the crystal.
-
-New types join the landing as your score grows (Swift at 20, Dart at 40, Shooter at 60, Guard at 100, Tank at 150). Every boss wave defeated hardens the whole fleet (compounding ×1.15 HP per wave, keeping pace with your firepower), and every ~15s a formation assault sweeps in: V-shaped swift squadrons, slow shield walls, or pincers converging from both flanks.
-
-## 👑 Boss Fleet
-
-When the kill counter crosses the threshold an alarm sounds, spawns slow to a trickle, and a boss warship enters with its own HP bar. Five bosses rotate, and every later encounter has more HP and harder-hitting bullets:
-
-| Boss | Look | Signature Skill |
-| --- | --- | --- |
-| 🔴 **Destructor** | triple-hull red battleship | rotating 14-shot ring barrages |
-| 🟣 **Interceptor** | twin-prong stealth cruiser | player-seeking 5-shot fans + slow rings |
-| 🟢 **Fortress** | teal mega-carrier | triple rotating spiral streams |
-| 🟡 **Hunter** | gold twin-claw stalker | homing rounds + 6-way shots |
-| 🔵 **Phantom** | blue crystal ghost | teleports, then bursts 8-spike volleys |
-
-Every boss fires its own signature rounds — the bullet is the identity: Destructor's **crimson heavy shells**, Interceptor's **violet darts**, Fortress's **emerald lance bolts**, Hunter's **gold stingers** (with a faint trail), Phantom's **cyan crystal shards**. When a boss enrages, each shows its own signature effect: Destructor's red turret orbs orbiting, Interceptor's violet exhaust streaks, Fortress's four charging nodes, Hunter's golden crackle, Phantom's rising blue wisps, and OMEGA's five-colored fleet orbs.
-
-From the second cycle (wave 6) onward each boss also carries a random **affix** (shown next to its name) — **Swift** (+25% bullet speed), **Fortified** (+50% HP), **Summoner** (calls minions), **Vengeful** (detonates a bullet ring on death).
-
-After two full cycles (10 waves) of the five bosses, the final **OMEGA mothership** descends — it has devoured the entire fleet: it rotates through all five signature bullet styles, enrages at 70% HP, and below 35% it gains Phantom's teleport plus full-screen destructor rings. Bringing it down triggers the **victory settlement** — a run recap, a permanently saved badge and the endless / restart choice — after which endless mode continues for a higher score.
-
-Defeating a boss chains explosions across the screen and drops a **power core** — catch it to transform your fighter; even if you let it drift to the bottom it hovers there until you come get it. At half HP bosses **enrage**: faster fire, faster bullets and expanded patterns.
-
-## 🛩️ Ship Forms
-
-**20 progressive forms across 5 tiers** — every power core evolves the fighter one step with a visible silhouette change (wider wings, new wing geometry, more engines, wingtip cannons, armor plating):
-
-| Tier | Forms | Wing family | Extras |
-| --- | --- | --- | --- |
-| Scout | 1-4 | delta wings | 1-2 engines |
-| Assault | 5-8 | swept wings | wing pods |
-| Heavy | 9-12 | wide wings | gun barrels |
-| Flagship | 13-16 | X-wings | armor plating |
-| Sovereign | 17-20 | twin prongs | everything + max size |
-
-Each core also grants a permanent stat bump (extra volley guns, damage, fire rate, hull). The transformation plays **without pausing the fight**: the old hull contracts into white light, a beam erupts skyward and the new frame elastic-pops in while you keep flying.
-
-## 🧬 Upgrades: Elements & Patterns
-
-Each level-up pauses the game and deals **3 random cards out of a 19-card pool**. Cards follow their individual stacking rules and caps. Elements and the wave pattern reach Lv.3; switching preserves their individual levels. The illustrated cards show the effect and a current → next attribute preview:
-
-| Card | Effect |
-| --- | --- |
-| 🔥 Fire Rate | shooting interval −20% (stackable) |
-| 💪 Power | bullet damage +1 (stackable) |
-| 🎇 Multishot | +1 bullet per volley (up to 7) |
-| 👟 Sprint | move speed +12% (up to Lv.5) |
-| 🛡️ Armor | max HP +2 and heal 4 (stackable) |
-| 🔴 Fire warhead | applies a burning mark and damage over time, damage +1 |
-| 💧 Water warhead | knocks foes back and soaks them, triggers reactions |
-| 🔵 Ice warhead | applies frost slow; can prime freeze, melt or shatter |
-| 🟣 Lightning warhead | hits chain to up to 2 nearby enemies |
-| 🟢 Wind warhead | bullet speed +40%, gathers nearby foes into one spot |
-| 🌠 Wide barrage | wider fan, +1 bullet |
-| 〰️ Wave path | bullets snake sideways for wider coverage |
-| 🧲 Magnet | gem pickup range +35% (up to Lv.3) |
-| 🎓 Elite Pilot | XP gain +15% (up to Lv.3) |
-| 🐦‍🔥 Phoenix Core | revive once on death with a screen-clearing shockwave |
-| ✨ Critical | 10% chance for double damage (up to Lv.3) |
-| 🚀 Velocity | projectile speed +20% (up to Lv.3) |
-| ⚡ Chain Reaction | reaction damage +50%, wider area (up to Lv.2) |
-| ⏳ Element Extend | element marks last +1s (up to Lv.2) |
-
-**Elemental reactions** (the first hit leaves a mark, the second triggers and consumes it — the reaction name floats up at the impact point):
-
-| Reaction | Pair (either order) | Effect |
-| --- | --- | --- |
-| Thermal shock | Fire + Water | Nearby damage and brief vulnerability |
-| Melt | Fire + Ice | Single-target burst |
-| Freeze | Water + Ice | Freeze enemies; reduced control on Bosses |
-| Conduction | Water + Lightning | Prefer soaked chain targets |
-| Shatter | Ice + Lightning | Flying shards and area damage |
-| Overload | Fire + Lightning | Area damage and brief enemy firing interruption |
-
-Wind spreads existing elemental states and gently gathers enemies. Each hit triggers at most one reaction; secondary damage never recursively applies elements. See [combat rules](./docs/COMBAT-REVISION.md).
-
-
-**Homing missiles are an item, not a card**: every boss killed grants one charge — click the mouse (or the bottom-right button on mobile) to trigger it: **every player bullet on screen turns into a homing round** (gilded, with a golden flash and a transform sfx). If no bullets are on screen, the charge is not consumed. You can pivot between elements anytime without losing levels. If the whole pool maxes out, a Field Repair filler card keeps level-ups meaningful.
-
-## ✨ Game Feel
-
-- 🌌 four-layer parallax starfield (nebula → far → mid → near) scrolling toward you for constant motion
-- 🎵 fully synthesized driving BGM — a 140-BPM loop with drum grooves, saw bass, power chords, arpeggios and a heroic lead melody
-- 🔊 synthesized SFX for every action: laser fire, hits, explosions, pickups, level-up chime, boss siren, transformation sweep
-- 💫 bullets glow with element-colored trails; hits burst into sparks
-- 💥 kills explode into color-matched glow puffs + sparks + an expanding shockwave ring; bosses chain-detonate
-- 📳 camera shake scaled by the event (bosses shake the screen hard)
-- 🩸 0.35s invulnerability window after taking damage, with red damage flash
-
-## 🧠 Tech Highlights
-
-- 🎮 **Godot 4 / GDScript**, GL Compatibility renderer for maximum browser reach
-- 🎨 **Generated backgrounds & touch UI** by `tools/gen_assets.py` (Python + Pillow); ships, bosses and effects are fully 3D
-- 🔈 **All audio is procedurally synthesized** by `tools/gen_sounds.py` (pure math → WAV) — SFX and the looping BGM, WAV resources bundled with the game
-- 🌐 **Pooled bullets**: player bullets live in an object pool with element materials/meshes shared statically, reducing repeated mesh and projectile construction
-- 🀄 **Embedded UI font**: the current UI uses a subset of Noto Sans SC (`NoSurvivorUI.ttf`, SIL OFL); the original ZCOOL KuaiLe font is also retained.
-- 🕸️ **Web export with thread support off** — no SharedArrayBuffer / COOP-COEP headers needed, runs on GitHub Pages as-is
-- 📱 **Touch-first mobile support**: a virtual joystick appears automatically on touch devices; pause and settings are thumb-reachable
-- 💾 **Tiny save layer**: best score and settings persist to `localStorage` on the web or `user://save.json` on desktop
-- 🧠 **Procedural 3D fleet**: `visual_fleet.gd`, `enemy_shapes.gd` and `fleet_motion.gd` build and animate the current fleet; `polished_geometry.gd` and `fleet_materials.gd` provide beveled surfaces and material finishes. Mesh prototypes are cached. Low-end device performance is not yet verified.
-
-## 📁 Project Structure
-
-```text
-no-survivor-game/
-├── assets/                # art & audio resources
-│   ├── fonts/             # Noto Sans SC subset + legacy ZCOOL KuaiLe (SIL OFL)
-│   ├── ships/             # retained legacy Quaternius assets (CC0)
-│   ├── sounds/            # synthesized SFX + looping BGM (tools/gen_sounds.py)
-│   └── *.png              # parallax starfield + touch joystick + snowflake (gen_assets.py)
-├── scenes/                # 9 scenes: world / player / enemies / bosses / bullets / core / gem
-├── scripts/               # all game logic
-│   ├── world.gd           # state hub: UI / audio / save / pause / settlement
-│   ├── spawn_director.gd  # spawning / formations / boss scheduling (static module)
-│   ├── form_ability.gd    # morph cinematic / form powers / auras (static module)
-│   ├── player.gd          # mouse/touch piloting, elements & patterns, 20 forms, death/revive
-│   ├── enemy.gd           # 6 enemy types, signature movement, boss-wave scaling
-│   ├── boss.gd            # 6 bosses (incl. final OMEGA), cycle affixes, signature enrage FX
-│   ├── bullet.gd          # player bullets: object pool + 8 elemental reactions
-│   ├── enemy_bullet.gd    # enemy rounds: per-source bullet styles
-│   ├── upgrades.gd        # 19-card upgrade pool (ids / conditions / effects)
-│   ├── i18n.gd            # zh/en string table, auto-picked by system locale
-│   ├── save.gd            # best score & settings (web localStorage / desktop file)
-│   ├── fx.gd              # one-shot VFX library: shockwave rings, explosions, confetti, lightning
-│   ├── model_builder.gd   # fleet entry point → visual_fleet.gd / enemy_shapes.gd
-│   └── …                  # camera / touch_ui / panel_fx / pause_menu / gem / core / hit_spk
-├── tools/                 # dev tools: art/audio generators + headless smoke & balance tests + capture
-├── docs/                  # deployed web build (GitHub Pages serves this folder)
-├── screenshots/           # README screenshots
-├── project.godot          # Godot project config (main scene / renderer / embedded font)
-└── export_presets.cfg     # Web preset (threads off)
-```
-
-## 🚀 Quick Start
-
-**Play online** — open <https://mocas-12.github.io/no-survivor-game/>. First load is ~40 MB (the engine itself), cached by the browser afterwards.
-
-**Run from source**:
-
-```bash
-git clone https://github.com/Mocas-12/no-survivor-game.git
-# open the folder in Godot 4.7+ and press F5
-```
-
-**Rebuild the web version**:
-
-```bash
-godot --headless --path . --export-release "Web" build/web/index.html
-cp -r build/web/* docs/    # then commit & push to redeploy
-```
-
-**Regenerate legacy background / audio** (optional; does not recreate current illustrations):
-
-```bash
-python tools/gen_assets.py
-python tools/gen_sounds.py
-```
-
-## ❓ FAQ
-
-**Why is the first load slow?**
-The 39 MB WebAssembly engine is downloaded once; the browser caches it and later visits start instantly.
-
-**Can I play on a phone?**
-Yes — touch the left half of the screen to summon the movement joystick; the fighter fires automatically. Desktop with a mouse is still the most precise way to play.
-
-**Where are the image / audio files from?**
-Current fleet meshes are generated by the project’s own geometry scripts. Hangar and module artwork was generated with the built-in image tool; source images and prompts are recorded under `assets/art-direction/`. Sounds/BGM come from `tools/gen_sounds.py`; legacy starfield/joystick textures come from `tools/gen_assets.py`. Those generators do not recreate the new illustrations or fleet meshes. The original Quaternius CC0 assets and licenses are retained separately.
-
-## 📄 License & Credits
-
-- **Code & generated art/audio**: [MIT License](./LICENSE) — © Mocas-12
-- **Legacy ship assets**: [Quaternius — Ultimate Spaceships](https://quaternius.com) — CC0 1.0; retained alongside the current procedural fleet.
-- **Fonts**: Noto Sans SC subset and ZCOOL KuaiLe — SIL Open Font License; see [Noto license](./assets/fonts/NotoSansSC-OFL.txt).
-- **Engine**: [Godot Engine](https://godotengine.org/) 4.7 — MIT License
-
-## Verification and local preview
-
-Run from the repository root with Godot 4.7 and its Web export templates installed. The preview server needs Node.js and serves `build/web/` on port 8316.
+- [Full combat redesign](./docs/FULL-COMBAT-REDESIGN.md)
+- [Flight and pulse beam changes](./docs/FLIGHT-PULSE.md)
+- [Version identity and package SHA-256](./docs/build-info.json)
+- [Export and release conventions](./EXPORTING.md)
 
 ```sh
-godot --headless --path . --script tools/blender_fleet_test.gd
-godot --headless --path . --script tools/combat_revision_test.gd
-godot --headless --path . --script tools/vfx_quality_test.gd
-godot --headless --path . --script res://tools/polish_geometry_test.gd
-godot --headless --path . --script res://tools/visual_v2_test.gd
+git clone https://github.com/Mocas-12/no-survivor-game.git
+cd no-survivor-game
+# Open project.godot in Godot 4.7 and press F5.
+godot --headless --path . --script tools/flight_pulse_test.gd
+godot --headless --path . --script tools/campaign_ui_test.gd
+godot --headless --path . --script tools/full_plan_test.gd
 godot --headless --path . res://tools/smoke_test.tscn
-godot --headless --path . --export-release Web build/web/index.html
-node tools/serve_preview.cjs
 ```
 
-http://127.0.0.1:8316/
+```sh
+# Install the matching Godot Web export templates first.
+mkdir -p build/expansion
+godot --headless --path . --export-release Web build/expansion/index.html
+node tools/serve_expansion.cjs
+# http://127.0.0.1:8318/
+```
 
-Tests cover fleet geometry, 75 presentation checks and the full smoke flow. An existing audio-resource warning can appear on headless shutdown; physical mobile GPU performance remains unverified. See [export and release conventions](./EXPORTING.md) before publishing.
+## License and credits
+
+- Code and project-generated assets: [MIT](./LICENSE), © Mocas-12.
+- Retained legacy spacecraft: Quaternius Ultimate Spaceships, CC0; original licenses remain in the asset folders.
+- Noto Sans SC subset and ZCOOL KuaiLe: SIL Open Font License; [font license](./assets/fonts/NotoSansSC-OFL.txt).
+- Godot Engine 4.7: MIT.

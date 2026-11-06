@@ -3,7 +3,7 @@ extends RefCounted
 static var meshes: Dictionary = {}
 static var materials: Dictionary = {}
 const PLAYER := {"normal":Color("8deafa"),"fire":Color("fa9952"),"water":Color("4aa9ec"),"ice":Color("9ceaf4"),"lightning":Color("bb95ee"),"wind":Color("82dec1"),"homing":Color("efd38a")}
-const ENEMY := {"shooter":Color("f2a468"),"destructor":Color("fa646b"),"interceptor":Color("bf83ef"),"fortress":Color("6cdaa2"),"hunter":Color("eabe65"),"phantom":Color("95d9f3")}
+const ENEMY := {"mine":Color("f2a468"),"shooter":Color("f2a468"),"destructor":Color("fa646b"),"interceptor":Color("bf83ef"),"fortress":Color("6cdaa2"),"hunter":Color("eabe65"),"phantom":Color("95d9f3")}
 
 static func material(kind: String,hostile: bool) -> StandardMaterial3D:
 	var key := str(hostile)+kind
@@ -22,7 +22,7 @@ static func mesh(kind: String,hostile: bool) -> Mesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var color: Color = ENEMY.get(kind,Color.WHITE) if hostile else PLAYER.get(kind,Color.WHITE)
 	if hostile:
-		ring(st,8,7,color.darkened(0.45))
+		# Enemy bodies use a clean directional silhouette, without a circular rim.
 		match kind:
 			"destructor":
 				ring(st,7,4.8,color)

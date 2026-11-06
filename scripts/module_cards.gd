@@ -13,6 +13,10 @@ var world: Node
 var textures: Dictionary = {}
 var choosing := false
 var generation := 0
+var rerolls:=3
+var reroll_button: Button
+var slot_buttons: Array[Button]=[]
+var action_buttons: Array[Button]=[]
 
 static func install(ui: CanvasLayer) -> void:
 	var controller = new()
@@ -23,12 +27,15 @@ static func install(ui: CanvasLayer) -> void:
 	controller.panel.add_child(controller)
 	for id in IDS:
 		controller.textures[id] = load("res://assets/modules/%s.webp" % {"pierce":"velocity","aux_water":"water","aux_ice":"ice","aux_homing":"multishot"}.get(id,id))
+	for id in preload("res://scripts/arsenal.gd").EXTRA:
+		var art: String=preload("res://scripts/arsenal.gd").EXTRA[id][4]
+		controller.textures[id]=load("res://assets/modules/expansion/%s.png" % id)
 	var box: VBoxContainer = controller.panel.get_node("Box")
 	box.offset_left = -430
 	box.offset_right = 430
-	box.offset_top = -250
-	box.offset_bottom = 250
-	box.add_theme_constant_override("separation",14)
+	box.offset_top = -272
+	box.offset_bottom = 272
+	box.add_theme_constant_override("separation",8)
 	box.get_node("Title").text = "模块解封" if I18N.lang()=="zh" else "MODULE UNSEALED"
 	box.get_node("Title").add_theme_font_size_override("font_size",28)
 	var row: HBoxContainer = box.get_node("Buttons")
@@ -44,6 +51,28 @@ static func install(ui: CanvasLayer) -> void:
 	help.add_theme_font_size_override("font_size",12)
 	help.add_theme_color_override("font_color",Color("93acbc"))
 	box.add_child(help)
+	var slots:=HBoxContainer.new()
+	slots.alignment=BoxContainer.ALIGNMENT_CENTER
+	box.add_child(slots)
+	for slot in ["main","aux1","aux2"]:
+		var slot_button:=Button.new()
+		slot_button.text=slot
+		slots.add_child(slot_button)
+		controller.slot_buttons.append(slot_button)
+		slot_button.pressed.connect(controller.select_slot.bind(slot))
+	var actions:=HBoxContainer.new()
+	actions.alignment=BoxContainer.ALIGNMENT_CENTER
+	box.add_child(actions)
+	controller.reroll_button=Button.new()
+	controller.reroll_button.text="重抽 · 3" if I18N.lang()=="zh" else "Reroll · 3"
+	actions.add_child(controller.reroll_button)
+	controller.reroll_button.pressed.connect(controller.reroll)
+	var skip:=Button.new()
+	skip.text="跳过" if I18N.lang()=="zh" else "Skip"
+	actions.add_child(skip)
+	skip.pressed.connect(controller.skip)
+	controller.action_buttons.append(controller.reroll_button)
+	controller.action_buttons.append(skip)
 	# Extend only this overlay's decorative frame; the buttons remain native controls.
 	for child in controller.panel.get_children():
 		if child is Panel:
@@ -54,21 +83,29 @@ static func install(ui: CanvasLayer) -> void:
 func present() -> void:
 	generation += 1
 	choosing = false
+	for i in slot_buttons.size():
+		var slot: String=["main","aux1","aux2"][i]
+		slot_buttons[i].text=("▸ " if world.player.equipment_focus==slot else "")+preload("res://scripts/equipment.gd").label(world.player,slot)+" · %d/2" % preload("res://scripts/equipment.gd").installed(world.player,slot).size()
+		slot_buttons[i].disabled=slot!="main" and preload("res://scripts/equipment.gd").key(world.player,slot)=="aux:"
 	for i in cards.size():
 		var card = cards[i]
 		var up: Dictionary = card.get_meta("upgrade")
 		var id: String = up.id
+		card.set_meta("unavailable",not up.can.call())
 		var level: int = up.lv_fn.call() if up.has("lv_fn") else int(world.card_taken.get(id,0))
 		var switching: bool = up.has("hint_fn") and up.hint_fn.call() != ""
 		var badge := ("切换" if I18N.lang()=="zh" else "SWITCH") if switching else (("新模块" if I18N.lang()=="zh" else "NEW") if level==0 else "Lv.%d → %d" % [level,level+1])
+		if id in ["pulse","rail","missile","blade","beam","mine"]: badge="切换主炮" if I18N.lang()=="zh" else "SWITCH WEAPON"
+		if id in preload("res://scripts/equipment.gd").MODS: badge="装配改造" if I18N.lang()=="zh" else "INSTALL MOD"
+		if bool(card.get_meta("unavailable",false)): badge="已装配" if I18N.lang()=="zh" else "INSTALLED"
 		if id in ["revive","repair"]:
 			badge = ("即刻生效" if id=="repair" else "补充核心") if I18N.lang()=="zh" else ("REPAIR" if id=="repair" else "RECHARGE")
 		var element: bool = id in ["fire","water","ice","lightning","wind","wave","chain_reaction","element_last"]
 		if id.begins_with("aux_"):
-			level=world.player.auxiliary_level if world.player.auxiliary==id.trim_prefix("aux_") else 0
+			level=world.player.auxiliary_level if world.player.auxiliary==id.trim_prefix("aux_") else (world.player.second_auxiliary_level if world.player.second_auxiliary==id.trim_prefix("aux_") else 0)
 			badge=("独立辅助" if I18N.lang()=="zh" else "AUXILIARY") if level==0 else "Lv.%d → %d" % [level,mini(level+1,3)]
-			if level==0 and world.player.auxiliary!="": badge="替换辅助" if I18N.lang()=="zh" else "REPLACE AUX"
-		var weapon: bool = id in ["fire_rate","damage","multishot","velocity","crit","wide","pierce","aux_water","aux_ice","aux_homing"]
+			if level==0 and world.player.auxiliary!="": badge=("新增辅助 / 满槽替换" if I18N.lang()=="zh" else "ADD / REPLACE IF FULL")
+		var weapon: bool = id in preload("res://scripts/equipment.gd").MODS or id in ["pulse","rail","missile","blade","beam","mine"] or id.begins_with("aux_") or id in ["fire_rate","damage","multishot","velocity","crit","wide","pierce","aux_water","aux_ice","aux_homing"]
 		var color := Color("79dce7") if element else (Color("e7bf78") if weapon else Color("a8d6b0"))
 		var category := ("元素接口" if element else ("武装模块" if weapon else "机体系统")) if I18N.lang()=="zh" else ("ELEMENT" if element else ("WEAPON" if weapon else "SYSTEM"))
 		var detail: String = preload("res://scripts/module_readout.gd").describe(world,id,level)
@@ -79,7 +116,7 @@ func present() -> void:
 			var old_title: String = I18N.T("card_"+current)
 			if old_title.begins_with("card_"): old_title = ("普通弹" if current=="normal" else "扇形弹道") if I18N.lang()=="zh" else current
 			detail = old_title+" → "+I18N.T("card_"+id)+"\n"+detail
-		card.configure({"title":I18N.T("card_"+id),"detail":detail,"badge":badge,"category":category,"color":color,"texture":textures[id],"caption":CAPTIONS.get(id,["辅助与主炮协同作战","Combine auxiliary and main fire"])[0 if I18N.lang()=="zh" else 1]})
+		card.configure({"title":preload("res://scripts/arsenal.gd").title(id),"detail":detail,"badge":badge,"category":category,"color":color,"texture":textures.get(id,textures.damage),"caption":CAPTIONS.get(id,(["装入选中武器的改造槽","Modify the selected weapon"] if id in preload("res://scripts/equipment.gd").MODS else ["独立武装与构筑核心","Independent weapons and build cores"]))[0 if I18N.lang()=="zh" else 1]})
 		card.reveal(0.08+i*0.14,world.reduce_fx or world.level%3!=0)
 	get_tree().create_timer(0.7).timeout.connect(focus_first.bind(generation))
 
@@ -96,6 +133,12 @@ func _input(event: InputEvent) -> void:
 	var touch: bool = event is InputEventScreenTouch and event.pressed
 	var mouse: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
 	if not touch and not mouse: return
+	if touch:
+		for button in slot_buttons+action_buttons:
+			if not button.disabled and button.get_global_rect().has_point(event.position):
+				button.pressed.emit()
+				get_viewport().set_input_as_handled()
+				return
 	for i in cards.size():
 		if cards[i].get_global_rect().has_point(event.position):
 			if not cards[i].front:
@@ -115,7 +158,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func choose(index: int,apply_choice: Callable) -> void:
-	if choosing or not panel.visible: return
+	if choosing or not panel.visible or bool(cards[index].get_meta("unavailable",false)): return
 	if not cards[index].front:
 		reveal_all()
 		return
@@ -153,8 +196,31 @@ func choose(index: int,apply_choice: Callable) -> void:
 		if token==generation and panel.visible: apply_choice.call())
 
 func visibility_changed() -> void:
+	if world.director: world.director.refresh_hud()
 	if not panel.visible:
 		generation += 1
 		choosing = false
 		for card in cards:
 			if card.flip_tween: card.flip_tween.kill()
+
+func reroll() -> void:
+	if choosing or rerolls<=0 or not panel.visible: return
+	rerolls-=1
+	reroll_button.text=("重抽 · %d" if I18N.lang()=="zh" else "Reroll · %d") % rerolls
+	reroll_button.disabled=rerolls<=0
+	world.show_level_up()
+
+func skip() -> void:
+	if choosing or not panel.visible: return
+	generation+=1
+	world.pending_level_ups=maxi(0,world.pending_level_ups-1)
+	world.director.draft_after=world.run_time+20
+	panel.hide()
+	get_tree().paused=false
+	world.pause_button.show()
+
+func select_slot(slot: String) -> void:
+	if choosing: return
+	world.player.equipment_focus=slot
+	present()
+	reveal_all()

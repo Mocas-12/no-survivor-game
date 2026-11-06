@@ -16,11 +16,15 @@ var elite_after := 75.0
 var reactions := 0
 var phase := ""
 var combo := ""
+var active_combos: Array[String]=[]
 var metrics := {"first_upgrade": -1.0, "first_evolution": -1.0, "damage_taken": 0, "kills": 0}
 var evolution_queue: Array[int] = []
 var choosing := false
 var morph_until := 0.0
 var branch := ""
+var boss_order: Array=[1,2,3,4,5]
+var encounter_index:=-1
+var evolution_count:=0
 var panel: PanelContainer
 var buttons: Array[Button] = []
 var overlay_label: Label
@@ -40,6 +44,7 @@ var streak := 0
 
 func _ready() -> void:
 	w = get_parent()
+	boss_order.shuffle()
 	process_mode=Node.PROCESS_MODE_ALWAYS
 	var data = SAVE.load_data()
 	seen = data.get("discoveries", {}).duplicate()
@@ -89,8 +94,8 @@ func spawn_interval() -> float:
 func boss_ready() -> bool:
 	if choosing or w.boss_active or w.dying: return false
 	var elapsed: float = w.run_time-last_boss_time
-	if w.boss_tier == 0: return w.run_time >= 150 or (w.run_time >= 100 and w.kill_count >= 60)
-	return elapsed >= 110 or (elapsed >= 45 and w.kill_count >= w.next_boss_at)
+	if w.boss_tier == 0: return w.run_time >= 150
+	return elapsed >= (240 if not w.omega_slain else 110)
 
 func may_spawn() -> bool:
 	var limit := 9 if w.boss_active else (12 if w.run_time < 45 else 22)
@@ -98,7 +103,16 @@ func may_spawn() -> bool:
 
 func encounter() -> void:
 	if not may_spawn(): return
-	var kind := randi()%3 if w.run_time >= 40 else 0
+	var unlocked: Array=[0,1,2]
+	if w.run_time>=80: unlocked.append_array([3,6])
+	if w.boss_tier>=1: unlocked.append_array([4,5,9])
+	if w.boss_tier>=2: unlocked.append_array([7,8,10,11])
+	var kind: int=unlocked.pick_random() if w.run_time>=25 else 0
+	if kind==encounter_index: kind=unlocked[(unlocked.find(kind)+1)%unlocked.size()]
+	encounter_index=kind
+	if kind>=3:
+		advanced_encounter(kind)
+		return
 	phase = [text("轻装集群", "LIGHT SQUADRON"), text("突破盾墙", "BREAK THE SHIELD"), text("交叉火力", "CROSSFIRE")][kind]
 	w._toast(phase,Color("79dce7"))
 	var cx := randf_range(-240,240)
@@ -174,7 +188,7 @@ func offer(available: Array) -> Array:
 
 func upgrade_applied(id: String) -> void:
 	if metrics.first_upgrade<0: metrics.first_upgrade=w.run_time
-	draft_after=w.run_time+12
+	draft_after=w.run_time+20
 	discover("module_"+id)
 	check_combo()
 
@@ -187,10 +201,12 @@ func killed() -> void:
 		w.play_sfx("pickup",-9,0.02)
 
 func check_combo() -> void:
-	var next := ""
-	if w.player.element=="fire" and w.player.auxiliary=="water": next="steam"
-	elif w.player.element=="lightning" and w.player.auxiliary=="ice": next="frost_arc"
-	elif w.player.pierce_level>0 and w.player.auxiliary=="homing": next="hunter"
+	active_combos.clear()
+	if w.player.element=="fire" and "water" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("steam")
+	if w.player.element=="lightning" and "ice" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("frost_arc")
+	if w.player.pierce_level>0 and "homing" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("hunter")
+	var next: String=active_combos[0] if not active_combos.is_empty() else ""
+	if w.player.auxiliary=="homing" and "hunter" in active_combos: next="hunter"
 	var previous:=combo
 	combo=next
 	if next!="" and next!=previous:
@@ -210,6 +226,7 @@ func discover(id: String) -> void:
 
 func request_evolution(form: int) -> void:
 	if w.dying: return
+	if evolution_count+evolution_queue.size()>=3: return
 	evolution_queue.append(form)
 	if not choosing and w.run_time>=morph_until: present_evolution()
 
@@ -219,11 +236,11 @@ func present_evolution() -> void:
 	w.get_tree().paused=true
 	w.get_node("TouchUI").reset()
 	w.pause_button.hide()
-	var options := ["assault","escort"] if branch=="" else [branch, "siege" if branch!="siege" else "assault"]
+	var options := [branch,branch] if branch!="" else ["assault","escort"]
 	for i in 2:
 		var id: String=options[i]
-		buttons[i].get_node("FrameTitle").text=branch_title(id)
-		buttons[i].get_node("FrameDetail").text=BRANCHES[id][2 if text("中","en")=="中" else 3]
+		buttons[i].get_node("FrameTitle").text=preload("res://scripts/arsenal.gd").title(specialization(id,i))
+		buttons[i].get_node("FrameDetail").text=specialization_detail(id,i)
 		buttons[i].tooltip_text=branch_title(id)+"\n"+BRANCHES[id][2 if text("中","en")=="中" else 3]
 		buttons[i].set_meta("branch",id)
 		buttons[i].disabled=false
@@ -253,7 +270,11 @@ func choose_branch(index: int) -> void:
 		w.health=mini(w.health+2,w.max_health)
 	discover("branch_"+branch)
 	if metrics.first_evolution<0: metrics.first_evolution=w.run_time
-	var form: int=maxi(w.player.form+1,evolution_queue.pop_front())
+	var chosen_module: String=specialization(branch,index)
+	evolution_count+=1
+	evolution_queue.pop_front()
+	preload("res://scripts/arsenal.gd").install(w,chosen_module,"main")
+	var form: int=mini(19,evolution_count*5)
 	panel.hide()
 	choosing=false
 	morph_until=w.run_time+1.6
@@ -318,17 +339,20 @@ func build_ui() -> void:
 	start_loadout.position=Vector2(370,550)
 	start_loadout.size=Vector2(280,40)
 	start_loadout.text=text("起始武装：标准机炮","START: Standard cannon")
-	start_loadout.visible=loadouts.size()>1
+	start_loadout.visible=true
+	start_loadout.text=text("机型：突击 · 点击切换","FRAME: Assault · click to cycle")
+	branch="assault"
+	w.player.branch=branch
 	w.start_panel.add_child(start_loadout)
 	start_loadout.pressed.connect(func():
-		loadout_index=(loadout_index+1)%loadouts.size()
-		var id: String=loadouts[loadout_index]
-		w.player.element=id if id in ["fire","lightning"] else "normal"
-		w.player.pierce_level=1 if id=="pierce" else 0
-		w.player.element_levels.fire=1 if id=="fire" else 0
-		w.player.element_levels.lightning=1 if id=="lightning" else 0
-		var label: String=preload("res://scripts/i18n.gd").T("card_"+id) if id!="normal" else text("标准机炮","Standard cannon")
-		start_loadout.text=text("起始武装：","START: ")+label)
+		loadout_index=(loadout_index+1)%3
+		branch=["assault","escort","siege"][loadout_index]
+		w.player.branch=branch
+		w.player.weapon={"assault":"pulse","escort":"missile","siege":"rail"}[branch]
+		w.player.auxiliary="water" if branch=="escort" else ""
+		w.player.auxiliary_level=1 if branch=="escort" else 0
+		w.player._set_model(w.player.form)
+		start_loadout.text=text("机型：","FRAME: ")+branch_title(branch))
 	discovery_label=Label.new()
 	discovery_label.position=Vector2(316,440)
 	discovery_label.size=Vector2(520,105)
@@ -402,10 +426,13 @@ func build_ui() -> void:
 
 func refresh_hud() -> void:
 	if not overlay_label: return
-	overlay_label.visible=not w.start_panel.visible and not w.dying
+	overlay_label.visible=not w.start_panel.visible and not w.dying and not w.levelup_panel.visible and not choosing and (w.get("campaign")==null or not w.campaign.panel.visible)
 	var main:=text("普通主炮","Standard cannon") if w.player.element=="normal" else preload("res://scripts/i18n.gd").T("card_"+w.player.element)
 	if w.player.element=="normal" and w.player.pierce_level>0: main=text("贯穿主炮","Piercing cannon")
+	main=preload("res://scripts/arsenal.gd").title(w.player.weapon)+" · "+main
 	var aux:=text("未装配辅助","No auxiliary") if w.player.auxiliary=="" else preload("res://scripts/i18n.gd").T("card_aux_"+w.player.auxiliary)
+	if w.player.second_auxiliary!="": aux+=" / "+preload("res://scripts/arsenal.gd").title("aux_"+w.player.second_auxiliary)
+	if w.player.overdrive>0: aux+=text(" · 过载"," · OVERDRIVE")
 	overlay_label.text=main+"  +  "+aux+"\n"+combo_name()+(" · "+branch_title(branch) if branch!="" else "")
 
 func record_run() -> void:
@@ -416,9 +443,36 @@ func record_run() -> void:
 	metrics["kills"]=w.kill_count
 	metrics["combo"]=combo
 	metrics["branch"]=branch
+	if w.get("campaign")!=null: metrics["damage_sources"]=w.campaign.damage_sources.duplicate()
 	var data=SAVE.load_data()
 	var history: Array=data.get("recent_runs",[])
 	history.append(metrics.duplicate())
 	if history.size()>10: history.pop_front()
 	SAVE.save_data({"recent_runs":history,"discoveries":seen})
 	discovery_label.text=text("本局构筑：", "BUILD: ")+combo_name()+"\n"+text("发现 %d 项 · 元素反应 %d 次", "%d discoveries · %d reactions") % [run_seen.size(),reactions]+"\n"+text("下次目标：", "NEXT: ")+(text("装配一种辅助武器", "Equip an auxiliary") if w.player.auxiliary=="" else (text("尝试另一种进化机翼", "Try another evolution frame") if branch!="" else text("击破精英，取得进化核心", "Defeat an elite for an evolution core")))
+
+func advanced_encounter(kind: int) -> void:
+	var layouts: Array=[
+		["shield","repair","shooter"], ["minelayer","fast","fast"],
+		["projector","tank","swift"], ["splitter","splitter","normal"],
+		["tractor","shooter","shooter"], ["bomber","shield","bomber"],
+		["repair","projector","tank"], ["swift","bomber","minelayer"],
+		["tractor","splitter","shooter"]]
+	var labels: Array=["拆掉维修链","穿越雷区","破解护盾阵","分裂集群","夺回补给","侧翼轰炸","坚守舰队","高速封锁","牵引伏击"]
+	phase=text(labels[kind-3],"TACTICAL ENCOUNTER %d" % (kind+1))
+	w._toast(phase,Color("79dce7"))
+	var cx: float=randf_range(-180,180)
+	for i in 3:
+		make_enemy(layouts[kind-3][i],Vector3(cx+(i-1)*160,420+abs(i-1)*45,0))
+
+func specialization(id: String,index: int) -> String:
+	var routes: Dictionary={"assault":["assault_core","expose","split","execute","kill_charge","reaction_salvage"],"escort":["escort_core","crossfire","wetwake","frostwake","reaction_salvage","repair_on_kill"],"siege":["heavy_core","blast","expose","returning","execute","split"]}
+	var available: Array=routes.get(id,routes.assault).filter(func(key):return not preload("res://scripts/equipment.gd").profile(w.player,"main").has(key))
+	if available.size()<2: available.append_array(["repair_on_kill","reaction_salvage"])
+	return available[index]
+
+func specialization_detail(id: String,index: int) -> String:
+	var mod: String=specialization(id,index)
+	var detail: String=preload("res://scripts/arsenal.gd").detail(mod)
+	if mod in preload("res://scripts/equipment.gd").MODS: detail=preload("res://scripts/equipment.gd").preview(w.player,mod,"main")+"\n"+detail
+	return detail

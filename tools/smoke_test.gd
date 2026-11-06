@@ -22,7 +22,8 @@ func _ready() -> void:
 func _run() -> void:
 	await get_tree().process_frame
 	var world = load("res://scenes/world.tscn").instantiate()
-	add_child(world)
+	get_tree().root.add_child(world)
+	get_tree().current_scene=world
 	await get_tree().process_frame
 	await get_tree().process_frame
 
@@ -30,6 +31,8 @@ func _run() -> void:
 	check(world.start_panel.visible, "开始面板显示")
 	check(get_tree().paused, "初始暂停")
 	world._on_start_pressed()
+	world.director.set_process(false)
+	world.campaign.set_process(false)
 	check(not get_tree().paused, "点击开始后解除暂停")
 	check(world.pause_button.visible, "暂停按钮显示")
 
@@ -38,6 +41,11 @@ func _run() -> void:
 	await get_tree().create_timer(1.5).timeout
 	check(get_tree().get_nodes_in_group("mobs").size() > 0, "敌机已生成")
 	check(world.score >= 0, "计分系统运行")
+	# Isolate the remaining flow fixture from newly arriving enemies and XP.
+	world.get_node("Timer").stop()
+	for mob in get_tree().get_nodes_in_group("mobs"): mob.queue_free()
+	for gem in get_tree().get_nodes_in_group("gems"): gem.queue_free()
+	await get_tree().process_frame
 
 	print("== 升级三选一 ==")
 	world.run_time=18
@@ -46,11 +54,14 @@ func _run() -> void:
 	var guard := 0
 	while world.pending_level_ups>0 and guard < 10:
 		if not world.levelup_panel.visible:
-			world.run_time+=13
-			await get_tree().process_frame
+			world.run_time=maxf(world.run_time+25,world.director.morph_until+1)
+			world.show_level_up()
 		world.levelup_panel.get_node("ModuleDraft").reveal_all()
-		world._on_upgrade_button_pressed(0)
-		await get_tree().create_timer(0.55).timeout
+		for i in 3:
+			if world.upgrade_buttons[i].get_meta("upgrade").can.call():
+				world._on_upgrade_button_pressed(i)
+				break
+		await get_tree().create_timer(0.8).timeout
 		guard += 1
 	check(world.pending_level_ups == 0 and not world.levelup_panel.visible, "全部升级选择完成")
 
@@ -115,13 +126,14 @@ func _run() -> void:
 	world.boss_tier = 10
 	world.omega_armed = true
 	world._start_boss()
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(4.0).timeout
 	var omega = get_tree().get_first_node_in_group("boss")
 	check(omega != null and omega.boss_id == 6, "OMEGA 登场")
 	if omega:
 		omega.take_damage_silent(omega.max_hp * 0.4)   # 压到 60%：P2 狂暴
 		check(omega.enraged, "OMEGA P2 狂暴")
 		omega.take_damage_silent(omega.max_hp * 0.3)   # 压到 30%：P3 相位
+		await get_tree().create_timer(2.1).timeout
 		check(omega.phase3, "OMEGA P3 相位")
 		omega.take_damage_silent(999999)
 		await get_tree().create_timer(1.2).timeout
@@ -133,7 +145,12 @@ func _run() -> void:
 	check(world.victory_panel.visible, "胜利结算面板弹出")
 	check(get_tree().paused, "胜利结算暂停战斗")
 	world._continue_endless()
-	check(not get_tree().paused and not world.victory_panel.visible, "继续无尽解除暂停")
+	check(not world.victory_panel.visible and (not get_tree().paused or world.levelup_panel.visible), "继续无尽恢复战斗或待领取升级")
+	# Boss XP may bank upgrades during the victory sequence; consume them through skip.
+	while world.pending_level_ups>0:
+		if not world.levelup_panel.visible: world.show_level_up()
+		world.levelup_panel.get_node("ModuleDraft").skip()
+	check(not get_tree().paused, "领取完待处理升级后解除暂停")
 
 	print("== 追踪导弹道具 ==")
 	check(world.homing_charges >= 1, "击杀 Boss 获得追踪导弹")

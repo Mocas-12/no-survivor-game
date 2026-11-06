@@ -1,4 +1,5 @@
 extends "res://scripts/blender_fleet_motion.gd"
+var deployment:=1.0
 var kind:=1
 var hostile_role:="enemy"
 var core: StandardMaterial3D
@@ -53,6 +54,13 @@ func _process(dt: float) -> void:
 	var reduced: bool=get_tree().current_scene!=null and "reduce_fx" in get_tree().current_scene and get_tree().current_scene.reduce_fx
 	if core:
 		core.emission_energy_multiplier=(1.2 if enraged else .8)+charge_amount*1.2+(0.0 if reduced else sin(age*3)*.10+recoil*.2)
+	# These are the actual imported mechanical pivots, not orbiting decorations.
+	for part in moving:
+		var role: String=part.get_meta("role")
+		if role.begins_with("Wing") or role.begins_with("Weapon") or role.begins_with("Shield") or role.begins_with("Bay"):
+			var rest: Vector3=part.get_meta("rest")
+			part.position=rest*Vector3(lerpf(.5,1.0,deployment),lerpf(.72,1.0,deployment),1)
+			part.rotation.z=(1-deployment)*(.55 if rest.x>0 else -.55)
 	if reduced: return
 	if hostile_role=="enemy" and is_instance_valid(render_model):
 		render_model.rotation.y=sin(age*2+kind)*.055
@@ -61,4 +69,4 @@ func _process(dt: float) -> void:
 		if label=="Rotor0": part.rotation.y+=dt*(.10 if not enraged else .18)
 		elif label=="Rotor1": part.rotation.y-=dt*.16
 		elif hostile_role=="boss" and kind==3 and label.begins_with("Shield"):
-			part.rotation.y=age*.10
+			part.rotation.y=(.2 if enraged else 0)+sin(age*.8)*.08

@@ -36,6 +36,7 @@ const SFX := {
 
 # 2. 核心变量
 var director: Node
+var campaign: Node
 var score = 0
 var health = 10
 var max_health = 10
@@ -79,6 +80,7 @@ var xp_mul := 1.0                # 经验获取倍率（精英学员卡）
 var revive_charges := 0          # 凤凰模块复活的次数
 var muted := false               # 声音开关（存档）
 var reduce_fx := false           # 减少闪光/震屏（存档，光敏友好）
+var performance_limited := DisplayServer.is_touchscreen_available()
 var formation_cd := 12.0         # 编队波次倒计时
 var homing_charges := 0          # 追踪导弹道具（每击破一个 Boss +1，点击释放）
 
@@ -236,6 +238,9 @@ func _ready():
 	director=preload("res://scripts/run_director.gd").new()
 	director.name="RunDirector"
 	add_child(director)
+	campaign=preload("res://scripts/campaign.gd").new()
+	campaign.name="Campaign"
+	add_child(campaign)
 	if hull_preview:
 		print("BLENDER_HULL_PREVIEW: assault.glb")
 		# Art preview starts with the prototype skin; weapon rules and the branch choice remain unchanged.
@@ -253,7 +258,7 @@ func _process(delta):
 		return
 	run_time += delta
 	# 脱战回血：4 秒未受击后，每 1.2 秒缓慢回复 1 点
-	var now_ms = Time.get_ticks_msec()
+	var now_ms = roundi(run_time*1000)
 	if health > 0 and health < max_health and now_ms - last_hurt_ms > 4000:
 		regen_accum += delta / 1.2
 		if regen_accum >= 1.0:
@@ -313,6 +318,8 @@ func _on_enemy_died(pos: Vector3, value, fx_color, max_hp := 3):
 	score += value
 	kill_count += 1
 	if director: director.killed()
+	if player.modules.has("kill_charge"): player.overdrive=minf(6,player.overdrive+.3)
+	if player.modules.has("repair_on_kill") and kill_count%10==0: health=mini(max_health,health+1)
 
 	# 纳米修复：击杀有概率回复 1 点生命
 	if ability == "leech" and health > 0 and health < max_health and randf() < 0.1:
@@ -427,6 +434,7 @@ func _on_upgrade_button_pressed(index):
 
 func _apply_upgrade_choice(index):
 	var up = upgrade_buttons[index].get_meta("upgrade")
+	if not up.can.call(): return
 	# Apply permanent upgrades to unbuffed stats so the timed buff cannot erase them on expiry.
 	var active_buff: String=buff_kind
 	var remaining: float=buff_left
@@ -467,7 +475,7 @@ func take_damage(amount, source := "collision"):
 	if dying:
 		return
 	# 0.35 秒受伤无敌帧，避免被弹幕一帧多连击穿
-	var now = Time.get_ticks_msec()
+	var now = roundi(run_time*1000)
 	if now - last_hurt_ms < 350:
 		return
 	last_hurt_ms = now
@@ -492,7 +500,7 @@ func _do_revive():
 	revive_charges -= 1
 	dying = false
 	health = maxi(1, int(max_health / 2.0))
-	last_hurt_ms = Time.get_ticks_msec() + 1200   # 额外无敌帧，防止落地即再被打死
+	last_hurt_ms = roundi(run_time*1000) + 1200   # 额外无敌帧，防止落地即再被打死
 	player.revive()
 	for b in get_tree().get_nodes_in_group("enemy_bullets"):
 		if b.global_position.distance_to(player.global_position) < 540.0:

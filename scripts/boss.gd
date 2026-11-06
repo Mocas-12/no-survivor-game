@@ -50,14 +50,14 @@ func setup(id, tier_, affix_ := ""):
 	# 血量随波数二次曲线成长；伤害缓慢提升但封顶
 	if is_omega:
 		# 终局战 60-120 秒张力带（balance_test 实测：旧公式 2905 血在后期 DPS 下 10 秒蒸发）
-		max_hp = 60000 + 8000 * maxi(tier - 10, 0)
+		max_hp = (10000 if tier<=3 else 60000) + 8000 * maxi(tier - 10, 0)
 		bullet_damage = mini(2 + (tier - 1) / 2, 6)
 		contact_damage = mini(3 + (tier - 1) / 2, 8)
 		scale = Vector3.ONE * 1.35
 	else:
 		# 血量曲线前陡后缓（早期 ×2.15/层跟住解锁期火力的爆发，5 层后 ×1.55/层），
 		# 对冲玩家火力的相乘式膨胀；目标 TTK：满配 ~60% 火力下 10-30s
-		max_hp = int(240 * pow(2.15, mini(tier - 1, 4)) * pow(1.55, maxi(tier - 5, 0))) + HP_BONUS.get(id, 0)
+		max_hp = (1400 if tier==1 else 4200) + HP_BONUS.get(id,0) if tier<=2 else int(240 * pow(2.15, mini(tier - 1, 4)) * pow(1.55, maxi(tier - 5, 0))) + HP_BONUS.get(id, 0)
 		bullet_damage = mini(1 + (tier - 1) / 2, 4)
 		contact_damage = mini(2 + (tier - 1) / 2, 6)
 		scale = Vector3.ONE * 1.12
@@ -142,6 +142,14 @@ func _physics_process(delta):
 			target_x = sin(t * 0.35) * 200.0
 			target_y = 160.0 + sin(t * 0.8) * 24.0
 			follow = 1.1
+	if enraged:
+		match boss_id:
+			1: target_x=sin(t*.85)*260; follow=2.0
+			2: target_x=sin(t*1.6)*350; target_y=150+sin(t*3)*48; follow=3.6
+			3: target_x=sin(t*.55)*190; target_y=155; follow=1.6
+			4: target_x=sin(t*2.0)*380; follow=3.4
+			5: target_x=sin(t*1.15)*310; follow=1.8
+			6: target_x=sin(t*.65)*280; follow=1.7
 	position.x = lerpf(position.x, target_x, minf(follow * delta, 1.0))
 	position.y = lerpf(position.y, target_y, minf(follow * delta, 1.0))
 
@@ -333,20 +341,28 @@ func _change_phase(next: int):
 	visual_phase=next
 	enraged=true
 	phase3=next==3
-	transition_left=.85
-	attack_cd=.6
+	transition_left=2.0
+	attack_cd=.9
 	teleport_ready=0
 	var old=model
 	model=preload("res://scripts/blender_hostiles.gd").build("boss",boss_id,MB.BOSS_SHIPS[boss_id][2],true,next)
 	add_child(model)
-	model.scale=Vector3.ONE*.80
+	model.deployment=0.0
+	model.visible=false
 	var tw=create_tween()
-	tw.tween_property(model,"scale",Vector3.ONE,.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if is_instance_valid(old): old.queue_free()
+	if is_instance_valid(old):
+		tw.tween_property(old,"scale",Vector3.ONE*.92,.32).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tw.tween_callback(old.queue_free)
+	tw.tween_callback(func(): if is_instance_valid(model): model.visible=true)
+	tw.tween_property(model,"deployment",1.0,1.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Transition is a safe interval: existing shots fade, no new attacks spawn.
+	for shot in get_tree().get_nodes_in_group("enemy_bullets"): shot.queue_free()
 	# Collider follows the deployed silhouette, never a ring of cosmetic orbs.
+	model.visible=true
 	var bounds=preload("res://scripts/blender_fleet.gd").visible_bounds(model)
+	model.visible=false
 	var shape=BoxShape3D.new()
-	shape.size=Vector3(maxf(70,bounds.size.x*.85/.8),maxf(70,bounds.size.y*.85/.8),40)
+	shape.size=Vector3(maxf(70,bounds.size.x*.85),maxf(70,bounds.size.y*.85),40)
 	$Collision.set_deferred("shape",shape)
 	var world=get_tree().current_scene
 	if world.has_method("play_sfx"): world.play_sfx("transform",-7,.1)
