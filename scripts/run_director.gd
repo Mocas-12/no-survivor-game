@@ -10,9 +10,9 @@ const BRANCHES = {
 var w: Node
 var last_boss_time := 0.0
 var elite_spawned := false
-var draft_after := 18.0
-var encounter_after := 8.0
-var elite_after := 75.0
+var draft_after := 12.0
+var encounter_after := 0.3
+var elite_after := 50.0
 var reactions := 0
 var phase := ""
 var combo := ""
@@ -41,6 +41,8 @@ var loadout_index := 0
 var loadouts: Array[String] = ["normal"]
 var last_kill_time := -10.0
 var streak := 0
+var refill_after:=2.0
+var streak_decay_after:=0.0
 
 func _ready() -> void:
 	w = get_parent()
@@ -56,16 +58,25 @@ func text(zh: String, en: String) -> String:
 
 func _process(_dt: float) -> void:
 	if w.dying or w.health <= 0 or get_tree().paused: return
+	if streak>0 and w.run_time>=streak_decay_after and w.run_time-last_kill_time>2.5:
+		streak=maxi(0,streak-1)
+		streak_decay_after=w.run_time+.5
 	if not evolution_queue.is_empty() and not choosing and w.run_time>=morph_until:
 		present_evolution()
 		return
 	if w.pending_level_ups > 0 and can_draft(): w.show_level_up()
 	if w.get_tree().paused: return
 	if not w.boss_active:
+		if w.run_time>=refill_after:
+			refill_after=w.run_time+1.5
+			var visible_count=get_tree().get_nodes_in_group("mobs").filter(func(m):return not m.dead and m.position.y<335 and m.position.y> -230).size()
+			if visible_count<(5 if w.run_time<90 else 7):
+				if w.run_time<90: opening_encounter()
+				else: encounter(false)
 		if w.run_time >= elite_after and not elite_spawned:
 			spawn_elite()
 		if w.run_time >= encounter_after:
-			encounter_after = w.run_time + randf_range(17,23)
+			encounter_after = w.run_time + (randf_range(4.5,6.5) if w.run_time<90 else randf_range(10,15))
 			encounter()
 		if boss_ready():
 			w._start_boss()
@@ -86,23 +97,27 @@ func _input(event: InputEvent) -> void:
 				return
 
 func can_draft() -> bool:
+	if w.get("salvage")!=null and w.salvage.panel.visible: return false
 	return w.run_time >= maxf(draft_after,morph_until) and not choosing and not w.levelup_panel.visible and not w.victory_panel.visible and not w.start_panel.visible and not w.pause_panel.visible and not w.dying
 
 func spawn_interval() -> float:
-	return 1.7 if w.boss_active else clampf(1.05-w.run_time*0.002,0.5,1.05)
+	return 1.7 if w.boss_active else clampf(.65-w.run_time*0.001,0.4,.65)
 
 func boss_ready() -> bool:
 	if choosing or w.boss_active or w.dying: return false
 	var elapsed: float = w.run_time-last_boss_time
-	if w.boss_tier == 0: return w.run_time >= 150
+	if w.boss_tier == 0: return w.run_time >= 120
 	return elapsed >= (240 if not w.omega_slain else 110)
 
 func may_spawn() -> bool:
-	var limit := 9 if w.boss_active else (12 if w.run_time < 45 else 22)
-	return w.get_tree().get_nodes_in_group("mobs").size() < limit and not w.dying and not choosing and not w.get_tree().paused and fmod(w.run_time,32.0)<27.0
+	var limit := 10 if w.boss_active else (22 if w.run_time < 45 else 30)
+	return w.get_tree().get_nodes_in_group("mobs").filter(func(m):return not m.dead).size() < limit and not w.dying and not choosing and not w.get_tree().paused
 
-func encounter() -> void:
+func encounter(announce:=true) -> void:
 	if not may_spawn(): return
+	if w.run_time<90:
+		opening_encounter()
+		return
 	var unlocked: Array=[0,1,2]
 	if w.run_time>=80: unlocked.append_array([3,6])
 	if w.boss_tier>=1: unlocked.append_array([4,5,9])
@@ -111,10 +126,10 @@ func encounter() -> void:
 	if kind==encounter_index: kind=unlocked[(unlocked.find(kind)+1)%unlocked.size()]
 	encounter_index=kind
 	if kind>=3:
-		advanced_encounter(kind)
+		advanced_encounter(kind,announce)
 		return
 	phase = [text("轻装集群", "LIGHT SQUADRON"), text("突破盾墙", "BREAK THE SHIELD"), text("交叉火力", "CROSSFIRE")][kind]
-	w._toast(phase,Color("79dce7"))
+	if announce: w._toast(phase,Color("79dce7"))
 	var cx := randf_range(-240,240)
 	for i in (5 if kind==0 else 3):
 		var type := "normal" if kind==0 else ("shield" if kind==1 else "shooter")
@@ -136,6 +151,19 @@ func make_enemy(kind: String, pos: Vector3):
 	e.died.connect(func(_pos,_v,_c,_hp): discover("enemy_"+kind))
 	w.add_child(e)
 	return e
+
+func opening_encounter():
+	var n:=int(w.run_time/6)%4
+	phase=text(["迎击侦察群","穿插阵列","侧翼突入","突破护卫"][n],["SCOUT SWARM","CROSS FORMATION","FLANK RUN","ESCORT BREAK"][n])
+	var count:=5 if w.run_time<15 else 7
+	var center:=randf_range(-150,150)
+	for i in count:
+		var kind: String="normal" if w.run_time<22 or i%4!=0 else ("swift" if n%2==0 else "fast")
+		var x: float=center+(i-count/2.0)*72 if n<2 else (-330+i*100)
+		var e=make_enemy(kind,Vector3(x,340+(absf(i-count/2.0)*20 if n==0 else i%2*40),0))
+		if e and kind=="normal":
+			e.health=1 if w.run_time<30 else 2
+			e.max_hp=e.health
 
 func spawn_elite() -> void:
 	if not may_spawn(): return
@@ -161,40 +189,41 @@ func boss_defeated(is_omega: bool) -> void:
 	discover("boss_%d" % (6 if is_omega else ((w.boss_tier-1)%5+1)))
 
 func offer(available: Array) -> Array:
-	var preferred: Array = []
-	if w.card_taken.is_empty():
-		preferred=["fire","lightning","pierce"]
-	elif w.player.auxiliary=="":
-		preferred=["aux_water"] if w.player.element=="fire" else (["aux_ice"] if w.player.element=="lightning" else ["aux_homing"])
+	return build_offer(available)
+
+func build_offer(available: Array) -> Array:
+	var chosen: Array=[]
+	var p=w.player
+	var groups: Array=[]
+	if p.element=="normal":
+		groups=[["fire","ice","lightning"],["water","wind"],["fire","ice","lightning"]]
+	elif p.catalyst=="":
+		var complements: Array=["fire","water","ice","lightning","wind"].filter(func(id):return id!=p.element)
+		complements.shuffle()
+		groups=[complements,["damage","fire_rate","multishot"],["salvage_return","jump_arc","tail_battery"]]
 	else:
-		preferred=[w.player.element,"chain_reaction"] if w.player.element!="normal" else ["pierce","crit"]
-	var ordered: Array=[]
+		groups=[[p.element,p.catalyst,"damage","fire_rate"],["jump_arc","salvage_return","focus_breach","shield_clone","tail_battery","graze_core"],["rail","missile","beam","mine","blade","split","ricochet","returning"]]
 	available.shuffle()
-	for id in preferred:
-		for up in available:
-			if up.id==id and not ordered.has(up): ordered.append(up)
-	# One synergy offer; leave the remaining slots open to alternatives after the opening draft.
-	if not w.card_taken.is_empty() and ordered.size()>1: ordered.resize(1)
-	# A completed build must never be forced to replace a weapon just to leave the draft.
-	if not w.card_taken.is_empty() and ordered.is_empty():
-		for up in available:
-			if up.id=="damage":
-				ordered.append(up)
-				break
+	for group in groups:
+		group.shuffle()
+		for id in group:
+			var found=available.filter(func(up):return up.id==id and not chosen.has(up))
+			if not found.is_empty(): chosen.append(found[0]);break
 	for up in available:
-		if ordered.size()>=3: break
-		if not ordered.has(up): ordered.append(up)
-	return ordered
+		if chosen.size()>=3: break
+		if not chosen.has(up): chosen.append(up)
+	return chosen
 
 func upgrade_applied(id: String) -> void:
 	if metrics.first_upgrade<0: metrics.first_upgrade=w.run_time
-	draft_after=w.run_time+20
+	draft_after=w.run_time+23
 	discover("module_"+id)
 	check_combo()
 
 func killed() -> void:
-	streak=streak+1 if w.run_time-last_kill_time<1.8 else 1
+	streak+=1
 	last_kill_time=w.run_time
+	streak_decay_after=w.run_time+2.5
 	metrics["best_streak"]=maxi(int(metrics.get("best_streak",0)),streak)
 	if streak in [5,10,20]:
 		w._toast(text("连续击破 ×%d", "STREAK ×%d") % streak,Color("e7bf78"))
@@ -205,6 +234,8 @@ func check_combo() -> void:
 	if w.player.element=="fire" and "water" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("steam")
 	if w.player.element=="lightning" and "ice" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("frost_arc")
 	if w.player.pierce_level>0 and "homing" in [w.player.auxiliary,w.player.second_auxiliary]: active_combos.append("hunter")
+	var paired: String=preload("res://scripts/element_reactions.gd").pair(w.player.element,w.player.catalyst)
+	if paired!="" and not active_combos.has(paired): active_combos.push_front(paired)
 	var next: String=active_combos[0] if not active_combos.is_empty() else ""
 	if w.player.auxiliary=="homing" and "hunter" in active_combos: next="hunter"
 	var previous:=combo
@@ -348,7 +379,7 @@ func build_ui() -> void:
 		loadout_index=(loadout_index+1)%3
 		branch=["assault","escort","siege"][loadout_index]
 		w.player.branch=branch
-		w.player.weapon={"assault":"pulse","escort":"missile","siege":"rail"}[branch]
+		w.player.weapon={"assault":"pulse","escort":"missile","siege":"pulse"}[branch]
 		w.player.auxiliary="water" if branch=="escort" else ""
 		w.player.auxiliary_level=1 if branch=="escort" else 0
 		w.player._set_model(w.player.form)
@@ -426,8 +457,9 @@ func build_ui() -> void:
 
 func refresh_hud() -> void:
 	if not overlay_label: return
-	overlay_label.visible=not w.start_panel.visible and not w.dying and not w.levelup_panel.visible and not choosing and (w.get("campaign")==null or not w.campaign.panel.visible)
+	overlay_label.visible=not w.start_panel.visible and not w.dying and not w.levelup_panel.visible and not choosing and (w.get("salvage")==null or not w.salvage.panel.visible) and (w.get("campaign")==null or not w.campaign.panel.visible)
 	var main:=text("普通主炮","Standard cannon") if w.player.element=="normal" else preload("res://scripts/i18n.gd").T("card_"+w.player.element)
+	if w.player.catalyst!="": main+=" + "+preload("res://scripts/i18n.gd").T("card_"+w.player.catalyst)
 	if w.player.element=="normal" and w.player.pierce_level>0: main=text("贯穿主炮","Piercing cannon")
 	main=preload("res://scripts/arsenal.gd").title(w.player.weapon)+" · "+main
 	var aux:=text("未装配辅助","No auxiliary") if w.player.auxiliary=="" else preload("res://scripts/i18n.gd").T("card_aux_"+w.player.auxiliary)
@@ -451,7 +483,7 @@ func record_run() -> void:
 	SAVE.save_data({"recent_runs":history,"discoveries":seen})
 	discovery_label.text=text("本局构筑：", "BUILD: ")+combo_name()+"\n"+text("发现 %d 项 · 元素反应 %d 次", "%d discoveries · %d reactions") % [run_seen.size(),reactions]+"\n"+text("下次目标：", "NEXT: ")+(text("装配一种辅助武器", "Equip an auxiliary") if w.player.auxiliary=="" else (text("尝试另一种进化机翼", "Try another evolution frame") if branch!="" else text("击破精英，取得进化核心", "Defeat an elite for an evolution core")))
 
-func advanced_encounter(kind: int) -> void:
+func advanced_encounter(kind: int,announce:=true) -> void:
 	var layouts: Array=[
 		["shield","repair","shooter"], ["minelayer","fast","fast"],
 		["projector","tank","swift"], ["splitter","splitter","normal"],
@@ -460,7 +492,7 @@ func advanced_encounter(kind: int) -> void:
 		["tractor","splitter","shooter"]]
 	var labels: Array=["拆掉维修链","穿越雷区","破解护盾阵","分裂集群","夺回补给","侧翼轰炸","坚守舰队","高速封锁","牵引伏击"]
 	phase=text(labels[kind-3],"TACTICAL ENCOUNTER %d" % (kind+1))
-	w._toast(phase,Color("79dce7"))
+	if announce: w._toast(phase,Color("79dce7"))
 	var cx: float=randf_range(-180,180)
 	for i in 3:
 		make_enemy(layouts[kind-3][i],Vector3(cx+(i-1)*160,420+abs(i-1)*45,0))

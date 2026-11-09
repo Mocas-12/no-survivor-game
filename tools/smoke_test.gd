@@ -33,6 +33,7 @@ func _run() -> void:
 	world._on_start_pressed()
 	world.director.set_process(false)
 	world.campaign.set_process(false)
+	world.salvage.set_process(false)
 	check(not get_tree().paused, "点击开始后解除暂停")
 	check(world.pause_button.visible, "暂停按钮显示")
 
@@ -73,7 +74,7 @@ func _run() -> void:
 	world.pick_element("fire")
 	check(int(world.player.element_levels.get("fire", 0)) == fire0 + 2, "同元素重复选取升级 Lv.2")
 	world.pick_element("ice")
-	check(world.player.element == "ice" and int(world.player.element_levels.get("fire", 0)) == fire0 + 2, "切换元素后原等级保留")
+	check("ice" in [world.player.element,world.player.catalyst] and int(world.player.element_levels.get("fire", 0)) == fire0 + 2, "双元素装配后原等级保留")
 	world.pick_pattern("homing")
 	check(world.player.pattern == "homing" and int(world.player.pattern_levels.get("homing", 0)) == hom0 + 1, "选追踪弹道")
 	world.pick_pattern("wave")

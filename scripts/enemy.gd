@@ -143,6 +143,9 @@ func _physics_process(delta):
 				vel = Vector3.ZERO
 			if elite and position.y<140: vel.y=0
 	velocity = vel
+	if has_meta("salvage_carrier"):
+		velocity=Vector3(0,-14,0) if get_meta("first_salvage",false) else Vector3(65,-5,0)
+		if position.x>600: queue_free();return
 	move_and_slide()
 
 	# 飞出屏幕底部即回收（正常弹幕游戏：漏过的敌机直接离场）
@@ -204,6 +207,8 @@ func die():
 	if dead:
 		return
 	dead = true
+	var world=get_tree().current_scene
+	if world.get("salvage")!=null: world.salvage.enemy_killed(self)
 	TACTICAL.split(self)
 	set_physics_process(false)
 	$Collision.set_deferred("disabled", true)

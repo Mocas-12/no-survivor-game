@@ -42,7 +42,7 @@ const STR := {
 		"switch_el": "切换元素",
 		"switch_pt": "切换弹道",
 		"btn_homing": "追踪导弹 ×%d",
-		"gain_homing": "获得追踪导弹 ×1（点击鼠标释放）",
+		"gain_homing": "追猎充能 ×1（下次武装爆发释放）",
 		"card_crit": "暴击强化", "card_crit_d": "子弹有 10% 概率造成双倍伤害",
 		"card_velocity": "弹速强化", "card_velocity_d": "子弹飞行速度 +20%",
 		"card_chain_reaction": "连锁反应", "card_chain_reaction_d": "元素反应伤害 +50%，范围扩大",
@@ -124,7 +124,7 @@ const STR := {
 		"switch_el": "SWITCH",
 		"switch_pt": "SWITCH",
 		"btn_homing": "HOMING ×%d",
-		"gain_homing": "Homing Missile ×1 (click to launch)",
+		"gain_homing": "Hunter charge +1 (released with next burst)",
 		"card_crit": "Critical", "card_crit_d": "10% chance for double damage",
 		"card_velocity": "Velocity", "card_velocity_d": "Projectile speed +20%",
 		"card_chain_reaction": "Chain Reaction", "card_chain_reaction_d": "Reaction damage +50%, wider area",
@@ -182,6 +182,7 @@ const RUN_TEXT = {
 		"card_aux_water":["水雾辅助炮","Water auxiliary"],"card_aux_water_d":["独立追踪弹浸润目标，配合火焰触发蒸汽","Homing water rounds prime steam reactions"],
 		"card_aux_ice":["寒霜辅助炮","Frost auxiliary"],"card_aux_ice_d":["独立冰弹减速目标，配合雷电触发冰雷连锁","Frost rounds prime lightning shatter chains"],
 		"card_aux_homing":["追猎辅助炮","Hunter auxiliary"],"card_aux_homing_d":["独立追踪弹追击敌机，不改变主炮弹道","Independent homing rounds preserve main fire"],
+		"react_firestorm":["火旋传播","FIRESTORM"],"react_vortex":["涡流聚拢","VORTEX"],"react_frost_blades":["霜刃散射","FROST BLADES"],"react_storm_arc":["电磁风暴","STORM ARC"],
 		"react_shatter":["冰雷碎裂","SHATTER"],"react_conduct":["感电连锁","CONDUCTION"],"react_steam":["热冲击","THERMAL SHOCK"]}
 
 static func T(key: String) -> String:

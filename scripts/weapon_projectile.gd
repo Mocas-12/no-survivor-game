@@ -41,8 +41,8 @@ static func box(size: Vector3) -> BoxMesh:
 	m.size=size
 	return m
 
-static func mesh(kind: String,element: String) -> Mesh:
-	var key:=kind+element
+static func mesh(kind: String,element: String,catalyst: String="") -> Mesh:
+	var key:=kind+element+catalyst
 	if meshes.has(key): return meshes[key]
 	var st:=SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -93,5 +93,8 @@ static func mesh(kind: String,element: String) -> Mesh:
 		_:
 			add(st,cylinder(1.8,12),Vector3.ZERO,accent)
 			add(st,box(Vector3(4,4,2)),Vector3(0,-4,0),dark)
+	if catalyst!="":
+		var secondary: Color=preload("res://scripts/projectile_geometry.gd").PLAYER.get(catalyst,Color.WHITE)
+		add(st,box(Vector3(3.6,3,1.2)),Vector3(0,1,3),secondary)
 	meshes[key]=st.commit()
 	return meshes[key]

@@ -28,16 +28,18 @@ const EXTRA = {
 	"assault_core":["过载回路","Overdrive circuit","持续接战进入过载；停止命中后逐渐冷却","Sustained contact enters overdrive; decays out of contact","fire_rate"],
 }
 static func title(id: String) -> String:
+	if preload("res://scripts/run_rules.gd").DATA.has(id): return preload("res://scripts/run_rules.gd").title(id)
 	var d: Array=EXTRA.get(id,[])
 	if d.is_empty(): return preload("res://scripts/i18n.gd").T("card_"+id)
 	return d[0 if preload("res://scripts/i18n.gd").lang()=="zh" else 1]
 
 static func detail(id: String) -> String:
+	if preload("res://scripts/run_rules.gd").DATA.has(id): return preload("res://scripts/run_rules.gd").detail(id)
 	var d: Array=EXTRA.get(id,[])
 	return d[2 if preload("res://scripts/i18n.gd").lang()=="zh" else 3] if not d.is_empty() else ""
 
 static func cards(w) -> Array:
-	var result: Array=[]
+	var result: Array=preload("res://scripts/run_rules.gd").cards(w)
 	for key in EXTRA:
 		var id: String=key
 		result.append({"id":id,"can":func(): return eligible(w,id),"apply":func(): install(w,id)})
@@ -75,7 +77,13 @@ static func configure(p,b,primary:=true,slot:="main") -> void:
 	b.return_after=.45 if b.modules.has("returning") else -1.0
 	b.bounces=1 if b.modules.has("ricochet") else 0
 	if not primary: return
-	b.get_node("Mesh").mesh=preload("res://scripts/weapon_projectile.gd").mesh(p.weapon,b.element)
+	b.catalyst=p.catalyst
+	b.catalyst_level=maxi(1,int(p.element_levels.get(p.catalyst,1)))
+	if p.modules.has("salvage_return"): b.return_after=.38
+	if p.get_tree().current_scene.get("salvage")!=null and p.get_tree().current_scene.salvage.burst_left>0:
+		b.damage=roundi(b.damage*1.35)
+		if p.weapon=="rail": b.pierce_left+=4
+	b.get_node("Mesh").mesh=preload("res://scripts/weapon_projectile.gd").mesh(p.weapon,b.element,p.catalyst)
 	b.get_node("Mesh").material_override=preload("res://scripts/weapon_projectile.gd").material(b.element)
 	match p.weapon:
 		"rail":
@@ -123,6 +131,7 @@ static func hit(b,target,world) -> void:
 
 static func split(p,pos: Vector3,dir: Vector3,damage: int,element: String) -> void:
 	if not is_instance_valid(p) or not p.is_inside_tree(): return
+	if p.get_tree().get_nodes_in_group("player_bullets").filter(func(b):return b._active).size()>230: return
 	for angle in [-.42,.42]:
 		var b=p.new_round()
 		b.launch(maxi(1,damage/2),element,.75,0,0,0,1,pos,dir.rotated(Vector3.BACK,angle))

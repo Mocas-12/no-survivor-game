@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = sys.argv[1] if len(sys.argv) > 1 else '266eae6'
 assert re.fullmatch(r'[0-9a-f]{7,40}', SOURCE), 'Expected a Git source hash'
-BUILD = 'flight-pulse-' + SOURCE
+BUILD = 'salvage-' + SOURCE
 PREFIX = 'game-' + SOURCE
 export = ROOT / 'build' / 'release'
 target = (ROOT / 'docs').resolve()

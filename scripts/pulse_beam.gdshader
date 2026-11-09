@@ -1,6 +1,7 @@
 shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, fog_disabled;
 uniform vec4 tint : source_color = vec4(0.25,0.8,1.0,1.0);
+uniform vec4 secondary : source_color = vec4(0.25,0.8,1.0,1.0);
 uniform float energy = 0.0;
 uniform float clock = 0.0;
 uniform float detail = 1.0;
@@ -20,6 +21,6 @@ void fragment() {
 		a=(exp(-r*r*20.0)+cross*.45)*(1.0-smoothstep(.7,1.0,r));
 		core=exp(-r*r*40.0);
 	}
-	ALBEDO=mix(tint.rgb,vec3(0.9,0.98,1.0),core*.8);
+	ALBEDO=mix(mix(tint.rgb,secondary.rgb,smoothstep(.45,.55,UV.x)),vec3(0.9,0.98,1.0),core*.8);
 	ALPHA=clamp(a*energy,0.0,1.0);
 }

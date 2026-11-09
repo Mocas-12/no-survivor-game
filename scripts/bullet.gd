@@ -49,6 +49,9 @@ var _target: Node3D = null
 var pierce_left := 0
 var struck := {}
 var source_player: Node = null
+var catalyst:=""
+var catalyst_level:=1
+var returned:=false
 var damage_channel:="main"
 var projectile_role:=""
 var modules := {}
@@ -85,6 +88,9 @@ static func _homing_mat() -> StandardMaterial3D:
 func launch(p_damage: int, p_element: String, p_speed_mul: float, p_wave: float, p_homing: float, p_homing_time: float, p_element_lv: int, p_pos: Vector3, p_dir: Vector3):
 	damage = p_damage
 	source_player=null
+	catalyst=""
+	catalyst_level=1
+	returned=false
 	damage_channel="main"
 	projectile_role=""
 	modules.clear()
@@ -264,6 +270,11 @@ func _process(delta):
 		if _target:
 			_steer_toward(_target, delta)
 	flight_age+=delta
+	if returned and is_instance_valid(source_player) and source_player.modules.has("salvage_return") and global_position.distance_to(source_player.global_position)<34:
+		var owner_world=get_tree().current_scene
+		if owner_world.get("salvage")!=null: owner_world.salvage.add_energy(1.2)
+		_recycle()
+		return
 	if projectile_role=="mine" and flight_age>.5:
 		speed=0
 		for target in get_tree().get_nodes_in_group("mobs"):
@@ -271,6 +282,7 @@ func _process(delta):
 				_on_body_entered(target)
 				return
 	if return_after>0 and flight_age>=return_after:
+		returned=true
 		dir=-dir
 		return_after=-1
 		struck.clear()
@@ -286,12 +298,31 @@ func _process(delta):
 		# 波浪弹道：垂直于航向叠加正弦摆动
 		wave_t += delta * 9.0
 		move += Vector3(-dir.y, dir.x, 0.0) * sin(wave_t) * wave_amp * delta
+	if move.length()>20 and not sweep(global_position,global_position+move): return
 	position += move
 	$Mesh.rotation.z = 0
 	rotation.z = Vector2(dir.x, dir.y).angle() - PI / 2
 	# 飞出游戏区域自动回池
 	if position.y > 420.0 or position.y < -420.0 or absf(position.x) > 660.0:
 		_recycle()
+
+func sweep(from: Vector3,to: Vector3) -> bool:
+	var excluded: Array[RID]=[]
+	var query:=PhysicsRayQueryParameters3D.create(from,to,collision_mask)
+	var space=get_world_3d().direct_space_state
+	for i in 8:
+		query.exclude=excluded
+		var hit: Dictionary=space.intersect_ray(query)
+		if hit.is_empty():
+			global_position=from
+			return true
+		var body=hit.collider
+		if body is CollisionObject3D: excluded.append(body.get_rid())
+		global_position=hit.position
+		_on_body_entered(body)
+		if not _active: return false
+	global_position=from
+	return true
 
 # 扫描最近的存活目标（每 0.15 秒一次）
 func _find_target() -> Node3D:
@@ -361,6 +392,7 @@ func _on_body_entered(body):
 					break
 		if modules.has("execute") and float(body.get("hp") if body.get("hp")!=null else body.get("health"))<float(body.max_hp)*.3: dmg=roundi(dmg*1.6)
 		preload("res://scripts/arsenal.gd").hit(self,body,world)
+		if world.get("salvage")!=null: world.salvage.hit(body,self)
 		_apply_element(body, world)
 		var exposed=preload("res://scripts/element_reactions.gd").state(body).has("exposed")
 		var dealt: float=float(dmg)*(1.18 if exposed else 1.0)
@@ -374,6 +406,8 @@ func _on_body_entered(body):
 # Shared status resolution also applies to Bosses; secondary hits cannot recurse.
 func _apply_element(hit_body, world):
 	preload("res://scripts/element_reactions.gd").apply(hit_body,element,damage,maxi(element_lv,1),reaction_boost,mark_boost,world)
+	if catalyst!="" and not hit_body.dead:
+		preload("res://scripts/element_reactions.gd").apply(hit_body,catalyst,damage,catalyst_level,reaction_boost,mark_boost,world)
 
 # --- 元素命中 / 反应特效（统一走 Fx.burst 工厂；ring/flash/sfx 组合留在原位） ---
 

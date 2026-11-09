@@ -4,7 +4,20 @@ const I18N := preload("res://scripts/i18n.gd")
 static func pick(zh: String,en: String) -> String:
 	return zh if I18N.lang()=="zh" else en
 
+static func element_title(id: String) -> String:
+	return pick({"fire":"火","water":"水","ice":"冰","lightning":"雷","wind":"风","normal":"普通"}.get(id,id),id)
+
 static func describe(w,id: String,level: int) -> String:
+	if id in ["fire","water","ice","lightning","wind"]:
+		var p=w.player
+		if id in [p.element,p.catalyst]: return pick("主炮元素强化 · 全部主弹保留双元素\n等级 %d → %d","Main element upgrade · keeps both payloads\nLevel %d → %d") % [level,level+1]
+		if p.element=="normal": return pick("全部主弹附加元素 · 首次威力 +1","All main shots gain the element · first core +1 damage")
+		if p.catalyst=="": return pick("新增催化元素 · ","Add catalyst · ")+element_title(p.element)+" + "+element_title(id)+pick("\n每发主弹参与反应，不等待副炮","\nEvery main shot participates; no support delay")
+		return pick("替换主元素：","Replace primary: ")+element_title(p.element)+" → "+element_title(id) if p.element_replace=="element" else pick("替换催化：","Replace catalyst: ")+element_title(p.catalyst)+" → "+element_title(id)
+	if preload("res://scripts/run_rules.gd").DATA.has(id):
+		var rules=preload("res://scripts/run_rules.gd")
+		var rule_detail: String=pick("命中后的脉冲收束会回收爆发能量","Successful beam pulses recover burst energy on cooldown") if id=="salvage_return" and w.player.weapon=="beam" else rules.detail(id)
+		return (pick("替换规则：","Replace rule: ")+rules.title(w.player.rule_slots[0])+"\n" if w.player.rule_slots.size()>=2 and not id in w.player.rule_slots else "")+rule_detail
 	if id.begins_with("aux_"): return auxiliary_preview(w,id)
 	if preload("res://scripts/arsenal.gd").EXTRA.has(id):
 		var extra: String=preload("res://scripts/arsenal.gd").detail(id)

@@ -31,17 +31,19 @@ func run() -> void:
 	w.show_level_up()
 	var ids: Array=[]
 	for b in w.upgrade_buttons: ids.append(b.get_meta("upgrade").id)
-	check(ids==["fire","lightning","pierce"],"Opening draft has three distinct combat directions")
+	check(ids.size()==3 and ids.all(func(id):return id in ["fire","water","ice","lightning","wind"]),"Opening offers immediately change all main rounds")
 	w._apply_upgrade_choice(0)
 	check(not paused and not w.levelup_panel.visible and w.pending_level_ups>0,"Queued upgrades return to combat for twelve seconds")
 	check(not d.can_draft(),"Upgrade cadence prevents back-to-back interruption")
 	w.run_time=41
+	w.player.element="fire"
+	w.player.catalyst=""
 	check(d.can_draft(),"Queued upgrade becomes eligible after combat interval")
 	w.show_level_up()
-	check(w.upgrade_buttons[0].get_meta("upgrade").id=="aux_water","Steam route gets an available matching auxiliary offer")
+	check(w.upgrade_buttons[0].get_meta("upgrade").id in ["water","ice","lightning","wind"],"Second offer can complete a main-weapon elemental pair")
 	w._apply_upgrade_choice(0)
-	check(w.player.element=="fire" and w.player.auxiliary=="water" and d.combo=="steam","Auxiliary keeps main cannon and forms steam build")
-	check(d.seen.has("combo_steam"),"Build discovery is recorded")
+	check(w.player.element=="fire" and w.player.catalyst!="" and d.combo!="","Second element coexists on main cannon and forms a build")
+	check(d.seen.has("combo_"+d.combo),"Build discovery is recorded")
 	w.pending_level_ups=0
 	w.player.fire_cooldown=0.25
 	preload("res://scripts/form_ability.gd")._start_buff(w,"overcharge",2)
@@ -53,6 +55,8 @@ func run() -> void:
 	check(is_equal_approx(w.player.fire_cooldown,0.2),"Permanent fire-rate upgrade survives temporary overcharge ending")
 	for up in w.upgrade_pool:
 		if up.id=="aux_ice": up.apply.call()
+	w.player.element="normal"
+	w.player.catalyst=""
 	w.pick_element("lightning")
 	d.check_combo()
 	check(d.combo=="frost_arc","Independent frost auxiliary forms lightning build")
@@ -135,13 +139,13 @@ func run() -> void:
 	d.record_run()
 	check(d.metrics.combo=="hunter" and d.metrics.first_upgrade>=18,"Run recap records build and timing metrics")
 	check(d.discovery_label.text.length()>0,"Result screen includes build and next exploration goal")
-	check(w.upgrade_pool.size()==48,"Expanded pool contains 48 distinct modules")
+	check(w.upgrade_pool.size()==54,"Expanded pool contains 54 distinct modules")
 	w.player.element="fire"
 	w.player.element_levels.fire=3
 	w.card_taken.chain_reaction=2
 	w.card_taken.fire=3
 	var finished_offers: Array=d.offer(w.upgrade_pool.filter(func(up):return up.can.call()))
-	check(finished_offers[0].id=="damage","Completed build always retains an upgrade without replacing weapons")
+	check(finished_offers.any(func(up):return not up.id in ["pulse","rail","missile","blade","beam","mine"]),"Completed build always retains an upgrade without replacing weapons")
 	print("RUN DESIGN ","OK" if failures.is_empty() else "FAILED"," checks=",checks," failures=",failures)
 	w.queue_free()
 	await process_frame

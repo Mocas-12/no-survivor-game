@@ -30,6 +30,8 @@ static func install(ui: CanvasLayer) -> void:
 	for id in preload("res://scripts/arsenal.gd").EXTRA:
 		var art: String=preload("res://scripts/arsenal.gd").EXTRA[id][4]
 		controller.textures[id]=load("res://assets/modules/expansion/%s.png" % id)
+	for id in preload("res://scripts/run_rules.gd").DATA:
+		controller.textures[id]=load("res://assets/modules/salvage/%s.png" % id)
 	var box: VBoxContainer = controller.panel.get_node("Box")
 	box.offset_left = -430
 	box.offset_right = 430
@@ -73,6 +75,14 @@ static func install(ui: CanvasLayer) -> void:
 	skip.pressed.connect(controller.skip)
 	controller.action_buttons.append(controller.reroll_button)
 	controller.action_buttons.append(skip)
+	var element_target:=Button.new()
+	element_target.text="替换：催化 / 主元素" if I18N.lang()=="zh" else "Replace catalyst / primary"
+	element_target.pressed.connect(func():
+		controller.world.player.element_replace="element" if controller.world.player.element_replace=="catalyst" else "catalyst"
+		controller.present()
+		controller.reveal_all())
+	actions.add_child(element_target)
+	controller.action_buttons.append(element_target)
 	# Extend only this overlay's decorative frame; the buttons remain native controls.
 	for child in controller.panel.get_children():
 		if child is Panel:
@@ -98,6 +108,8 @@ func present() -> void:
 		if id in ["pulse","rail","missile","blade","beam","mine"]: badge="切换主炮" if I18N.lang()=="zh" else "SWITCH WEAPON"
 		if id in preload("res://scripts/equipment.gd").MODS: badge="装配改造" if I18N.lang()=="zh" else "INSTALL MOD"
 		if bool(card.get_meta("unavailable",false)): badge="已装配" if I18N.lang()=="zh" else "INSTALLED"
+		if preload("res://scripts/run_rules.gd").DATA.has(id) and not bool(card.get_meta("unavailable",false)):
+			badge=("替换规则" if world.player.rule_slots.size()>=2 else "装配规则") if I18N.lang()=="zh" else ("REPLACE RULE" if world.player.rule_slots.size()>=2 else "INSTALL RULE")
 		if id in ["revive","repair"]:
 			badge = ("即刻生效" if id=="repair" else "补充核心") if I18N.lang()=="zh" else ("REPAIR" if id=="repair" else "RECHARGE")
 		var element: bool = id in ["fire","water","ice","lightning","wind","wave","chain_reaction","element_last"]
@@ -108,6 +120,8 @@ func present() -> void:
 		var weapon: bool = id in preload("res://scripts/equipment.gd").MODS or id in ["pulse","rail","missile","blade","beam","mine"] or id.begins_with("aux_") or id in ["fire_rate","damage","multishot","velocity","crit","wide","pierce","aux_water","aux_ice","aux_homing"]
 		var color := Color("79dce7") if element else (Color("e7bf78") if weapon else Color("a8d6b0"))
 		var category := ("元素接口" if element else ("武装模块" if weapon else "机体系统")) if I18N.lang()=="zh" else ("ELEMENT" if element else ("WEAPON" if weapon else "SYSTEM"))
+		if id in ["fire","water","ice","lightning","wind"]: category="主炮双元素" if I18N.lang()=="zh" else "MAIN ELEMENTS"
+		if preload("res://scripts/run_rules.gd").DATA.has(id): category="规则改造" if I18N.lang()=="zh" else "RULE MOD"
 		var detail: String = preload("res://scripts/module_readout.gd").describe(world,id,level)
 		if id in ["water","ice","lightning","wind"] and world.player.element_levels.values().all(func(lv):return int(lv)==0):
 			detail=("首次元素装配：伤害 +1\n" if I18N.lang()=="zh" else "First elemental core: damage +1\n")+detail

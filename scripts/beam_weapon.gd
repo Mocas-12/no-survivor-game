@@ -21,6 +21,7 @@ var beam_length:=0.0
 var width:=0.0
 var impact_cooldown:=0.0
 var audio_cycles:=0
+var cycle_hit:=false
 func make_quad(size: Vector2,kind: int=0) -> MeshInstance3D:
     var result:=MeshInstance3D.new()
     var quad:=QuadMesh.new()
@@ -57,6 +58,7 @@ func hide_effect():
     active=false
     phase="idle"
     age=0
+    cycle_hit=false
     damage_credit=0
 func exposed_time(time: float) -> float:
     return floorf(time/CYCLE)*(END-START)+clampf(fposmod(time,CYCLE)-START,0,END-START)
@@ -79,6 +81,9 @@ func _process(dt: float):
         play_cycle()
     var old_age:=age
     age+=dt
+    if floori((age-END)/CYCLE)>floori((old_age-END)/CYCLE):
+        if cycle_hit and player.modules.has('salvage_return') and w.get('salvage')!=null: w.salvage.add_energy(2)
+        cycle_hit=false
     if floori(age/CYCLE)>floori(old_age/CYCLE): play_cycle()
     var t:=fposmod(age,CYCLE)
     if floori((age-START)/CYCLE)>floori((old_age-START)/CYCLE): player._hull_fire(true)
@@ -92,6 +97,10 @@ func _process(dt: float):
     var top: Vector3=w.camera.project_position(Vector2(view.get_center().x,-24),w.camera.global_position.z-global_position.z)
     var length_to_edge:=maxf(40,top.y-global_position.y)
     width=5.5+minf(player.bullet_count,9)*.7+player.form*.12
+    var bursting: bool=w.get('salvage')!=null and w.salvage.burst_left>0
+    if bursting: width*=1.8
+    audio.volume_db=-11 if bursting else -13
+    audio.pitch_scale=1.04 if bursting else 1.0
     var targets: Array=get_tree().get_nodes_in_group("mobs").filter(func(m):return not m.dead and m.global_position.y>global_position.y and m.global_position.y<top.y and absf(m.global_position.x-global_position.x)<width)
     targets.sort_custom(func(a,b):return a.global_position.y<b.global_position.y)
     targets=targets.slice(0,3)
@@ -100,10 +109,13 @@ func _process(dt: float):
     visual.scale=Vector3(width/4,beam_length,1)
     visual.visible=t>=START
     mat.set_shader_parameter("tint",color)
+    var secondary: Color=preload("res://scripts/projectile_geometry.gd").PLAYER.get(player.catalyst,color)
+    mat.set_shader_parameter("secondary",secondary)
     mat.set_shader_parameter("clock",age)
     mat.set_shader_parameter("energy",power*(.9 if low else .88+.08*sin(age*68)))
     mat.set_shader_parameter("detail",0.0 if low else 1.0+player.form*.025)
     muzzle.material_override.set_shader_parameter("tint",color)
+    muzzle.material_override.set_shader_parameter("secondary",secondary)
     muzzle.material_override.set_shader_parameter("energy",power if t>=START else smoothstep(0,START,t)*.6)
     muzzle.scale=Vector3.ONE*(.7+player.form*.018)
     for i in 3:
@@ -111,6 +123,7 @@ func _process(dt: float):
         if contacts[i].visible:
             contacts[i].global_position=Vector3(global_position.x,targets[i].global_position.y,global_position.z+2)
             contacts[i].material_override.set_shader_parameter("tint",color)
+            contacts[i].material_override.set_shader_parameter("secondary",secondary)
             contacts[i].material_override.set_shader_parameter("energy",power*(.85+.12*sin(age*54+i)))
     var interval:=maxf(.09,player.fire_cooldown*.65)
     damage_credit+=(exposed_time(age)-exposed_time(old_age))/DUTY/interval
@@ -129,5 +142,6 @@ func _process(dt: float):
             round._recycle()
             hits+=1
     if hits>0 and impact_cooldown<=0:
+        cycle_hit=true
         impact_audio.play()
         impact_cooldown=.14

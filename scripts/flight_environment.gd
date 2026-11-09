@@ -1,7 +1,6 @@
 extends Node3D
 ## Stationary distant plates, non-repeating scenery and sparse directional dust.
-const PLATES=[preload("res://assets/campaign/flight-v2/orbit.png"),preload("res://assets/campaign/flight-v2/storm.png"),preload("res://assets/campaign/flight-v2/core.png")]
-const PROPS=[preload("res://assets/campaign/flight-v2/edge-0.png"),preload("res://assets/campaign/flight-v2/edge-1.png"),preload("res://assets/campaign/flight-v2/edge-2.png"),preload("res://assets/campaign/flight-v2/edge-3.png"),preload("res://assets/campaign/flight-v2/edge-4.png"),preload("res://assets/campaign/flight-v2/edge-5.png")]
+const PLATES=[preload("res://assets/campaign/flight-v2/sky-0.png"),preload("res://assets/campaign/flight-v2/sky-1.png"),preload("res://assets/campaign/flight-v2/sky-2.png")]
 var background: MeshInstance3D
 var act:=0
 var transition_time:=4.0
@@ -15,9 +14,9 @@ func _ready():
 	rng.seed=57391
 	background=MeshInstance3D.new()
 	var plane:=QuadMesh.new()
-	plane.size=Vector2(1320,780)
+	plane.size=Vector2(1560,900)
 	background.mesh=plane
-	background.position.z=-55
+	background.position.z=-180
 	var mat:=ShaderMaterial.new()
 	mat.shader=preload("res://scripts/flight_background.gdshader")
 	mat.set_shader_parameter("scene_texture",PLATES[0])
@@ -49,21 +48,11 @@ func change_act(value: int):
 	next_prop=1.7
 func spawn_prop(side: int,y: float=510):
 	if scenery.size()>=4: return
-	var prop:=MeshInstance3D.new()
-	var quad:=QuadMesh.new()
-	quad.size=Vector2(380,290)
-	prop.mesh=quad
-	var mat:=StandardMaterial3D.new()
-	mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_texture=PROPS[act*2+serial%2]
-	mat.albedo_color=Color(.38,.43,.49,0)
-	mat.cull_mode=BaseMaterial3D.CULL_DISABLED
-	prop.material_override=mat
-	prop.position=Vector3(side*(565+rng.randf_range(-15,15)),y,-43)
-	prop.rotation.z=side*rng.randf_range(-.12,.12)
+	var prop=preload("res://scripts/station_scenery.gd").build(act,serial)
+	prop.position=Vector3(side*535,y,-80)
+	if side<0: prop.rotation.z+=PI
 	add_child(prop)
-	scenery.append({"node":prop,"age":0.0,"act":act,"x":prop.position.x,"speed":rng.randf_range(16,23)})
+	scenery.append({"node":prop,"age":0.0,"act":act,"x":prop.position.x,"speed":38.0})
 	serial+=1
 func advance(dt: float,steer: float,low: bool,reduced_motion: bool):
 	clock+=dt
@@ -75,16 +64,19 @@ func advance(dt: float,steer: float,low: bool,reduced_motion: bool):
 	next_prop-=dt
 	if next_prop<=0:
 		spawn_prop(-1 if serial%2==0 else 1)
-		next_prop=18.0+rng.randf_range(0,7)
+		next_prop=9.0+rng.randf_range(0,2)
 	for i in range(scenery.size()-1,-1,-1):
 		var item=scenery[i]
-		var prop: MeshInstance3D=item.node
+		var prop: Node3D=item.node
 		item.age+=dt
 		prop.position.y-=dt*item.speed*(.4 if reduced_motion else 1.0)
 		prop.position.x=item.x-steer*(3 if reduced_motion else 12)
 		var fade: float=minf(1,item.age/2)*clampf((prop.position.y+550)/100,0,1)
 		if item.act!=act: fade*=1-blend
-		prop.material_override.albedo_color.a=fade*.7
+		for mesh in prop.get_children():
+			if mesh is MeshInstance3D:
+				mesh.visible=not (low and mesh.get_meta('minor_detail',false))
+				mesh.transparency=1.0-fade*.75
 		if prop.position.y< -560 or (item.act!=act and transition_time>=4):
 			prop.queue_free()
 			scenery.remove_at(i)

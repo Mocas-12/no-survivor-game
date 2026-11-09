@@ -96,6 +96,9 @@ func _physics_process(delta):
 	var spd: float = speed
 	# 引力井：靠近主角的敌方子弹被减速
 	var w = get_tree().current_scene
+	if w and w.get("salvage")!=null:
+		w.salvage.graze(self)
+		if w.salvage.block_projectile(self): queue_free();return
 	if w and w.get("ability") == "gravity":
 		var pl = get_tree().get_first_node_in_group("player")
 		if pl and global_position.distance_to(pl.global_position) < 270.0:
