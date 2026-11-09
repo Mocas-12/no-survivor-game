@@ -1,6 +1,6 @@
 # Web 导出与分发约定
 
-当前发布使用带源码版本号的文件名，避免 HTML 更新后仍读到旧 `.pck` 缓存。先导出 `build/release/game-<源码短哈希>.html`，再运行 `python tools/prepare_pages.py <源码短哈希>`。脚本只替换 `docs/` 中生成的网页文件，保留 Markdown 文档，并写入包体 SHA-256。当前游戏数据约62MB、引擎约40MB，首次加载需要下载这些文件。
+当前发布使用带源码版本号的文件名，避免 HTML 更新后仍读到旧 `.pck` 缓存。先导出 `build/release/game-<源码短哈希>.html`，再运行 `python tools/prepare_pages.py <源码短哈希>`。脚本只替换 `docs/` 中生成的网页文件，保留 Markdown 文档，并写入包体 SHA-256。当前抢装构筑版本的游戏数据约77MB、引擎约40MB，首次加载需要下载这些文件。合并后还需核对在线 `build-info.json`，源码提交成功不等于Pages已经完成部署。
 
 为控制仓库体积（Godot 网页导出单份约 48MB，其中 wasm 约 38MB），本仓库从 2026-10-23 起采用以下约定：
 

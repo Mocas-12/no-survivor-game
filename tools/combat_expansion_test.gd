@@ -18,7 +18,7 @@ func run() -> void:
 	w.director.set_process(false)
 	w.player.set_physics_process(false)
 	var p=w.player
-	check(w.upgrade_pool.size()==48,"48 complete modules")
+	check(w.upgrade_pool.size()==54,"54 complete modules")
 	var ids: Array=[]
 	for card in w.upgrade_pool:
 		check(not ids.has(card.id),"Unique module "+card.id)

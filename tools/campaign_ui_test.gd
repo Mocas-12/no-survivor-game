@@ -14,12 +14,12 @@ func run():
 	w.director.set_process(false)
 	w.get_node("Timer").stop()
 	w.player.set_physics_process(false)
-	w.run_time=55
+	w.run_time=135
 	w.campaign._process(0)
 	await process_frame
 	var panel=w.campaign.panel
 	var view=root.get_visible_rect()
-	check(paused and panel.visible,"Real 55-second convoy event pauses combat")
+	check(paused and panel.visible,"Real 135-second convoy event pauses combat")
 	check(view.encloses(panel.get_global_rect()),"Convoy panel fully fits the screen")
 	check(panel.get_global_rect().get_center().distance_to(view.get_center())<2,"Convoy panel is centered")
 	var decline=panel.get_child(0).get_child(2)

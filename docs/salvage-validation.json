@@ -1,0 +1,386 @@
+{
+  "recorded": "2026-11-10",
+  "campaign_recorded": "2026-11-08",
+  "assertions": 632,
+  "campaign": {
+    "failures": [],
+    "runs": [
+      {
+        "bosses": 3,
+        "bursts": 82,
+        "contracts": 3,
+        "damage_taken": 44,
+        "elements": [
+          "fire",
+          "lightning"
+        ],
+        "events": [
+          "transport",
+          "battery",
+          "convoy",
+          "repair_chain",
+          "breakthrough",
+          "repair_chain",
+          "breakthrough",
+          "battery",
+          "convoy",
+          "transport",
+          "breakthrough",
+          "repair_chain",
+          "convoy",
+          "battery",
+          "transport",
+          "transport",
+          "convoy"
+        ],
+        "first_part": 25.1197485555555,
+        "frame": "assault",
+        "kills": 2981,
+        "level": 70,
+        "opening_kills": 576,
+        "opening_peak_visible": 10,
+        "parts": [
+          "mines",
+          "splitter"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 14,
+        "peak_projectiles": 95,
+        "reactions": 1311,
+        "reference_invulnerable": true,
+        "rules": [
+          "jump_arc",
+          "salvage_return"
+        ],
+        "seconds": 660.873386119743,
+        "won": true
+      },
+      {
+        "bosses": 3,
+        "bursts": 92,
+        "contracts": 3,
+        "damage_taken": 5,
+        "elements": [
+          "ice",
+          "lightning"
+        ],
+        "events": [
+          "transport",
+          "breakthrough",
+          "repair_chain",
+          "convoy",
+          "battery",
+          "repair_chain",
+          "battery",
+          "convoy",
+          "transport",
+          "breakthrough",
+          "convoy",
+          "breakthrough",
+          "transport",
+          "repair_chain",
+          "battery",
+          "breakthrough",
+          "repair_chain"
+        ],
+        "first_part": 24.8094026060606,
+        "frame": "escort",
+        "kills": 3528,
+        "level": 73,
+        "opening_kills": 573,
+        "opening_peak_visible": 9,
+        "parts": [
+          "tractor",
+          "cannon"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 9,
+        "peak_projectiles": 123,
+        "reactions": 2156,
+        "reference_invulnerable": true,
+        "rules": [
+          "shield_clone",
+          "graze_core"
+        ],
+        "seconds": 655.603867383359,
+        "won": true
+      },
+      {
+        "bosses": 3,
+        "bursts": 90,
+        "contracts": 3,
+        "damage_taken": 13,
+        "elements": [
+          "lightning",
+          "fire"
+        ],
+        "events": [
+          "transport",
+          "battery",
+          "breakthrough",
+          "convoy",
+          "repair_chain",
+          "breakthrough",
+          "battery",
+          "transport",
+          "convoy",
+          "repair_chain",
+          "repair_chain",
+          "battery",
+          "transport",
+          "breakthrough",
+          "convoy",
+          "battery",
+          "transport"
+        ],
+        "first_part": 24.8128116060606,
+        "frame": "siege",
+        "kills": 3497,
+        "level": 76,
+        "opening_kills": 559,
+        "opening_peak_visible": 12,
+        "parts": [
+          "bomber",
+          "shield"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 12,
+        "peak_projectiles": 87,
+        "reactions": 1978,
+        "reference_invulnerable": true,
+        "rules": [
+          "focus_breach",
+          "tail_battery"
+        ],
+        "seconds": 665.663904446835,
+        "won": true
+      },
+      {
+        "bosses": 1,
+        "bursts": 23,
+        "contracts": 1,
+        "damage_taken": 8,
+        "elements": [
+          "lightning",
+          "wind"
+        ],
+        "events": [
+          "transport",
+          "repair_chain",
+          "battery",
+          "convoy"
+        ],
+        "first_part": 25.2983917142857,
+        "frame": "assault",
+        "kills": 890,
+        "level": 27,
+        "opening_kills": 598,
+        "opening_peak_visible": 12,
+        "parts": [
+          "tractor",
+          "splitter"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 12,
+        "peak_projectiles": 63,
+        "reactions": 339,
+        "reference_invulnerable": false,
+        "rules": [
+          "salvage_return"
+        ],
+        "seconds": 180.217121957675,
+        "won": false
+      },
+      {
+        "bosses": 1,
+        "bursts": 25,
+        "contracts": 1,
+        "damage_taken": 5,
+        "elements": [
+          "fire",
+          "wind"
+        ],
+        "events": [
+          "transport",
+          "breakthrough",
+          "convoy",
+          "battery"
+        ],
+        "first_part": 24.9861014285714,
+        "frame": "escort",
+        "kills": 975,
+        "level": 28,
+        "opening_kills": 601,
+        "opening_peak_visible": 7,
+        "parts": [
+          "cannon",
+          "bomber"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 7,
+        "peak_projectiles": 44,
+        "reactions": 409,
+        "reference_invulnerable": false,
+        "rules": [
+          "shield_clone"
+        ],
+        "seconds": 180.035957767198,
+        "won": false
+      },
+      {
+        "bosses": 1,
+        "bursts": 22,
+        "contracts": 1,
+        "damage_taken": 7,
+        "elements": [
+          "lightning",
+          "wind"
+        ],
+        "events": [
+          "transport",
+          "battery",
+          "breakthrough",
+          "convoy"
+        ],
+        "first_part": 24.9252683333334,
+        "frame": "siege",
+        "kills": 867,
+        "level": 26,
+        "opening_kills": 591,
+        "opening_peak_visible": 11,
+        "parts": [
+          "bomber",
+          "mines"
+        ],
+        "peak_fields": 0,
+        "peak_mobs": 11,
+        "peak_projectiles": 37,
+        "reactions": 367,
+        "reference_invulnerable": false,
+        "rules": [
+          "focus_breach"
+        ],
+        "seconds": 180.068376989419,
+        "won": false
+      }
+    ],
+    "scope": "Three invulnerable full-route references and three damage-taking opening sessions capped at 180s; accelerated desktop headless bots, not human fun or phone verification"
+  },
+  "browser_scope": "Synthetic invulnerable stress fixture, desktop GPU, emulated CPU/touch. Hardware and burst clicked through native canvas input; not physical phone or retention testing.",
+  "browser_profiles": [
+    {
+      "width": 1152,
+      "height": 648,
+      "cpu_throttle": 1,
+      "average_fps": 124.75,
+      "minimum_fps": 59.0,
+      "audio": [
+        {
+          "state": "running",
+          "sampleRate": 48000
+        }
+      ],
+      "final_state": {
+        "burst_button": [
+          1055,
+          581
+        ],
+        "burst_kind": "detonate",
+        "burst_left": 0,
+        "bursts": 1,
+        "buttons": [
+          [
+            576,
+            252.5
+          ],
+          [
+            576,
+            375.5
+          ],
+          [
+            576,
+            469.5
+          ]
+        ],
+        "elements": [
+          "fire",
+          "water"
+        ],
+        "energy": 100,
+        "panel": false,
+        "parts": [
+          "cannon",
+          "mines"
+        ],
+        "rules": [
+          "jump_arc",
+          "salvage_return"
+        ],
+        "viewport": [
+          1152,
+          648
+        ]
+      }
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "cpu_throttle": 4,
+      "average_fps": 39.5,
+      "minimum_fps": 26.0,
+      "audio": [
+        {
+          "state": "running",
+          "sampleRate": 48000
+        }
+      ],
+      "final_state": {
+        "burst_button": [
+          1055,
+          581
+        ],
+        "burst_kind": "detonate",
+        "burst_left": 0,
+        "bursts": 1,
+        "buttons": [
+          [
+            576,
+            252.5
+          ],
+          [
+            576,
+            375.5
+          ],
+          [
+            576,
+            469.5
+          ]
+        ],
+        "elements": [
+          "fire",
+          "water"
+        ],
+        "energy": 100,
+        "panel": false,
+        "parts": [
+          "cannon",
+          "mines"
+        ],
+        "rules": [
+          "jump_arc",
+          "salvage_return"
+        ],
+        "viewport": [
+          1152,
+          648
+        ]
+      }
+    }
+  ],
+  "browser_errors": [],
+  "limitations": [
+    "Accelerated campaign references are not human balance or retention measurements.",
+    "Browser CPU/touch emulation is not a physical-phone performance result.",
+    "Headless exits retain known resource warnings."
+  ]
+}

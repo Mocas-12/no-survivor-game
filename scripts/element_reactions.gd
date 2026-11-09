@@ -1,8 +1,8 @@
 extends RefCounted
 ## One symmetric reaction per hit. Secondary damage never applies another element.
 const VISUAL=preload("res://scripts/reaction_fx.gd")
-const PAIRS={"fire+water":"steam", "fire+ice":"melt", "lightning+water":"conduct", "ice+water":"freeze", "ice+lightning":"shatter", "fire+lightning":"overload"}
-const COLORS={"fire":Color("ff864d"),"water":Color("56cfff"),"ice":Color("bdedff"),"lightning":Color("d1a3ff")}
+const PAIRS={"fire+water":"steam", "fire+ice":"melt", "lightning+water":"conduct", "ice+water":"freeze", "ice+lightning":"shatter", "fire+lightning":"overload", "fire+wind":"firestorm", "water+wind":"vortex", "ice+wind":"frost_blades", "lightning+wind":"storm_arc"}
+const COLORS={"fire":Color("ff864d"),"water":Color("56cfff"),"ice":Color("bdedff"),"lightning":Color("d1a3ff"),"wind":Color("82dec1")}
 
 static func state(target) -> Dictionary:
 	if not target.has_meta("elements"): target.set_meta("elements",{})
@@ -43,7 +43,8 @@ static func nearby(target,radius: float,limit:=6) -> Array:
 static func apply(target,element: String,damage: float,level: int,boost: float,mark: float,world) -> String:
 	if target.dead or not COLORS.has(element) and element!="wind": return ""
 	var s=state(target)
-	if element=="wind":
+	if element=="wind" and not COLORS.keys().any(func(key):return key!="wind" and s.has(key)):
+		s["wind"]=2.1*mark
 		if s.has("wind_cd"): return ""
 		s["wind_cd"]=.5
 		var spread=""
@@ -77,6 +78,24 @@ static func apply(target,element: String,damage: float,level: int,boost: float,m
 	var amount=damage*boost
 	var affected=[]
 	match reaction:
+		"firestorm":
+			for m in nearby(target,180,4):
+				state(m)["fire"]=2.0
+				m.set_meta("burn_damage",maxf(1,amount*.2))
+				hurt(m,amount*.5,world)
+		"vortex":
+			for m in nearby(target,190,4):
+				if not "boss_id" in m: m.position=m.position.move_toward(target.position,28)
+				hurt(m,amount*.45,world)
+		"frost_blades":
+			for m in nearby(target,200,4):
+				state(m)["ice"]=1.3
+				hurt(m,amount*.65,world)
+				FX_blade(world,target.position,m.position,Color("a3e7ed"))
+		"storm_arc":
+			for m in nearby(target,240,4):
+				hurt(m,amount*.6,world)
+				if world.has_method("spawn_lightning"): world.spawn_lightning(target.position,m.position)
 		"melt": hurt(target,amount*1.6,world)
 		"steam":
 			s["exposed"]=1.8
@@ -99,9 +118,16 @@ static func apply(target,element: String,damage: float,level: int,boost: float,m
 	if reaction=="shatter" and world.get("player")!=null and preload("res://scripts/equipment.gd").has_active(world.player,"split"):
 		for other in nearby(target,160,3): state(other)["ice"]=1.2
 	if world.get("director")!=null: world.director.reactions+=1
+	if world.get("player")!=null and world.player.modules.has("jump_arc"):
+		for other in nearby(target,190,2):
+			hurt(other,maxf(1,amount*.45),world)
+			if world.has_method("spawn_lightning"): world.spawn_lightning(target.position,other.position)
 	if world.get("player")!=null and world.player.modules.has("reaction_salvage"): world.player.overdrive=minf(6,world.player.overdrive+.2)
 	if world.has_method("spawn_reaction_text"):
 		var key="react_"+reaction
 		world.spawn_reaction_text(target.global_position,key,Color("e4f4ff"))
-	VISUAL.emit(world,target.global_position,reaction)
+	VISUAL.emit(world,target.global_position,{"firestorm":"melt","vortex":"steam","frost_blades":"shatter","storm_arc":"conduct"}.get(reaction,reaction))
 	return reaction
+
+static func FX_blade(world,a: Vector3,b: Vector3,color: Color):
+	preload("res://scripts/precision_fx.gd").pulse(world,a.lerp(b,.5),color,55,false,.22,6)

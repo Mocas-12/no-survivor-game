@@ -8,11 +8,13 @@ const MB := preload("res://scripts/model_builder.gd")
 
 @export var follow_speed = 1300    # 鼠标跟随速度（越大跟得越紧）
 @export var speed = 400            # 移动速度（摇杆移动 / 疾跑强化用）
-@export var fire_cooldown = 0.25   # 射击间隔（秒），强化可缩短
+@export var fire_cooldown = 0.18   # Continuous starting fire; cards can shorten it.
 var damage = 1                     # 每发子弹的伤害
 var bullet_count = 3               # 同时发射的弹道数量
 var form = 0                       # 当前形态 0-19
 var element = "normal"             # 弹头元素：normal / fire / ice / lightning / wind
+var catalyst := ""
+var element_replace := "catalyst"
 var element_levels := {"fire": 0, "water": 0, "ice": 0, "lightning": 0, "wind": 0}  # 各元素等级（切换时各自保留）
 var pattern = "spread"             # 弹道模式：spread 扇形 / homing 追踪 / wave 波浪
 var pattern_levels := {"homing": 0, "wave": 0}  # 特殊弹道等级（切换时各自保留）
@@ -33,6 +35,7 @@ var weapon := "pulse"
 var weapon_modules := {}
 var equipment_focus := "main"
 var modules := {}
+var rule_slots: Array[String]=[]
 var second_auxiliary := ""
 var second_auxiliary_level := 0
 var contact_charge := 0.0
@@ -149,6 +152,8 @@ func shoot():
 	var speed_mul = 1.4 if element == "wind" else 1.0
 	var spacing = (0.1 if branch=="assault" else 0.18) * spacing_scale
 	var shots: int = mini(bullet_count + (1 if branch=="assault" else 0),9)
+	var run=get_tree().current_scene.get("salvage")
+	if run!=null and run.burst_left>0 and run.burst_kind()=="overclock": shots=mini(11,shots+2)
 	var start = -(shots - 1) / 2.0 * spacing
 
 	for i in shots:
@@ -201,6 +206,7 @@ func fire_auxiliary():
 	if second_auxiliary!="": _fire_auxiliary_slot(second_auxiliary,second_auxiliary_level,1)
 
 func _fire_auxiliary_slot(slot: String,slot_level: int,side: int):
+	if get_tree().get_nodes_in_group("player_bullets").filter(func(b):return b._active).size()>230: return
 	if is_instance_valid(model):
 		var hull: Node3D=model.get_meta("fleet_motion",model)
 		if hull.has_method("launch_bay"): hull.launch_bay()

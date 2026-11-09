@@ -37,6 +37,7 @@ const SFX := {
 # 2. 核心变量
 var director: Node
 var campaign: Node
+var salvage: Node
 var score = 0
 var health = 10
 var max_health = 10
@@ -241,6 +242,8 @@ func _ready():
 	campaign=preload("res://scripts/campaign.gd").new()
 	campaign.name="Campaign"
 	add_child(campaign)
+	salvage=preload("res://scripts/salvage_run.gd").new()
+	add_child(salvage)
 	if hull_preview:
 		print("BLENDER_HULL_PREVIEW: assault.glb")
 		# Art preview starts with the prototype skin; weapon rules and the branch choice remain unchanged.
@@ -271,7 +274,7 @@ func _process(delta):
 func _unhandled_input(event):
 	# 鼠标左键：消耗追踪导弹道具（桌面端；手机用右下角按钮）
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if homing_charges > 0 and not dying:
+		if salvage==null and homing_charges > 0 and not dying:
 			_use_homing()
 		return
 	# Esc 打开暂停（关闭方向由 pause_menu.gd 在暂停状态下处理）
@@ -461,7 +464,10 @@ func _apply_upgrade_choice(index):
 func pick_element(id: String):
 	if player.element_levels.values().all(func(lv): return int(lv)==0):
 		player.damage+=1
-	player.element = id
+	if player.element=="normal" or (id!=player.element and id!=player.catalyst and player.element_replace=="element" and player.catalyst!=""):
+		player.element=id
+	elif id!=player.element and id!=player.catalyst:
+		player.catalyst=id
 	player.element_levels[id] = int(player.element_levels.get(id, 0)) + 1
 
 # 特殊弹道：切换 / 升级（追踪/波浪等级独立保留）
@@ -673,7 +679,7 @@ func _use_homing():
 
 func _update_homing_btn():
 	homing_btn.text = I18n.T("btn_homing") % homing_charges
-	homing_btn.visible = homing_charges > 0 and not dying
+	homing_btn.visible = salvage==null and homing_charges > 0 and not dying
 
 # 反应提示：命中点浮起反应名（元素反应可见性）
 func spawn_reaction_text(pos: Vector3, key: String, color: Color):

@@ -36,6 +36,11 @@ static func spawn_enemy(w) -> void:
 	w.add_child(enemy)
 
 static func pick_enemy_type(w) -> String:
+	if w.get("director")!=null and w.run_time<55:
+		if w.run_time<15: return "normal"
+		return ["normal","normal","normal","swift","fast"].pick_random()
+	if w.get("director")!=null and w.run_time<90:
+		return ["normal","normal","fast","swift","shooter"].pick_random()
 	if w.get("director")!=null and w.run_time>90 and randf()<.28:
 		var roles: Array=["repair","splitter"]
 		if w.boss_tier>=1: roles.append_array(["minelayer","projector"])

@@ -3,7 +3,7 @@ extends Node
 const TXT=preload("res://scripts/module_readout.gd")
 var w: Node
 var act:=-1
-var next_event:=55.0
+var next_event:=135.0
 var active_event:=""
 var event_until:=0.0
 var event_kills:=0
@@ -104,13 +104,23 @@ func _process(_dt: float) -> void:
 		if perf_clock>=1:
 			perf_clock=0
 			var sample: Dictionary={"fps":Performance.get_monitor(Performance.TIME_FPS),"process_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000,"mobs":get_tree().get_nodes_in_group("mobs").size(),"fields":get_tree().get_nodes_in_group("reaction_fields").size(),"low_fx":w.performance_limited}
+			sample['draw_calls']=Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
 			JavaScriptBridge.eval("window.__noSurvivorPerf="+JSON.stringify(sample),true)
 			var beam=w.player.get_node("BeamWeapon")
 			JavaScriptBridge.eval("window.__noSurvivorWeapon="+JSON.stringify({"weapon":w.player.weapon,"phase":beam.phase,"audio_cycles":beam.audio_cycles,"beam_length":beam.beam_length}),true)
+			var s=w.salvage
+			var centers: Array=[]
+			for button in s.buttons:
+				var center: Vector2=button.get_global_rect().get_center()
+				centers.append([center.x,center.y])
+			var burst_center: Vector2=s.burst_button.get_global_rect().get_center()
+			var viewport_size: Vector2=get_viewport().get_visible_rect().size
+			JavaScriptBridge.eval("window.__noSurvivorSalvage="+JSON.stringify({"panel":s.panel.visible,"parts":s.parts,"rules":w.player.rule_slots,"elements":[w.player.element,w.player.catalyst],"energy":s.energy,"burst_left":s.burst_left,"bursts":s.bursts,"burst_kind":s.burst_kind(),"buttons":centers,"burst_button":[burst_center.x,burst_center.y],"viewport":[viewport_size.x,viewport_size.y]}),true)
 	if stress:
 		w.player.autopilot_target=Vector3(sin(w.run_time*.7)*280,-190,0)
 		w.health=100000
 		w.max_health=100000
+		w.salvage.add_energy(_dt*30)
 	status.visible=not w.start_panel.visible and not w.levelup_panel.visible and not w.director.choosing and not w.dying and not panel.visible
 	if w.dying or w.victory_panel.visible or w.game_over_panel.visible:
 		w.director.overlay_label.hide()
@@ -191,6 +201,7 @@ func setup_stress() -> void:
 	w.player.bullet_count=6
 	if str(JavaScriptBridge.eval("new URLSearchParams(location.search).get('weapon')",true))=="beam": w.player.weapon="beam"
 	w.player.element="fire"
+	w.player.catalyst="water"
 	w.player.auxiliary="water"
 	w.player.auxiliary_level=3
 	w.player.second_auxiliary="lightning"
@@ -210,3 +221,10 @@ func setup_stress() -> void:
 	boss._change_phase(2)
 	w.boss_active=true
 	status.text=TXT.pick("性能试验 · 不计成绩","PERFORMANCE TEST · no score saved")
+	w.salvage.next_event=INF
+	if str(JavaScriptBridge.eval("new URLSearchParams(location.search).get('salvage')",true))=="1":
+		w.salvage.install('shield')
+		w.salvage.install('cannon')
+		preload('res://scripts/run_rules.gd').install(w,'jump_arc')
+		preload('res://scripts/run_rules.gd').install(w,'salvage_return')
+		if str(JavaScriptBridge.eval("new URLSearchParams(location.search).get('salvage_review')",true))=="1": w.salvage.present('mines')
