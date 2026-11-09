@@ -1,0 +1,5 @@
+# Repository icon · 2026-11-10
+
+Tool: built-in image_gen / image-2. Original output: `exec-2fa3f281-7f03-4434-a91e-c01f9817ec98.png`, preserved here as `source.png`. Repository README asset: `screenshots/app_icon.png`, normalized to 512×512 with high-quality bicubic resampling. Full-bleed opaque art, no text or baked frame. This update changes the README illustration; it does not change the playable ship mesh or Web export.
+
+Prompt: One polished original square sci-fi survivor app icon, no text. A single upward-facing interceptor in a near-top-down slight 3D view; swept segmented wings, thick ivory-metal armor with graphite joints and deep-blue inserts, vivid cyan cockpit and twin cyan-white thrusters, restrained amber details. Premium hard-surface game rendering, beveled edges, controlled metal highlights, ambient occlusion, strong silhouette legible at 64–100 pixels. Deep navy atmospheric background with subtle cyan halo and few stars. Cool upper-left key and warm right rim. No planets, explosions, clutter, typography, logos, watermarks, mockup border or grid.
